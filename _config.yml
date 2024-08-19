@@ -1,10 +1,10 @@
-title: devlopr
-subtitle: A Portfolio Jekyll Theme Built for Developers
+title: DevWhistle
+subtitle: My Dev Blog!
 description: >- # this means to ignore newlines until "baseurl:"
-  devlopr-jekyll is a beautiful Jekyll Theme Built For Developers, which is optimized for speed and readability.
+  hello. i'm DevWhistle
 
-url: "" # the base hostname & protocol for your site, e.g. https://example.github.io
-baseurl: "" # the subpath of your site, e.g. /blog
+url: "https://YouYeonHwi.github.io" # the base hostname & protocol for your site, e.g. https://example.github.io
+baseurl: "https://YouYeonHwi.github.io" # the subpath of your site, e.g. /blog
 
 # Navigation
 urls:
@@ -14,29 +14,29 @@ urls:
       url: /about
     - text: Blog
       url: /blog
-    - text: Gallery
-      url: /gallery
-    - text: Shop
-      url : /shop
+#    - text: Gallery
+#      url: /gallery
+#    - text: Shop
+#      url : /shop
     - text: Contact
       url : /contact
 
 
 # Edit Author details (For multi authors check _data/authors.yml)
 
-author_logo: profile.png
-author: John Doe
-author_bio: Hi, my name is John Doe. I built this site using devlopr-jekyll :D
-author_email: "mail@sujaykundu.com"
-author_location: India
-author_website_url: "https://sujaykundu.com"
+author_logo: /assets/profile.png
+author: DevWhistle
+author_bio: Hi, my name is Whistle. I built this site for my portpolio
+author_email: "dusgnl0903@gmail.com"
+author_location: South Korea
+author_website_url: "https://YouYeonHwi.github.io"
 typewrite-text: devlopr is a jekyll framework built for developers. You can edit this in _config.yml file
-hero_cover_img: sample_cover.jpg # replace this for changing homepage cover (eg. try cover.jpeg). Image should be in /assets/img
+hero_cover_img: /assets/sample_cover.jpg # replace this for changing homepage cover (eg. try cover.jpeg). Image should be in /assets/img
 
 # Experiences
 author_work_experiences:
             - company_name: Google
-              company_logo: google.png
+              company_logo: assets/google.png
               company_url: https://google.com
               designation: Software Engineer
               description: Worked on various Google Products
