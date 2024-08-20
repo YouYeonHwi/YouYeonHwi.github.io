@@ -1,16 +1,16 @@
 # Configurations
-title:            Jekyll Gitbook
-longtitle:        Jekyll Gitbook
-author:           HE Tao
-email:            sighingnow@gmail.com
+title:            Whistle's Dev Diary
+longtitle:        DevWhistle
+author:           DevWhistle
+email:            dusgnl0903@gmail.com
 description: >
-  Build Jekyll site with the GitBook style.
+  My blog for Dev Diaries
 
 version:          1.0
 gitbook_version:  3.2.3
 
-url:              'https://sighingnow.github.io'
-baseurl:          '/jekyll-gitbook'
+url:              'https://YouYeonHwi.github.io'
+baseurl:          'https://YouYeonHwi.github.io'
 rss:              RSS
 
 # bootstrap: use the remote theme for the site itself
