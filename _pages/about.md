@@ -1,9 +1,7 @@
 ---
 title: About
-author: Tao He
-date: 2022-02-04
-category: Jekyll
 layout: post
+permalink: /about/
 ---
 
-This is an about page.
+안녕하세요! Whistle의 개발 다이어리입니다. AI 기술과 논문 분석, 프로젝트 실험을 매주 공유합니다.
