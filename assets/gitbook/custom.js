@@ -19,11 +19,17 @@ function bind_footnote_links() {
     }
 }
 
-if (document.readyState === "loading") {
-    // Loading hasn't finished yet
-    document.addEventListener("DOMContentLoaded", bind_footnote_links);
-} else {
-    // `DOMContentLoaded` has already fired
-    bind_footnote_links();
+if (typeof window !== 'undefined' && typeof document !== 'undefined' && !(typeof module !== 'undefined' && module.exports)) {
+    if (document.readyState === "loading") {
+        // Loading hasn't finished yet
+        document.addEventListener("DOMContentLoaded", bind_footnote_links);
+    } else {
+        // `DOMContentLoaded` has already fired
+        bind_footnote_links();
+    }
+}
+
+if (typeof module !== 'undefined') {
+    module.exports = { bind_footnote_links };
 }
 
