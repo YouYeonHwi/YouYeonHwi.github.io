@@ -261,3 +261,11 @@ pre:has(code.language-mermaid[data-processed="true"]) {
     --c-danger-title: #c00;
     --font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
 }
+/* Pastel theme */
+body {
+    background-color: #fdf6e3;
+}
+
+a {
+    color: #6c5ce7;
+}
