@@ -44,13 +44,16 @@ layout: post
 ```python
 # 'w' 모드: 기존 내용을 덮어씀
 f = open("new_file.txt", "w", encoding="utf-8")
-f.write("안녕하세요, 파이썬 파일 쓰기 테스트입니다.")
-f.write("두 번째 줄을 작성합니다.")
+f.write("안녕하세요, 파이썬 파일 쓰기 테스트입니다.
+")
+f.write("두 번째 줄을 작성합니다.
+")
 f.close() # 중요: 파일 작업이 끝나면 반드시 닫아야 합니다.
 
 # 'a' 모드: 기존 내용 끝에 추가
 f = open("new_file.txt", "a", encoding="utf-8")
-f.write("이 내용은 파일 끝에 추가됩니다.")
+f.write("이 내용은 파일 끝에 추가됩니다.
+")
 f.close()
 ```
 
@@ -71,7 +74,8 @@ with open(file, mode, encoding) as 파일_객체_변수:
 ```python
 # with 문을 사용한 파일 쓰기
 with open("new_file_with.txt", "w", encoding="utf-8") as f:
-    f.write("with 문을 사용하면 close()가 필요 없습니다.")
+    f.write("with 문을 사용하면 close()가 필요 없습니다.
+")
     f.write("자동으로 닫히므로 매우 편리합니다.")
 
 # with 블록 바깥에서는 f 객체를 사용할 수 없음
@@ -98,7 +102,8 @@ with open("new_file_with.txt", "r", encoding="utf-8") as f:
 파일의 내용을 한 번에 한 줄씩 읽어옵니다. `while` 문과 함께 사용하여 파일 끝까지 한 줄씩 처리할 때 유용합니다.
 
 ```python
-print("--- readline()으로 읽기 ---")
+print("
+--- readline()으로 읽기 ---")
 with open("new_file_with.txt", "r", encoding="utf-8") as f:
     while True:
         line = f.readline()
@@ -112,7 +117,8 @@ with open("new_file_with.txt", "r", encoding="utf-8") as f:
 파일의 모든 줄을 각각의 문자열 요소로 갖는 리스트를 반환합니다. `for` 문과 함께 사용하기 편리합니다.
 
 ```python
-print("--- readlines()로 읽기 ---")
+print("
+--- readlines()로 읽기 ---")
 with open("new_file_with.txt", "r", encoding="utf-8") as f:
     lines = f.readlines()
     for line in lines:
@@ -124,7 +130,8 @@ with open("new_file_with.txt", "r", encoding="utf-8") as f:
 파일 객체는 반복 가능한(iterable) 객체이므로, `for` 문을 사용해 바로 한 줄씩 읽어올 수 있습니다. 가장 간결하고 효율적인 방법입니다.
 
 ```python
-print("--- for 문으로 직접 순회하기 ---")
+print("
+--- for 문으로 직접 순회하기 ---")
 with open("new_file_with.txt", "r", encoding="utf-8") as f:
     for line in f:
         print(line.strip())
