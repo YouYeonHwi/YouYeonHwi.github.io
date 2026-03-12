@@ -83,8 +83,7 @@ layout: post
 
   # JSON 문자열을 다시 파이썬 딕셔너리로 변환 (역직렬화)
   parsed_dict = json.loads(json_string)
-  print("
---- 파이썬 딕셔너리 ---")
+  print("--- 파이썬 딕셔너리 ---")
   print(parsed_dict)
   ```
 
@@ -145,8 +144,7 @@ layout: post
   print(df)
 
   # 'Age'가 30 이상인 데이터만 필터링
-  print("
---- 30세 이상 ---")
+  print("--- 30세 이상 ---")
   print(df[df['Age'] >= 30])
   ```
 

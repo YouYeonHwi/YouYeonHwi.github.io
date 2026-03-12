@@ -1,6 +1,7 @@
 ---
 title: 파이썬 조건문 (Conditional Statements)
 layout: post
+parent: 파이썬 기초 문법
 ---
 
 ## 조건문이란?

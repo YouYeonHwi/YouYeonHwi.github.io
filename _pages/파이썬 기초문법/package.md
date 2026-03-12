@@ -1,6 +1,7 @@
 ---
-title: 파이썬 패키지 (Package)
+title: 패키지(Package)
 layout: post
+parent: 파이썬 기초 문법
 ---
 
 ## 패키지(Package)란 무엇일까?
