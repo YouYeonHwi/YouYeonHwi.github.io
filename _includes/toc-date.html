@@ -49,38 +49,6 @@
 
             <li class="divider"></li>
 
-            <li class="chapter" data-level="1.3">
-                <a href="{{site.baseurl}}/pages/파이썬-기초문법/" onclick="pageScrollToTop(this)">파이썬 기초 문법</a>
-                <ul class="articles">
-                    <li class="chapter" data-level="1.3.1"><a href="{{site.baseurl}}/pages/파이썬 기초문법/built-in-functions/" onclick="pageScrollToTop(this)">파이썬 내장 함수 (Built-in Functions)</a></li>
-                    <li class="chapter" data-level="1.3.2"><a href="{{site.baseurl}}/pages/파이썬 기초문법/class/" onclick="pageScrollToTop(this)">파이썬 클래스 (Class) - 심화편</a></li>
-                    <li class="chapter" data-level="1.3.3"><a href="{{site.baseurl}}/pages/파이썬 기초문법/exception-handling/" onclick="pageScrollToTop(this)">파이썬 예외 처리 (Exception Handling)</a></li>
-                    <li class="chapter" data-level="1.3.4"><a href="{{site.baseurl}}/pages/파이썬 기초문법/file-io/" onclick="pageScrollToTop(this)">파이썬 파일 입출력 (File I/O)</a></li>
-                    <li class="chapter" data-level="1.3.5"><a href="{{site.baseurl}}/pages/파이썬 기초문법/libraries/" onclick="pageScrollToTop(this)">파이썬 라이브러리 (Library)</a></li>
-                    <li class="chapter" data-level="1.3.6"><a href="{{site.baseurl}}/pages/파이썬 기초문법/module/" onclick="pageScrollToTop(this)">파이썬 모듈 (Module)</a></li>
-                    <li class="chapter" data-level="1.3.7"><a href="{{site.baseurl}}/pages/파이썬 기초문법/package/" onclick="pageScrollToTop(this)">파이썬 패키지 (Package)</a></li>
-                    <li class="chapter" data-level="1.3.8">
-                        <a>제어 흐름</a>
-                        <ul class="articles">
-                            <li class="chapter" data-level="1.3.8.1"><a href="{{site.baseurl}}/pages/파이썬 기초문법/control-flow/conditional-statements/" onclick="pageScrollToTop(this)">파이썬 조건문 (Conditional Statements)</a></li>
-                            <li class="chapter" data-level="1.3.8.2"><a href="{{site.baseurl}}/pages/파이썬 기초문법/control-flow/loops/" onclick="pageScrollToTop(this)">파이썬 반복문 (Loops)</a></li>
-                        </ul>
-                    </li>
-                    <li class="chapter" data-level="1.3.9">
-                        <a>자료형</a>
-                        <ul class="articles">
-                            <li class="chapter" data-level="1.3.9.1"><a href="{{site.baseurl}}/pages/파이썬 기초문법/data-types/boolean/" onclick="pageScrollToTop(this)">불 자료형 (Boolean)</a></li>
-                            <li class="chapter" data-level="1.3.9.2"><a href="{{site.baseurl}}/pages/파이썬 기초문법/data-types/dictionary/" onclick="pageScrollToTop(this)">딕셔너리 (Dictionary)</a></li>
-                            <li class="chapter" data-level="1.3.9.3"><a href="{{site.baseurl}}/pages/파이썬 기초문법/data-types/list/" onclick="pageScrollToTop(this)">리스트 (List)</a></li>
-                            <li class="chapter" data-level="1.3.9.4"><a href="{{site.baseurl}}/pages/파이썬 기초문법/data-types/number/" onclick="pageScrollToTop(this)">숫자형 (Number)</a></li>
-                            <li class="chapter" data-level="1.3.9.5"><a href="{{site.baseurl}}/pages/파이썬 기초문법/data-types/set/" onclick="pageScrollToTop(this)">집합 (Set)</a></li>
-                            <li class="chapter" data-level="1.3.9.6"><a href="{{site.baseurl}}/pages/파이썬 기초문법/data-types/string/" onclick="pageScrollToTop(this)">문자열 (String)</a></li>
-                            <li class="chapter" data-level="1.3.9.7"><a href="{{site.baseurl}}/pages/파이썬 기초문법/data-types/tuple/" onclick="pageScrollToTop(this)">튜플 (Tuple)</a></li>
-                        </ul>
-                    </li>
-                </ul>
-            </li>
-
             {% if site.ordered_collections %}
                 {% for label in site.ordered_collections %}
                     {% assign collection = site.collections | where: "label", label | first %}
@@ -93,7 +61,6 @@
                         {% endif %}
 
                         {% for post in reversed_posts %}
-                            {% if post.path contains '_pages/파이썬 기초문법' %}{% continue %}{% endif %}
                             {% if page.url == post.url %}
                             <li class="chapter active" data-level="1.2" data-path="{{site.baseurl}}{{post.url}}">
                             {% else %}
@@ -126,7 +93,6 @@
                         {% endif %}
 
                         {% for post in reversed_posts %}
-                            {% if post.path contains '_pages/파이썬 기초문법' %}{% continue %}{% endif %}
                             {% if page.url == post.url %}
                             <li class="chapter active" data-level="1.2" data-path="{{site.baseurl}}{{post.url}}">
                             {% else %}
