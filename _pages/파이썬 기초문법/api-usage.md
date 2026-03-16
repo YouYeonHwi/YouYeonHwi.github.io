@@ -1,11 +1,11 @@
 ---
-title: "파이썬 API 활용 (API Usage)"
-permalink: /python/api-usage/
+title: 파이썬 API 활용 (API Usage)
+layout: post
 category: 파이썬 기초 문법
 weight: 18
 ---
 
-## 1. API(Application Programming Interface)란 무엇일까?
+## API(Application Programming Interface)란 무엇일까?
 
 **API(Application Programming Interface)**는 한 프로그램이 다른 프로그램이나 서비스의 데이터와 기능을 사용할 수 있도록 연결해 주는 **'창구' 또는 '약속'**입니다. 마치 식당에서 손님(클라이언트)이 메뉴판을 보고 웨이터(API)에게 주문을 하면, 주방(서버)에서 요리를 만들어 가져다주는 것과 같은 원리입니다.
 
@@ -13,7 +13,7 @@ weight: 18
 
 ---
 
-## 2. API 준비하기: `requests` 라이브러리
+## 1. API 준비하기: `requests` 라이브러리
 
 파이썬에서 API와 통신할 때 가장 널리 쓰이는 표준적인 라이브러리는 `requests`입니다. 사람이 읽기 쉽고 사용법이 매우 직관적입니다.
 
@@ -24,7 +24,7 @@ pip install requests
 
 ---
 
-## 3. GET 요청: 데이터 가져오기
+## 2. GET 요청: 데이터 가져오기
 
 가장 기본적인 작업인 데이터를 요청하고 받아오는 `GET` 방식의 예시입니다. 무료로 제공되는 테스트용 API를 사용해 보겠습니다.
 
@@ -49,7 +49,7 @@ else:
 
 ---
 
-## 4. POST 요청: 데이터 전송하기
+## 3. POST 요청: 데이터 전송하기
 
 서버에 새로운 데이터를 생성하거나 보낼 때는 `POST` 요청을 사용합니다. `json` 파라미터를 사용하면 딕셔너리를 자동으로 JSON 형식으로 변환하여 보냅니다.
 
@@ -69,12 +69,12 @@ if response.status_code == 201: # 201은 'Created'를 의미
 
 ---
 
-## 5. 응답 데이터 처리와 JSON (꿀팁!)
+## 4. 응답 데이터 처리와 JSON
 
 대부분의 현대적인 API는 데이터를 **JSON(JavaScript Object Notation)** 형식으로 주고받습니다. 파이썬의 `dict`와 구조가 매우 비슷하여 변환이 쉽습니다.
 
 ### 복잡한 JSON 데이터 파싱 (Advanced Parsing)
-API 응답이 리트스 안에 딕셔너리가 있고, 그 안에 또 리스트가 있는 복잡한 구조일 때가 많습니다. 이때는 차근차근 키 값을 따라가면 됩니다.
+API 응답이 리스트 안에 딕셔너리가 있고, 그 안에 또 리스트가 있는 복잡한 구조일 때가 많습니다. 이때는 차근차근 키 값을 따라가면 됩니다.
 
 ```python
 response = requests.get("https://jsonplaceholder.typicode.com/users")
@@ -90,7 +90,7 @@ emails = [user['email'] for user in users]
 
 ---
 
-## 6. 인증(Authentication)과 보안
+## 5. 인증(Authentication)과 보안
 
 유료 API나 개인 정보를 다루는 API는 대부분 '열쇠'가 필요합니다. 주로 `headers`에 **API Key**나 **Bearer Token**을 담아 보냅니다.
 
@@ -105,7 +105,7 @@ response = requests.get("https://api.example.com/private-data", headers=headers)
 
 ---
 
-## 7. 세션(Session) 객체 활용하기 (성능 꿀팁!)
+## 6. 세션(Session) 객체 활용하기 (꿀팁!)
 
 동일한 서버에 여러 번 요청을 보낼 때는 `requests.Session()`을 사용하는 것이 훨씬 빠릅니다. 한 번 맺은 연결을 재사용하기 때문입니다.
 
@@ -120,7 +120,7 @@ with requests.Session() as session:
 
 ---
 
-## 8. 💡 API 활용 꿀팁과 실전 가이드
+## 7. 💡 API 활용 꿀팁과 실전 가이드
 
 실제 개발에서 API를 다룰 때 꼭 알아두어야 할 핵심 팁입니다.
 
