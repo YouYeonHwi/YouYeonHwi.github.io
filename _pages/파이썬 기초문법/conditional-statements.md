@@ -1,6 +1,8 @@
 ---
 title: 파이썬 조건문 (Conditional Statements)
 layout: post
+category: 파이썬 기초 문법
+weight: 9
 ---
 
 ## 조건문이란?

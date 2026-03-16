@@ -1,6 +1,8 @@
 ---
 title: 리스트 (List)
 layout: post
+category: 파이썬 기초 문법
+weight: 5
 ---
 
 ## 리스트(list)란?

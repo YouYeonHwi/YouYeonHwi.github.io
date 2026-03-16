@@ -1,6 +1,8 @@
 ---
 title: 집합 (Set)
 layout: post
+category: 파이썬 기초 문법
+weight: 8
 ---
 
 ## 집합(set)이란?

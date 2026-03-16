@@ -2,6 +2,8 @@
 title: 파이썬 기초 문법
 layout: post
 permalink: /pages/파이썬-기초문법/
+category: 파이썬 기초 문법
+weight: 1
 ---
 
 ## 파이썬 기초 문법

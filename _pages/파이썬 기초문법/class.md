@@ -1,6 +1,8 @@
 ---
 title: 파이썬 클래스 (Class) - 심화편
 layout: post
+category: 파이썬 기초 문법
+weight: 12
 ---
 
 ## 클래스(Class)란 무엇일까?

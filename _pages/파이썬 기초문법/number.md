@@ -1,6 +1,8 @@
 ---
 title: 숫자형 (Number)
 layout: post
+category: 파이썬 기초 문법
+weight: 2
 ---
 
 ## 숫자형 자료란?

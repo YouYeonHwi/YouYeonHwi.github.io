@@ -1,6 +1,8 @@
 ---
 title: 불 자료형 (Boolean)
 layout: post
+category: 파이썬 기초 문법
+weight: 4
 ---
 
 ## 불(Bool) 자료형이란?

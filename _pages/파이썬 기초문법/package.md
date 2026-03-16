@@ -1,6 +1,8 @@
 ---
 title: 파이썬 패키지 (Package)
 layout: post
+category: 파이썬 기초 문법
+weight: 14
 ---
 
 ## 패키지(Package)란 무엇일까?

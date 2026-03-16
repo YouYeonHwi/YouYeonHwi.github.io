@@ -1,6 +1,8 @@
 ---
 title: 문자열 (String)
 layout: post
+category: 파이썬 기초 문법
+weight: 3
 ---
 
 ## 문자열(str)이란?

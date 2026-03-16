@@ -1,6 +1,8 @@
 ---
 title: 파이썬 반복문 (Loops)
 layout: post
+category: 파이썬 기초 문법
+weight: 10
 ---
 
 ## 반복문이란?

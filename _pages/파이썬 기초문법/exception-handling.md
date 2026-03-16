@@ -1,6 +1,8 @@
 ---
 title: 파이썬 예외 처리 (Exception Handling)
 layout: post
+category: 파이썬 기초 문법
+weight: 16
 ---
 
 ## 예외(Exception)란 무엇일까?

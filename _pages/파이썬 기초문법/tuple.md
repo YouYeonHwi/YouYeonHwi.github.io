@@ -1,6 +1,8 @@
 ---
 title: 튜플 (Tuple)
 layout: post
+category: 파이썬 기초 문법
+weight: 6
 ---
 
 ## 튜플(tuple)이란?

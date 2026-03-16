@@ -1,6 +1,8 @@
 ---
 title: 딕셔너리 (Dictionary)
 layout: post
+category: 파이썬 기초 문법
+weight: 7
 ---
 
 ## 딕셔너리(dict)란?

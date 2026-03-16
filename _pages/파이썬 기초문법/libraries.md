@@ -1,6 +1,8 @@
 ---
 title: 파이썬 라이브러리 (Library)
 layout: post
+category: 파이썬 기초 문법
+weight: 15
 ---
 
 ## 라이브러리(Library)란 무엇일까?

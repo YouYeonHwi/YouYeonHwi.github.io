@@ -1,6 +1,8 @@
 ---
 title: 파이썬 내장 함수 (Built-in Functions)
 layout: post
+category: 파이썬 기초 문법
+weight: 11
 ---
 
 ## 내장 함수(Built-in Function)란?

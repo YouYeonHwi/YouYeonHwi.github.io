@@ -1,6 +1,8 @@
 ---
 title: 파이썬 모듈 (Module)
 layout: post
+category: 파이썬 기초 문법
+weight: 13
 ---
 
 ## 모듈(Module)이란 무엇일까?

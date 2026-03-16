@@ -1,6 +1,8 @@
 ---
 title: 파이썬 파일 입출력 (File I/O)
 layout: post
+category: 파이썬 기초 문법
+weight: 17
 ---
 
 ## 파일 입출력이란?
