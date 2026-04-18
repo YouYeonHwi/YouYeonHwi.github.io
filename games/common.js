@@ -282,11 +282,22 @@ const GameUtils = (() => {
     addOverlayMascot('overlay-result');
   }
 
+  /* ───────────────────── 구글 애드센스 스크립트 일괄 주입 ───────────────────── */
+  function injectAdsense() {
+    if (document.querySelector('script[src*="adsbygoogle.js"]')) return;
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2428685752915797";
+    script.crossOrigin = "anonymous";
+    document.head.appendChild(script);
+  }
+
   /* ───────────────────── 초기화 ───────────────────── */
   function init() {
     lockViewport();
     applyTheme(); // 저장된 테마 적용
     injectShibaTheme();
+    injectAdsense(); // 모든 게임에 애드센스 자동 광고 스크립트 로드
   }
 
   // DOM 준비 시 자동 초기화
