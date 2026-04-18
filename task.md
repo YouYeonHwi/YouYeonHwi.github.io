@@ -1,5 +1,9 @@
-- `[x]` **긴급 핫픽스: 게임 시작 불가 문제 해결**
-    - `[x]` `common.js` 내 RemoteManager 지연 초기화(Lazy Init) 적용
-    - `[x]` `common.js` 내 Firebase 비상시 예외 처리 (로컬 모드 안정화)
-    - `[x]` 주요 게임(야추, 탭 배틀 등) 로컬/온라인 시작 흐름 전면 재검토 및 변수 복구
-    - `[x]` 통합 테스트 (로컬/온라인 시작 확인 가능 상태로 복구)
+- `[x]` **원격 방만들기 로직 및 UI 피드백 개선**
+    - `[x]` `common.js` 내 `createRoom` 개선 (중복 ID 체크, onDisconnect 적용)
+    - `[x]` `common.js` 내 `monitorStatus` 개선 (상대방 이탈 실시간 감지 및 UI 복구)
+    - `[x]` `common.js` 내 `openLobby` UI 개선 (버튼 로딩 상태 및 에러 처리 표시)
+- `[x]` **화면 전환 연출 및 시각적 피드백 강화**
+    - `[x]` `common.js` 내 카드 전환 애니메이션 (Fade/Slide) 추가
+    - `[x]` 대기실/준비완료 상태별 테마 색상(Theme Colors) 차별화
+    - `[x]` 방 생성 중 로딩 오버레이 시각화 구현
+    - `[x]` 전체적인 UI 완성도 및 가독성 점검

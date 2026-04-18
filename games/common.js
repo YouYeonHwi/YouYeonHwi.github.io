@@ -457,9 +457,13 @@ const GameUtils = (() => {
         if (!st) return;
 
         if (st === 'ready') {
-          initUI.classList.add('hidden');
-          waitUI.classList.add('hidden');
-          readyUI.classList.remove('hidden');
+          // 전환 애니메이션 적용
+          if (!waitUI.classList.contains('hidden')) {
+             transitionTo(waitUI, readyUI, 'theme-ready');
+          } else if (!initUI.classList.contains('hidden')) {
+             transitionTo(initUI, readyUI, 'theme-ready');
+          }
+          
           if (playerRole === 'p1') {
             overlay.querySelector('#btn-real-start').classList.remove('hidden');
           } else {
@@ -494,13 +498,31 @@ const GameUtils = (() => {
         p2JoinedRef.on('value', snapshot => {
            const joined = snapshot.val();
            if (joined === false) {
-             // 상대방이 나가면 다시 대기 화면으로 복구
-             readyUI.classList.add('hidden');
-             waitUI.classList.remove('hidden');
-             roomRef.update({ status: 'lobby' });
+             // 상대방이 나가면 다시 대기 화면으로 부드럽게 복구
+             if (!readyUI.classList.contains('hidden')) {
+                transitionTo(readyUI, waitUI, 'theme-wait');
+                roomRef.update({ status: 'lobby' });
+             }
            }
         });
       }
+    }
+
+    // 부드러운 카드 전환 유틸리티
+    function transitionTo(fromUI, toUI, themeClass) {
+      fromUI.style.opacity = '0';
+      fromUI.style.transform = 'scale(0.9) translateY(10px)';
+      setTimeout(() => {
+        fromUI.classList.add('hidden');
+        fromUI.style.opacity = '';
+        fromUI.style.transform = '';
+        
+        toUI.classList.remove('hidden');
+        if (themeClass) {
+          toUI.classList.remove('theme-wait', 'theme-ready');
+          toUI.classList.add(themeClass);
+        }
+      }, 300);
     }
 
     function showSelectionMenu(gameTitle, onLocal, onOnline) {
@@ -583,10 +605,9 @@ const GameUtils = (() => {
         btnCreate.disabled = true;
         btnCreate.textContent = "방 생성 중...";
         createRoom(initialState, (newId) => {
-          initUI.classList.add('hidden');
-          waitUI.classList.remove('hidden');
           overlay.querySelector('#room-code-val').textContent = newId;
           overlay.querySelector('#role-p1').textContent = "Host (나)";
+          transitionTo(initUI, waitUI, 'theme-wait');
           monitorStatus(overlay, initUI, waitUI, readyUI, onStart);
         });
       };
@@ -599,6 +620,7 @@ const GameUtils = (() => {
         btnJoin.textContent = "연결 중...";
         joinRoom(code, () => {
           overlay.querySelector('#role-p2').textContent = "Guest (나)";
+          transitionTo(initUI, readyUI, 'theme-ready');
           monitorStatus(overlay, initUI, waitUI, readyUI, onStart);
         }, (err) => {
           alert(err);
@@ -633,9 +655,13 @@ const GameUtils = (() => {
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .remote-card {
           width: 100%; max-width: 320px; text-align: center;
-          background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
+          background: rgba(255,255,255,0.03); border: 2px solid rgba(255,255,255,0.1);
           border-radius: 24px; padding: 2rem; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+          transition: all 0.3s ease; position: relative; overflow: hidden;
         }
+        .remote-card.theme-wait { border-color: rgba(244,114,182,0.4); background: rgba(244,114,182,0.05); }
+        .remote-card.theme-ready { border-color: rgba(74,222,128,0.4); background: rgba(74,222,128,0.05); }
+        
         .remote-card h1 { font-size: 1.8rem; font-weight: 900; margin-bottom: 0.5rem; background: linear-gradient(135deg, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .remote-card p { font-size: 0.85rem; color: #94a3b8; margin-bottom: 2rem; line-height: 1.5; }
         .remote-btn {
@@ -644,6 +670,7 @@ const GameUtils = (() => {
           transition: transform 0.2s, box-shadow 0.2s;
         }
         .remote-btn-primary { background: linear-gradient(135deg, #a78bfa, #f472b6); color: white; box-shadow: 0 4px 15px rgba(167,139,250,0.4); }
+        .remote-btn:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
         .remote-btn-ghost { background: rgba(255,255,255,0.05); color: #e2e8f0; border: 1px solid rgba(255,255,255,0.1); }
         .remote-btn:active { transform: scale(0.96); }
         .remote-input {
