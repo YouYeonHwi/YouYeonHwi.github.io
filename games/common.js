@@ -347,125 +347,124 @@ const GameUtils = (() => {
     let gameId = '';
     let currentRoomState = null;
 
-    function init(id, onSync) {
-      if (!window.firebase) {
-        console.error('Firebase SDK가 로드되지 않았습니다.');
-        return;
-      }
-      if (!window.FIREBASE_CONFIG) {
-        console.error('FIREBASE_CONFIG가 없습니다.');
-        return;
-      }
-
-      firebase.initializeApp(window.FIREBASE_CONFIG);
+    function ensureDB() {
+      if (db) return true;
+      if (typeof firebase === 'undefined') return false;
+      const config = window.firebaseConfig || window.FIREBASE_CONFIG;
+      if (!config) return false;
+      if (!firebase.apps.length) firebase.initializeApp(config);
       db = firebase.database();
+      return true;
+    }
+
+    function init(id, onSync) {
+      if (!id) return;
       gameId = id;
       onSyncCallback = onSync;
+      if (ensureDB()) {
+        listenToRoom();
+      }
     }
 
     function createRoom(initialState, callback) {
-      const newId = Math.floor(1000 + Math.random() * 9000).toString();
-      roomId = newId;
-      playerRole = 'p1';
-      
-      db.ref('rooms/' + roomId).set({
+      if (!ensureDB()) return alert('Firebase를 초기화할 수 없습니다.');
+      const newRoomId = Math.floor(1000 + Math.random() * 9000).toString();
+      db.ref('rooms/' + newRoomId).set({
         gameId: gameId,
-        status: 'waiting',
         gameState: initialState,
-        players: { p1: true },
-        updatedAt: firebase.database.ServerValue.TIMESTAMP
+        status: 'lobby',
+        p1Joined: true,
+        p2Joined: false,
+        lastActive: Date.now()
       }).then(() => {
-        listen();
-        if (callback) callback(newId);
+        roomId = newRoomId;
+        playerRole = 'p1';
+        if (callback) callback(newRoomId);
       });
     }
 
-    function joinRoom(id, callback, onError) {
+    function joinRoom(id, callback, errorCallback) {
+      if (!ensureDB()) return alert('Firebase를 초기화할 수 없습니다.');
       db.ref('rooms/' + id).once('value', snapshot => {
         const data = snapshot.val();
-        if (!data) return onError?.('존재하지 않는 방입니다.');
-        if (data.gameId !== gameId) return onError?.('다른 게임의 방입니다.');
-        if (data.status !== 'waiting') return onError?.('이미 시작된 방입니다.');
-
-        roomId = id;
-        playerRole = 'p2';
-        db.ref('rooms/' + roomId).update({
-          status: 'ready',
-          'players/p2': true
-        }).then(() => {
-          listen();
-          if (callback) callback();
-        });
-      });
-    }
-
-    function listen() {
-      db.ref('rooms/' + roomId).on('value', snapshot => {
-        const data = snapshot.val();
-        if (data && onSyncCallback) {
-          currentRoomState = data;
-          onSyncCallback(data.gameState, playerRole, data.status);
+        if (data && !data.p2Joined) {
+          if (data.gameId !== gameId) return errorCallback?.('다른 게임의 방입니다.');
+          db.ref('rooms/' + id).update({
+            p2Joined: true,
+            status: 'ready'
+          }).then(() => {
+            roomId = id;
+            playerRole = 'p2';
+            if (callback) callback();
+          });
+        } else {
+          if (errorCallback) errorCallback('방이 없거나 이미 가득 찼습니다.');
         }
       });
     }
 
-    function updateState(newState) {
-      if (!roomId) return;
-      db.ref('rooms/' + roomId + '/gameState').set({
-        ...newState,
-        updatedAt: firebase.database.ServerValue.TIMESTAMP
+    function updateState(state) {
+      if (!roomId || !db) return;
+      db.ref('rooms/' + roomId + '/gameState').set(state);
+    }
+
+    function listenToRoom() {
+      if (!roomId || !db) return;
+      db.ref('rooms/' + roomId + '/gameState').on('value', snapshot => {
+        currentRoomState = snapshot.val();
+        if (onSyncCallback) onSyncCallback(currentRoomState, playerRole);
       });
     }
 
     function leaveRoom() {
-      if (roomId && playerRole === 'p1') {
-        db.ref('rooms/' + roomId).remove();
+      if (roomId && db) {
+        if (playerRole === 'p1') db.ref('rooms/' + roomId).remove();
+        else db.ref('rooms/' + roomId + '/p2Joined').set(false);
       }
       roomId = null;
+      playerRole = null;
     }
 
-    /* ───────────────────── UI 동적 주입 (Lobby & Menu) ───────────────────── */
-    function injectStyles() {
-      if (document.getElementById('remote-manager-styles')) return;
-      const style = document.createElement('style');
-      style.id = 'remote-manager-styles';
-      style.textContent = `
-        .remote-overlay {
-          position: fixed; inset: 0; background: rgba(10,10,15,0.98);
-          backdrop-filter: blur(20px); z-index: 10000; display: flex;
-          flex-direction: column; align-items: center; justify-content: center;
-          padding: 2rem; color: #e2e8f0; font-family: 'Outfit', sans-serif;
-          animation: fadeIn 0.3s ease;
+    function getRoomState() {
+      return currentRoomState;
+    }
+
+    function monitorStatus(overlay, initUI, waitUI, readyUI, onStart) {
+      if (!roomId || !db) return;
+      const statusRef = db.ref('rooms/' + roomId + '/status');
+      statusRef.on('value', snapshot => {
+        const st = snapshot.val();
+        if (!st) return;
+
+        if (st === 'ready') {
+          initUI.classList.add('hidden');
+          waitUI.classList.add('hidden');
+          readyUI.classList.remove('hidden');
+          if (playerRole === 'p1') {
+            overlay.querySelector('#btn-real-start').classList.remove('hidden');
+          } else {
+            overlay.querySelector('#ready-msg').style.display = 'block';
+          }
+        } else if (st === 'countdown') {
+          showFastCountdown(() => {
+            if (playerRole === 'p1') {
+              db.ref('rooms/' + roomId).update({ status: 'playing' }).then(() => {
+                statusRef.off('value');
+                overlay.remove();
+                if (onStart) onStart();
+              });
+            } else {
+              statusRef.off('value');
+              overlay.remove();
+              if (onStart) onStart();
+            }
+          });
+        } else if (st === 'playing') {
+          statusRef.off('value');
+          overlay.remove();
+          if (onStart) onStart();
         }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .remote-card {
-          width: 100%; max-width: 320px; text-align: center;
-          background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
-          border-radius: 24px; padding: 2rem; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-        }
-        .remote-card h1 { font-size: 1.8rem; font-weight: 900; margin-bottom: 0.5rem; background: linear-gradient(135deg, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .remote-card p { font-size: 0.85rem; color: #94a3b8; margin-bottom: 2rem; line-height: 1.5; }
-        .remote-btn {
-          width: 100%; padding: 1rem; border-radius: 50px; border: none;
-          font-weight: 800; font-size: 1rem; cursor: pointer; margin-bottom: 0.8rem;
-          transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .remote-btn-primary { background: linear-gradient(135deg, #a78bfa, #f472b6); color: white; box-shadow: 0 4px 15px rgba(167,139,250,0.4); }
-        .remote-btn-ghost { background: rgba(255,255,255,0.05); color: #e2e8f0; border: 1px solid rgba(255,255,255,0.1); }
-        .remote-btn:active { transform: scale(0.96); }
-        .remote-input {
-          width: 100%; padding: 1rem 1.5rem; border-radius: 50px; border: 1px solid rgba(255,255,255,0.1);
-          background: rgba(0,0,0,0.2); color: white; font-family: inherit; font-size: 1.1rem;
-          text-align: center; margin-bottom: 1rem; outline: none; transition: border-color 0.2s;
-        }
-        .remote-input:focus { border-color: #a78bfa; }
-        .room-code-display {
-          font-size: 3rem; font-weight: 900; color: #a78bfa; letter-spacing: 4px;
-          margin: 1.5rem 0; text-shadow: 0 0 20px rgba(167,139,250,0.3);
-        }
-        .hidden { display: none !important; }
-      `;
-      document.head.appendChild(style);
+      });
     }
 
     function showSelectionMenu(gameTitle, onLocal, onOnline) {
@@ -494,8 +493,11 @@ const GameUtils = (() => {
       };
     }
 
-    function openLobby(gameId, initialState, onStart) {
+    function openLobby(id, initialState, onStart) {
+      gameId = id;
       injectStyles();
+      ensureDB();
+
       const overlay = document.createElement('div');
       overlay.className = 'remote-overlay';
       overlay.innerHTML = `
@@ -539,57 +541,12 @@ const GameUtils = (() => {
       const readyUI = overlay.querySelector('#lobby-ready');
       const input = overlay.querySelector('#input-code');
 
-      let statusRef = null;
-
-      function monitorStatus() {
-        if (!roomId || statusRef) return;
-        statusRef = db.ref('rooms/' + roomId + '/status');
-        statusRef.on('value', snapshot => {
-          const st = snapshot.val();
-          if (!st) return;
-
-          if (st === 'ready') {
-            initUI.classList.add('hidden');
-            waitUI.classList.add('hidden');
-            readyUI.classList.remove('hidden');
-            if (getRole() === 'p1') {
-              overlay.querySelector('#btn-real-start').classList.remove('hidden');
-            } else {
-              overlay.querySelector('#ready-msg').style.display = 'block';
-            }
-          } else if (st === 'countdown') {
-            // 카운트다운 시작 (양쪽 동시)
-            showFastCountdown(() => {
-              if (getRole() === 'p1') {
-                // 방장이 상태를 playing으로 바꾸고 오버레이 제거
-                db.ref('rooms/' + roomId).update({ status: 'playing' }).then(() => {
-                  statusRef.off('value');
-                  overlay.remove();
-                  onStart();
-                });
-              } else {
-                // 게스트는 방장이 playing으로 바꿀 때까지 대기해도 되지만, 
-                // 즉시 시작해도 무방 (이미 카운트다운이 끝났으므로)
-                statusRef.off('value');
-                overlay.remove();
-                onStart();
-              }
-            });
-          } else if (st === 'playing') {
-            // 이미 playing인 경우 (늦게 들어온 경우 등)
-            statusRef.off('value');
-            overlay.remove();
-            onStart();
-          }
-        });
-      }
-
       overlay.querySelector('#btn-create').onclick = () => {
         createRoom(initialState, (newId) => {
           initUI.classList.add('hidden');
           waitUI.classList.remove('hidden');
           overlay.querySelector('#room-code-val').textContent = newId;
-          monitorStatus();
+          monitorStatus(overlay, initUI, waitUI, readyUI, onStart);
         });
       };
 
@@ -597,7 +554,7 @@ const GameUtils = (() => {
         const code = input.value.trim();
         if (code.length !== 4) return alert('4자리 코드를 입력하세요.');
         joinRoom(code, () => {
-          monitorStatus();
+          monitorStatus(overlay, initUI, waitUI, readyUI, onStart);
         }, (err) => alert(err));
       };
 
@@ -606,10 +563,53 @@ const GameUtils = (() => {
       overlay.querySelector('#btn-ready-cancel').onclick = () => { leaveRoom(); location.reload(); };
 
       overlay.querySelector('#btn-real-start').onclick = () => {
-        if (getRole() === 'p1' && roomId) {
+        if (playerRole === 'p1' && roomId && db) {
           db.ref('rooms/' + roomId).update({ status: 'countdown' });
         }
       };
+    }
+
+    function injectStyles() {
+      if (document.getElementById('remote-manager-styles')) return;
+      const style = document.createElement('style');
+      style.id = 'remote-manager-styles';
+      style.textContent = `
+        .remote-overlay {
+          position: fixed; inset: 0; background: rgba(10,10,15,0.98);
+          backdrop-filter: blur(20px); z-index: 10000; display: flex;
+          flex-direction: column; align-items: center; justify-content: center;
+          padding: 2rem; color: #e2e8f0; font-family: 'Outfit', sans-serif;
+          animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .remote-card {
+          width: 100%; max-width: 320px; text-align: center;
+          background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 24px; padding: 2rem; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        .remote-card h1 { font-size: 1.8rem; font-weight: 900; margin-bottom: 0.5rem; background: linear-gradient(135deg, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .remote-card p { font-size: 0.85rem; color: #94a3b8; margin-bottom: 2rem; line-height: 1.5; }
+        .remote-btn {
+          width: 100%; padding: 1rem; border-radius: 50px; border: none;
+          font-weight: 800; font-size: 1rem; cursor: pointer; margin-bottom: 0.8rem;
+          transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .remote-btn-primary { background: linear-gradient(135deg, #a78bfa, #f472b6); color: white; box-shadow: 0 4px 15px rgba(167,139,250,0.4); }
+        .remote-btn-ghost { background: rgba(255,255,255,0.05); color: #e2e8f0; border: 1px solid rgba(255,255,255,0.1); }
+        .remote-btn:active { transform: scale(0.96); }
+        .remote-input {
+          width: 100%; padding: 1rem 1.5rem; border-radius: 50px; border: 1px solid rgba(255,255,255,0.1);
+          background: rgba(0,0,0,0.2); color: white; font-family: inherit; font-size: 1.1rem;
+          text-align: center; margin-bottom: 1rem; outline: none; transition: border-color 0.2s;
+        }
+        .remote-input:focus { border-color: #a78bfa; }
+        .room-code-display {
+          font-size: 3rem; font-weight: 900; color: #a78bfa; letter-spacing: 4px;
+          margin: 1.5rem 0; text-shadow: 0 0 20px rgba(167,139,250,0.3);
+        }
+        .hidden { display: none !important; }
+      `;
+      document.head.appendChild(style);
     }
 
     return { init, createRoom, joinRoom, updateState, leaveRoom, getRoomId: () => roomId, getRole: () => playerRole, showSelectionMenu, openLobby, getRoomState };

@@ -213,6 +213,12 @@
 
   <script src="/games/common.js"></script>
   <script>
+    const GAME_ID = 'rps';
+    const MAX_ROUNDS = 3;
+    const WINS_NEEDED = 2;
+    let p1Wins = 0, p2Wins = 0, round = 0;
+    let p1Choice = null, p2Choice = null;
+
     window.onload = () => {
       // 로컬/온라인 선택 메뉴 표시
       GameUtils.RemoteManager.showSelectionMenu('가위바위보', 
