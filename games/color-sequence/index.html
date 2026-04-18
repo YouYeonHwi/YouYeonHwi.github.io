@@ -245,8 +245,7 @@
       window.onload = () => {
         GameUtils.RemoteManager.showSelectionMenu('색깔 순서 기억',
           () => { // Local
-            document.getElementById('overlay-start').classList.add('hidden');
-            startGame();
+            // 대기화면 유지
           },
           () => { // Online
             window.location.href = 'online.html';
@@ -255,19 +254,22 @@
       };
 
       function startGame() {
+        document.getElementById('overlay-start').classList.add('hidden');
         document.getElementById('overlay-result').classList.add('hidden');
         document.getElementById('penalty-card').classList.add('hidden');
-        p1Level = 0; p2Level = 0;
-        gameActive = true;
-        currentPlayer = 1;
-        sequence = [];
-        getLevelEl(1).textContent = '레벨: 0';
-        getLevelEl(2).textContent = '레벨: 0';
-        getStatus(1).textContent = '🎮 차례입니다!';
-        getStatus(2).textContent = '⏳ 대기 중...';
-        disableGrid(1);
-        disableGrid(2);
-        nextLevel();
+        GameUtils.showFastCountdown(() => {
+          p1Level = 0; p2Level = 0;
+          gameActive = true;
+          currentPlayer = 1;
+          sequence = [];
+          getLevelEl(1).textContent = '레벨: 0';
+          getLevelEl(2).textContent = '레벨: 0';
+          getStatus(1).textContent = '🎮 차례입니다!';
+          getStatus(2).textContent = '⏳ 대기 중...';
+          disableGrid(1);
+          disableGrid(2);
+          nextLevel();
+        });
       }
 
       function nextLevel() {

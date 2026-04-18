@@ -268,8 +268,7 @@
       window.onload = () => {
         GameUtils.RemoteManager.showSelectionMenu('타이밍 맞추기',
           () => { // Local
-            document.getElementById('overlay-start').classList.add('hidden');
-            startGame();
+            // 대기화면을 남겨둠 (유저가 START 버튼 직접 클릭하도록)
           },
           () => { // Online
             window.location.href = 'online.html';
@@ -402,7 +401,10 @@
         document.getElementById('overlay-result').classList.remove('hidden');
       }
 
-      document.getElementById('btn-start').addEventListener('click', startGame);
+      document.getElementById('btn-start').addEventListener('click', () => {
+        document.getElementById('overlay-start').classList.add('hidden');
+        GameUtils.showFastCountdown(startGame);
+      });
       document.getElementById('btn-retry').addEventListener('click', startGame);
       document.getElementById('btn-penalty').addEventListener('click', () => {
         const p = GameUtils.spinPenalty();

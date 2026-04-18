@@ -237,8 +237,7 @@
       window.onload = () => {
         GameUtils.RemoteManager.showSelectionMenu('숫자 기억력',
           () => { // Local
-            document.getElementById('overlay-start').classList.add('hidden');
-            startGame();
+            // 대기화면 유지
           },
           () => { // Online
             window.location.href = 'online.html';
@@ -247,10 +246,13 @@
       };
 
       function startGame() {
-        round = 0; p1Score = 0; p2Score = 0;
+        document.getElementById('overlay-start').classList.add('hidden');
         document.getElementById('overlay-result').classList.add('hidden');
         document.getElementById('penalty-card').classList.add('hidden');
-        nextRound();
+        GameUtils.showFastCountdown(() => {
+          round = 0; p1Score = 0; p2Score = 0;
+          nextRound();
+        });
       }
 
       function nextRound() {

@@ -770,7 +770,10 @@
       // Event listeners
       btnRoll.addEventListener('click', rollDice);
 
-      document.getElementById('btn-start-local').addEventListener('click', startGame);
+      document.getElementById('btn-start-local').addEventListener('click', () => {
+        document.getElementById('overlay-start').classList.add('hidden');
+        GameUtils.showFastCountdown(startGame);
+      });
       document.getElementById('btn-start-remote').addEventListener('click', () => {
         window.location.href = 'online.html';
       });

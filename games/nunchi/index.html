@@ -135,8 +135,7 @@
     window.onload = () => {
       GameUtils.RemoteManager.showSelectionMenu('눈치 게임',
         () => { // Local
-          document.getElementById('overlay-start').classList.add('hidden');
-          startGame();
+          // 대기화면 유지
         },
         () => { // Online
           window.location.href = 'online.html';
@@ -145,18 +144,21 @@
     };
 
     function startGame() {
-      currentNum = 0; playing = true; lastTapPlayer = 0;
-      tapTimestamps = { 1: 0, 2: 0 };
-      historyArr = [];
+      document.getElementById('overlay-start').classList.add('hidden');
       document.getElementById('overlay-result').classList.add('hidden');
       document.getElementById('penalty-card').classList.add('hidden');
-      document.getElementById('center-num').textContent = '0';
-      document.getElementById('history').textContent = '';
-      document.getElementById('msg-p1').textContent = '터치해서 숫자를 올려!';
-      document.getElementById('msg-p2').textContent = '터치해서 숫자를 올려!';
-      document.getElementById('area-p1').classList.remove('win-state', 'lose-state');
-      document.getElementById('area-p2').classList.remove('win-state', 'lose-state');
-      cooldown = false;
+      GameUtils.showFastCountdown(() => {
+        currentNum = 0; playing = true; lastTapPlayer = 0;
+        tapTimestamps = { 1: 0, 2: 0 };
+        historyArr = [];
+        document.getElementById('center-num').textContent = '0';
+        document.getElementById('history').textContent = '';
+        document.getElementById('msg-p1').textContent = '터치해서 숫자를 올려!';
+        document.getElementById('msg-p2').textContent = '터치해서 숫자를 올려!';
+        document.getElementById('area-p1').classList.remove('win-state', 'lose-state');
+        document.getElementById('area-p2').classList.remove('win-state', 'lose-state');
+        cooldown = false;
+      });
     }
 
     function tap(player) {

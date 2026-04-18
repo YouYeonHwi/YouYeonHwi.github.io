@@ -332,9 +332,8 @@
 
       window.onload = () => {
         GameUtils.RemoteManager.showSelectionMenu('미니 핑퐁',
-          () => { // Local
-            document.getElementById('overlay-start').classList.add('hidden');
-            startGame();
+          () => {
+            // 대기화면 유지
           },
           () => { // Online
             window.location.href = 'online.html';
@@ -343,11 +342,14 @@
       };
 
       function startGame() {
-        initGame();
-        running = true;
+        document.getElementById('overlay-start').classList.add('hidden');
         document.getElementById('overlay-result').classList.add('hidden');
         document.getElementById('penalty-card').classList.add('hidden');
-        loop();
+        GameUtils.showFastCountdown(() => {
+          initGame();
+          running = true;
+          loop();
+        });
       }
 
       function endGame(winner) {

@@ -402,7 +402,7 @@
       window.onload = () => {
         GameUtils.RemoteManager.showSelectionMenu('순발력 터치 대결',
           () => { // Local
-            overlayStart.classList.add('hidden');
+            // 대기화면을 남겨둠 (유저가 START 버튼 직접 클릭하도록)
           },
           () => { // Online
             window.location.href = 'online.html';
@@ -420,25 +420,9 @@
         penaltyCard.classList.add('hidden');
         resetAreas();
 
-        // 카운트다운 3-2-1
-        show(overlayCD);
-        state = 'COUNTDOWN';
-        let count = 3;
-        cdNumber.textContent = count;
-
-        const cdTimer = setInterval(() => {
-          count--;
-          if (count > 0) {
-            cdNumber.textContent = count;
-            cdNumber.style.animation = 'none';
-            void cdNumber.offsetWidth; // reflow
-            cdNumber.style.animation = 'pulse .5s ease-in-out';
-          } else {
-            clearInterval(cdTimer);
-            hide(overlayCD);
-            startWaiting();
-          }
-        }, 800);
+        GameUtils.showFastCountdown(() => {
+          startWaiting();
+        });
       }
 
       /* ── WAITING PHASE: 랜덤 시간 후 GO ── */

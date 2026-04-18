@@ -171,8 +171,7 @@
     window.onload = () => {
       GameUtils.RemoteManager.showSelectionMenu('숫자 빨리 누르기',
         () => { // Local
-          document.getElementById('overlay-start').classList.add('hidden');
-          startGame();
+          // 대기화면 유지
         },
         () => { // Online
           window.location.href = 'online.html';
@@ -181,14 +180,17 @@
     };
 
     function startGame() {
-      playing = true; p1Next = 1; p2Next = 1;
-      startTime = performance.now();
+      document.getElementById('overlay-start').classList.add('hidden');
       document.getElementById('overlay-result').classList.add('hidden');
       document.getElementById('penalty-card').classList.add('hidden');
-      document.getElementById('status-p1').textContent = '다음: 1';
-      document.getElementById('status-p2').textContent = '다음: 1';
-      buildGrid('grid-p1', 1);
-      buildGrid('grid-p2', 2);
+      GameUtils.showFastCountdown(() => {
+        playing = true; p1Next = 1; p2Next = 1;
+        startTime = performance.now();
+        document.getElementById('status-p1').textContent = '다음: 1';
+        document.getElementById('status-p2').textContent = '다음: 1';
+        buildGrid('grid-p1', 1);
+        buildGrid('grid-p2', 2);
+      });
     }
 
     function win(player) {

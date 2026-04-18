@@ -239,8 +239,7 @@
       window.onload = () => {
         GameUtils.RemoteManager.showSelectionMenu('풍선 터뜨리기',
           () => { // Local
-            document.getElementById('overlay-start').classList.add('hidden');
-            startGame();
+            // 대기화면 유지
           },
           () => { // Online
             window.location.href = 'online.html';
@@ -249,23 +248,9 @@
       };
 
       function startGame() {
+        document.getElementById('overlay-start').classList.add('hidden');
         document.getElementById('overlay-result').classList.add('hidden');
         document.getElementById('penalty-card').classList.add('hidden');
-        p1Count = 0; p2Count = 0; timeLeft = GAME_TIME; running = false;
-        document.getElementById('p1-count').textContent = '💥 0';
-        document.getElementById('p2-count').textContent = '💥 0';
-        document.getElementById('p1-timer').textContent = `⏱ ${GAME_TIME}s`;
-        document.getElementById('p2-timer').textContent = `⏱ ${GAME_TIME}s`;
-        document.getElementById('p1-bar').style.width = '100%';
-        document.getElementById('p2-bar').style.width = '100%';
-        document.getElementById('p1-balloons').innerHTML = '';
-        document.getElementById('p2-balloons').innerHTML = '';
-
-        // Countdown
-        const cdOverlay = document.getElementById('overlay-countdown');
-        const cdNum = document.getElementById('cd-num');
-        cdOverlay.classList.remove('hidden');
-        let c = 3;
         cdNum.textContent = c;
         const cdTimer = setInterval(() => {
           c--;
