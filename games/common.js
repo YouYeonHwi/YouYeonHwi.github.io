@@ -499,23 +499,23 @@ const GameUtils = (() => {
           }
         } else if (st === 'countdown') {
           showFastCountdown(() => {
+            // 리스너를 먼저 해제하여 playing 이벤트가 onStart를 이중 실행하는 것을 방지
+            statusRef.off('value');
+            p2JoinedRef.off('value');
+            overlay.remove();
             if (playerRole === 'p1') {
               roomRef.update({ status: 'playing' }).then(() => {
-                statusRef.off('value');
-                p2JoinedRef.off('value');
-                overlay.remove();
                 if (onStart) onStart();
               });
             } else {
-              statusRef.off('value');
-              p2JoinedRef.off('value');
-              overlay.remove();
               if (onStart) onStart();
             }
           });
         } else if (st === 'playing') {
+          // p2가 이미 countdown에서 처리했거나, 늦게 입장한 경우를 위한 폴백
           statusRef.off('value');
           p2JoinedRef.off('value');
+          if (!overlay.parentNode) return; // 이미 제거됨
           overlay.remove();
           if (onStart) onStart();
         }

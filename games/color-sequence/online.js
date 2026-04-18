@@ -50,7 +50,7 @@
   }
 
   function nextLevel() {
-    const state = GameUtils.RemoteManager.getRoomState().gameState;
+    const state = GameUtils.RemoteManager.getRoomState();
     const newSeq = [...state.sequence, COLORS[Math.floor(Math.random() * COLORS.length)]];
     
     GameUtils.RemoteManager.updateState({
@@ -70,7 +70,7 @@
       if (i < seq.length) {
         // Sync the lit color so both see it
         GameUtils.RemoteManager.updateState({
-          ...GameUtils.RemoteManager.getRoomState().gameState,
+          ...GameUtils.RemoteManager.getRoomState(),
           litColor: seq[i]
         });
         GameUtils.vibrate(20);
@@ -78,7 +78,7 @@
       } else {
         clearInterval(intv);
         GameUtils.RemoteManager.updateState({
-          ...GameUtils.RemoteManager.getRoomState().gameState,
+          ...GameUtils.RemoteManager.getRoomState(),
           litColor: null,
           status: 'input'
         });
