@@ -546,6 +546,8 @@ const GameUtils = (() => {
         statusRef = db.ref('rooms/' + roomId + '/status');
         statusRef.on('value', snapshot => {
           const st = snapshot.val();
+          if (!st) return;
+
           if (st === 'ready') {
             initUI.classList.add('hidden');
             waitUI.classList.add('hidden');
@@ -556,19 +558,25 @@ const GameUtils = (() => {
               overlay.querySelector('#ready-msg').style.display = 'block';
             }
           } else if (st === 'countdown') {
-            statusRef.off('value');
+            // 카운트다운 시작 (양쪽 동시)
             showFastCountdown(() => {
               if (getRole() === 'p1') {
+                // 방장이 상태를 playing으로 바꾸고 오버레이 제거
                 db.ref('rooms/' + roomId).update({ status: 'playing' }).then(() => {
+                  statusRef.off('value');
                   overlay.remove();
                   onStart();
                 });
               } else {
+                // 게스트는 방장이 playing으로 바꿀 때까지 대기해도 되지만, 
+                // 즉시 시작해도 무방 (이미 카운트다운이 끝났으므로)
+                statusRef.off('value');
                 overlay.remove();
                 onStart();
               }
             });
           } else if (st === 'playing') {
+            // 이미 playing인 경우 (늦게 들어온 경우 등)
             statusRef.off('value');
             overlay.remove();
             onStart();

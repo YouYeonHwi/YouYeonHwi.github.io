@@ -30,78 +30,24 @@
     winner: null
   };
 
-  // --- DOM 요소 ---
-  const roomOverlay = document.getElementById('overlay-room');
-  const roomInitUI = document.getElementById('room-init-ui');
-  const roomLobbyUI = document.getElementById('room-lobby-ui');
-  const inputRoomId = document.getElementById('input-room-id');
-  const displayRoomId = document.getElementById('display-room-id');
-  
-  const btnRoll = document.getElementById('btn-roll');
-  const rollsLeftEl = document.getElementById('rolls-left');
-  const turnIndicator = document.getElementById('turn-indicator');
+  /* ───────────────────── 초기화 및 방 동기화 ───────────────────── */
 
-  /* ───────────────────── 방 관리 (Room Management) ───────────────────── */
-
-  document.getElementById('btn-create-room').addEventListener('click', createRoom);
-  document.getElementById('btn-join-room').addEventListener('click', () => joinRoom(inputRoomId.value.trim()));
-  document.getElementById('btn-cancel-room').addEventListener('click', cancelRoom);
-
-  function createRoom() {
-    const newId = Math.floor(1000 + Math.random() * 9000).toString();
-    roomId = newId;
-    playerRole = 'p1';
-    
-    db.ref('rooms/' + roomId).set({
-      status: 'waiting',
-      gameState: gameState,
-      players: { p1: true }
-    }).then(() => {
-      showLobby(newId);
+  function initRemote() {
+    GameUtils.RemoteManager.openLobby(GAME_ID, gameState, () => {
+      // 3-2-1 카운트다운 후 실행되는 콜백
+      roomId = GameUtils.RemoteManager.getRoomId();
+      playerRole = GameUtils.RemoteManager.getRole();
+      
+      // 실제 게임 시작 신호
+      document.getElementById('turn-indicator').textContent = '게임 시작!';
       listenToRoom();
     });
-  }
-
-  function joinRoom(id) {
-    if (!id) return alert('방 번호를 입력하세요.');
-    db.ref('rooms/' + id).once('value', snapshot => {
-      const data = snapshot.val();
-      if (!data) return alert('존재하지 않는 방입니다.');
-      if (data.status !== 'waiting') return alert('이미 시작된 방이거나 만원입니다.');
-
-      roomId = id;
-      playerRole = 'p2';
-      
-      db.ref('rooms/' + roomId).update({
-        status: 'playing',
-        'players/p2': true
-      }).then(() => {
-        roomOverlay.classList.add('hidden');
-        listenToRoom();
-      });
-    });
-  }
-
-  function cancelRoom() {
-    if (roomId) db.ref('rooms/' + roomId).remove();
-    location.reload();
-  }
-
-  function showLobby(id) {
-    roomInitUI.style.display = 'none';
-    roomLobbyUI.style.display = 'flex';
-    displayRoomId.textContent = id;
   }
 
   function listenToRoom() {
     db.ref('rooms/' + roomId).on('value', snapshot => {
       const data = snapshot.val();
       if (!data) return;
-
-      // 상대방 입장 시 (Host 전용)
-      if (playerRole === 'p1' && data.status === 'playing' && roomOverlay.style.display !== 'none') {
-        roomOverlay.classList.add('hidden');
-      }
 
       // 게임 데이터 동기화
       syncGameState(data.gameState);
@@ -276,9 +222,7 @@
     // ... 생략 (HTML에 이미 뼈대가 있거나 JS로 생성)
     btnRoll.onclick = rollDice;
     
-    // 테마 연동
-    const themeBtn = document.getElementById('btn-theme-toggle');
-    if (themeBtn) themeBtn.onclick = () => GameUtils.nextTheme();
+    initRemote(); // 원격 대기실 초기화 시작
   })();
 
 })();

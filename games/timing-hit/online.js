@@ -30,9 +30,13 @@
   const myArea = document.getElementById('my-area');
 
   function init() {
-    GameUtils.RemoteManager.init(GAME_ID, onSync);
     GameUtils.RemoteManager.openLobby(GAME_ID, currentState, () => {
+      // 3-2-1 카운트다운 후 실행
       myRole = GameUtils.RemoteManager.getRole();
+      
+      // 동기화 리스너 시작
+      GameUtils.RemoteManager.init(GAME_ID, onSync);
+
       if (myRole === 'p1') {
         startRound(1, 0, 0);
       }

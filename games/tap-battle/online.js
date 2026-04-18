@@ -21,42 +21,36 @@
   const gameStatus = document.getElementById('game-status');
 
   function init() {
-    GameUtils.RemoteManager.init(GAME_ID, onSync);
     GameUtils.RemoteManager.openLobby(GAME_ID, currentState, () => {
+      // 3-2-1 카운트다운 완료 후 실행
       myRole = GameUtils.RemoteManager.getRole();
       if (myRole === 'p1') {
-        startSequence();
+        startWaiting(); // 바로 기다리기 상태로 진입 (엔진이 이미 321 카운트함)
       }
+      listenToRoom();
     });
   }
 
-  function startSequence() {
-    // 3, 2, 1 카운트다운 시작
-    GameUtils.RemoteManager.updateState({ ...currentState, status: 'countdown' });
-    
-    let count = 3;
-    const interval = setInterval(() => {
-      count--;
-      if (count === 0) {
-        clearInterval(interval);
-        startWaiting();
-      }
-    }, 1000);
+  function listenToRoom() {
+    GameUtils.RemoteManager.init(GAME_ID, onSync);
   }
 
   function startWaiting() {
     const delay = GameUtils.randomBetween(2000, 5000);
+    // 방 상태를 'waiting'으로 명시적으로 업데이트
     GameUtils.RemoteManager.updateState({ ...currentState, status: 'waiting' });
     
     setTimeout(() => {
       // "GO" 신호 발생
-      if (currentState.status === 'waiting') {
-        GameUtils.RemoteManager.updateState({
-          ...currentState,
-          status: 'go',
-          startTime: Date.now()
-        });
-      }
+      GameUtils.RemoteManager.getRoomState((state) => {
+          if (state && state.status === 'waiting') {
+            GameUtils.RemoteManager.updateState({
+              ...state,
+              status: 'go',
+              startTime: Date.now()
+            });
+          }
+      });
     }, delay);
   }
 

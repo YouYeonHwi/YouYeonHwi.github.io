@@ -27,26 +27,19 @@
   const cdNum = document.getElementById('cd-num');
 
   function init() {
-    GameUtils.RemoteManager.init(GAME_ID, onSync);
     GameUtils.RemoteManager.openLobby(GAME_ID, currentState, () => {
+      // 3-2-1 카운트다운 후 실행
       myRole = GameUtils.RemoteManager.getRole();
-      if (myRole === 'p1') {
-        startSequence();
-      }
-    });
-  }
+      
+      // 동기화 리스너 시작
+      GameUtils.RemoteManager.init(GAME_ID, onSync);
 
-  function startSequence() {
-    GameUtils.RemoteManager.updateState({ ...currentState, status: 'countdown' });
-    let count = 3;
-    const intv = setInterval(() => {
-      count--;
-      if (count === 0) {
-        clearInterval(intv);
+      if (myRole === 'p1') {
+        // 방장이 게임 시작 및 타이머 설정
         GameUtils.RemoteManager.updateState({ ...currentState, status: 'playing', timeLeft: GAME_TIME });
         startTimer();
       }
-    }, 1000);
+    });
   }
 
   function startTimer() {

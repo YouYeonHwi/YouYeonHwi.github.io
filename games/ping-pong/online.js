@@ -27,12 +27,17 @@
   let lastSyncTime = 0;
 
   function init() {
-    GameUtils.RemoteManager.init(GAME_ID, onSync);
     GameUtils.RemoteManager.openLobby(GAME_ID, currentState, () => {
+      // 3-2-1 카운트다운 후 실행
       myRole = GameUtils.RemoteManager.getRole();
+      
       resize();
       myX = W / 2 - PADDLE_W / 2;
       running = true;
+
+      // 동기화 리스너 시작
+      GameUtils.RemoteManager.init(GAME_ID, onSync);
+
       if (myRole === 'p1') {
         resetBall();
         gameLoop();

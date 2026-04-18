@@ -128,30 +128,7 @@
     <div class="ad-slot">AD · BOTTOM</div>
   </div>
 
-  <!-- ROOM OVERLAY -->
-  <div class="overlay" id="overlay-room">
-    <img src="/games/assets/shiba_mascot.png" class="shiba-mascot-overlay" style="width:80px" alt="Shiba">
-    <h1>🌐 원격 멀티플레이</h1>
-    <p id="room-status">방을 만들거나 참여 코드를 입력하세요.</p>
-    
-    <div id="room-init-ui" style="display:flex; flex-direction:column; gap:1rem; width:100%; max-width:280px;">
-      <button class="btn btn-primary" id="btn-create-room" style="width:100%; justify-content:center;">🏠 방 만들기 (Host)</button>
-      <div style="display:flex; gap:.5rem;">
-        <input type="text" id="input-room-id" placeholder="방 번호" style="flex:1; border-radius:50px; border:1px solid var(--border); background:var(--surface); color:white; padding:0 1.2rem; outline:none;">
-        <button class="btn btn-ghost" id="btn-join-room" style="padding:.85rem 1.2rem;">참여</button>
-      </div>
-      <button id="btn-theme-toggle" class="status-badge" style="cursor:pointer">🎨 테마 변경</button>
-    </div>
-
-    <div id="room-lobby-ui" style="display:none; flex-direction:column; align-items:center; gap:1.2rem;">
-      <div class="status-badge">상대방을 기다리는 중...</div>
-      <div style="font-size:2.5rem; font-weight:900; background:rgba(255,255,255,0.05); padding:1rem 2rem; border-radius:20px; border:1px solid var(--primary); color:var(--primary);">
-        <span id="display-room-id">----</span>
-      </div>
-      <p style="font-size:.75rem; opacity:.7">이 코드를 상대방에게 전달하세요!</p>
-      <button class="btn btn-ghost" id="btn-cancel-room">취소</button>
-    </div>
-  </div>
+  <!-- ROOM OVERLAY (공통 엔진에 의해 동적으로 주입됨) -->
 
   <!-- RESULT OVERLAY -->
   <div class="overlay hidden" id="overlay-result">
