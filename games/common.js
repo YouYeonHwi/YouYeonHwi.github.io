@@ -368,33 +368,50 @@ const GameUtils = (() => {
 
     function createRoom(initialState, callback) {
       if (!ensureDB()) return alert('Firebase를 초기화할 수 없습니다.');
-      const newRoomId = Math.floor(1000 + Math.random() * 9000).toString();
-      db.ref('rooms/' + newRoomId).set({
-        gameId: gameId,
-        gameState: initialState,
-        status: 'lobby',
-        p1Joined: true,
-        p2Joined: false,
-        lastActive: Date.now()
-      }).then(() => {
-        roomId = newRoomId;
-        playerRole = 'p1';
-        if (callback) callback(newRoomId);
-      });
+      
+      const tryCreate = () => {
+        const newRoomId = Math.floor(1000 + Math.random() * 9000).toString();
+        const roomRef = db.ref('rooms/' + newRoomId);
+        
+        roomRef.once('value', snapshot => {
+          if (snapshot.exists()) {
+            tryCreate(); // 중복이면 재시도
+          } else {
+            roomRef.set({
+              gameId: gameId,
+              gameState: initialState,
+              status: 'lobby',
+              p1Joined: true,
+              p2Joined: false,
+              lastActive: Date.now()
+            }).then(() => {
+              roomId = newRoomId;
+              playerRole = 'p1';
+              // 방장 종료 시 방 삭제 예약
+              roomRef.onDisconnect().remove();
+              if (callback) callback(newRoomId);
+            });
+          }
+        });
+      };
+      tryCreate();
     }
 
     function joinRoom(id, callback, errorCallback) {
       if (!ensureDB()) return alert('Firebase를 초기화할 수 없습니다.');
-      db.ref('rooms/' + id).once('value', snapshot => {
+      const roomRef = db.ref('rooms/' + id);
+      roomRef.once('value', snapshot => {
         const data = snapshot.val();
         if (data && !data.p2Joined) {
           if (data.gameId !== gameId) return errorCallback?.('다른 게임의 방입니다.');
-          db.ref('rooms/' + id).update({
+          roomRef.update({
             p2Joined: true,
             status: 'ready'
           }).then(() => {
             roomId = id;
             playerRole = 'p2';
+            // 참여자 종료 시 p2Joined 상태만 false로
+            roomRef.child('p2Joined').onDisconnect().set(false);
             if (callback) callback();
           });
         } else {
@@ -431,7 +448,10 @@ const GameUtils = (() => {
 
     function monitorStatus(overlay, initUI, waitUI, readyUI, onStart) {
       if (!roomId || !db) return;
-      const statusRef = db.ref('rooms/' + roomId + '/status');
+      const roomRef = db.ref('rooms/' + roomId);
+      const statusRef = roomRef.child('status');
+      const p2JoinedRef = roomRef.child('p2Joined');
+
       statusRef.on('value', snapshot => {
         const st = snapshot.val();
         if (!st) return;
@@ -448,23 +468,39 @@ const GameUtils = (() => {
         } else if (st === 'countdown') {
           showFastCountdown(() => {
             if (playerRole === 'p1') {
-              db.ref('rooms/' + roomId).update({ status: 'playing' }).then(() => {
+              roomRef.update({ status: 'playing' }).then(() => {
                 statusRef.off('value');
+                p2JoinedRef.off('value');
                 overlay.remove();
                 if (onStart) onStart();
               });
             } else {
               statusRef.off('value');
+              p2JoinedRef.off('value');
               overlay.remove();
               if (onStart) onStart();
             }
           });
         } else if (st === 'playing') {
           statusRef.off('value');
+          p2JoinedRef.off('value');
           overlay.remove();
           if (onStart) onStart();
         }
       });
+
+      // 상대방의 입퇴장을 모니터링 (방장 전용)
+      if (playerRole === 'p1') {
+        p2JoinedRef.on('value', snapshot => {
+           const joined = snapshot.val();
+           if (joined === false) {
+             // 상대방이 나가면 다시 대기 화면으로 복구
+             readyUI.classList.add('hidden');
+             waitUI.classList.remove('hidden');
+             roomRef.update({ status: 'lobby' });
+           }
+        });
+      }
     }
 
     function showSelectionMenu(gameTitle, onLocal, onOnline) {
@@ -519,14 +555,14 @@ const GameUtils = (() => {
         <div class="remote-card hidden" id="lobby-ready" style="max-width:350px;">
           <h1>대기실</h1>
           <div style="display:flex; justify-content:space-around; align-items:center; margin:1.5rem 0; background:rgba(0,0,0,0.2); padding:1.5rem; border-radius:16px;">
-            <div style="text-align:center;">
+            <div style="text-align:center; position:relative;">
               <div style="width:60px; height:60px; border-radius:50%; background:url('/games/assets/shiba_p1.png') center/cover; margin:0 auto 0.5rem; border:2px solid #f472b6;"></div>
-              <div style="font-weight:900; font-size:0.9rem; color:#f472b6;">Host</div>
+              <div style="font-weight:900; font-size:0.9rem; color:#f472b6;" id="role-p1">Host</div>
             </div>
             <div style="font-size:1.5rem; font-weight:900; opacity:0.5;">VS</div>
-            <div style="text-align:center;">
+            <div style="text-align:center; position:relative;">
               <div style="width:60px; height:60px; border-radius:50%; background:url('/games/assets/shiba_p2.png') center/cover; margin:0 auto 0.5rem; border:2px solid #a78bfa;"></div>
-              <div style="font-weight:900; font-size:0.9rem; color:#a78bfa;">Guest</div>
+              <div style="font-weight:900; font-size:0.9rem; color:#a78bfa;" id="role-p2">Guest</div>
             </div>
           </div>
           <button class="remote-btn remote-btn-primary hidden" id="btn-real-start">게임 시작하기! 🚀</button>
@@ -539,23 +575,36 @@ const GameUtils = (() => {
       const initUI = overlay.querySelector('#lobby-init');
       const waitUI = overlay.querySelector('#lobby-wait');
       const readyUI = overlay.querySelector('#lobby-ready');
+      const btnCreate = overlay.querySelector('#btn-create');
+      const btnJoin = overlay.querySelector('#btn-join');
       const input = overlay.querySelector('#input-code');
 
-      overlay.querySelector('#btn-create').onclick = () => {
+      btnCreate.onclick = () => {
+        btnCreate.disabled = true;
+        btnCreate.textContent = "방 생성 중...";
         createRoom(initialState, (newId) => {
           initUI.classList.add('hidden');
           waitUI.classList.remove('hidden');
           overlay.querySelector('#room-code-val').textContent = newId;
+          overlay.querySelector('#role-p1').textContent = "Host (나)";
           monitorStatus(overlay, initUI, waitUI, readyUI, onStart);
         });
       };
 
-      overlay.querySelector('#btn-join').onclick = () => {
+      btnJoin.onclick = () => {
         const code = input.value.trim();
         if (code.length !== 4) return alert('4자리 코드를 입력하세요.');
+        
+        btnJoin.disabled = true;
+        btnJoin.textContent = "연결 중...";
         joinRoom(code, () => {
+          overlay.querySelector('#role-p2').textContent = "Guest (나)";
           monitorStatus(overlay, initUI, waitUI, readyUI, onStart);
-        }, (err) => alert(err));
+        }, (err) => {
+          alert(err);
+          btnJoin.disabled = false;
+          btnJoin.textContent = "참여하기";
+        });
       };
 
       overlay.querySelector('#btn-back').onclick = () => location.reload();
