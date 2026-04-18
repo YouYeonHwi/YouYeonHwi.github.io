@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0a0a0f">
+  <link rel="manifest" href="/games/manifest.json">
+
+  <title>색깔 순서 기억 | 커플 게임 광장</title>
+  <meta name="description" content="사이먼 세이즈! 색깔 순서를 기억하고 따라 터치하세요 🎨">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --primary: #a78bfa; --primary-glow: rgba(167,139,250,.35);
+      --accent: #f472b6; --accent-glow: rgba(244,114,182,.3);
+      --bg: #0a0a0f; --surface: rgba(255,255,255,.04);
+      --border: rgba(255,255,255,.08); --text: #e2e8f0; --text-dim: #64748b;
+      --radius: 20px;
+    }
+    html, body {
+      height: 100%; font-family: 'Outfit', sans-serif; background: var(--bg);
+      color: var(--text); overflow: hidden; touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent; user-select: none;
+    }
+
+    .game-wrapper { display: flex; flex-direction: column; height: 100dvh; }
+
+    .ad-slot {
+      width: 100%; min-height: 50px; background: var(--surface);
+      border: 1px dashed var(--border); display: flex; align-items: center;
+      justify-content: center; color: var(--text-dim); font-size: .6rem;
+      letter-spacing: 2px; text-transform: uppercase; flex-shrink: 0;
+    }
+
+    .player-area {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; position: relative; gap: .6rem; padding: .8rem;
+    }
+    .player-area.top { transform: rotate(180deg); background: linear-gradient(135deg, #831843, #4a044e); }
+    .player-area.bottom { background: linear-gradient(135deg, #1e1b4b, #0c4a6e); }
+
+    .player-label {
+      font-size: .65rem; font-weight: 700; letter-spacing: 3px;
+      text-transform: uppercase; opacity: .4; position: absolute; bottom: .3rem;
+    }
+
+    .player-status {
+      font-size: .85rem; font-weight: 700; min-height: 1.2rem; text-align: center;
+    }
+
+    .player-level {
+      font-size: .75rem; color: var(--text-dim); font-weight: 600;
+    }
+
+    .color-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
+      width: 100%; max-width: 220px;
+    }
+
+    .color-btn {
+      aspect-ratio: 1; border-radius: 16px; border: 2px solid rgba(255,255,255,.1);
+      cursor: pointer; transition: transform .1s, opacity .15s, box-shadow .15s;
+      opacity: .4;
+    }
+    .color-btn:active { transform: scale(.92); }
+    .color-btn.lit { opacity: 1; box-shadow: 0 0 20px currentColor; }
+    .color-btn.disabled { pointer-events: none; opacity: .2; }
+
+    .color-btn.red { background: #ef4444; color: #ef4444; }
+    .color-btn.blue { background: #3b82f6; color: #3b82f6; }
+    .color-btn.green { background: #22c55e; color: #22c55e; }
+    .color-btn.yellow { background: #eab308; color: #eab308; }
+
+    .divider {
+      width: 100%; height: 40px; display: flex; align-items: center;
+      justify-content: center; position: relative; flex-shrink: 0; z-index: 10; background: var(--bg);
+    }
+    .divider::before {
+      content: ''; position: absolute; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--primary), transparent);
+    }
+    .vs-badge {
+      background: var(--bg); border: 2px solid var(--primary); color: var(--primary);
+      font-weight: 900; font-size: .8rem; width: 38px; height: 38px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; z-index: 1;
+      box-shadow: 0 0 16px var(--primary-glow);
+    }
+
+    /* Overlays */
+    .overlay {
+      position: fixed; inset: 0; background: rgba(10,10,15,.94);
+      backdrop-filter: blur(12px); display: flex; flex-direction: column;
+      align-items: center; justify-content: center; z-index: 999; padding: 2rem;
+      transition: opacity .3s, visibility .3s;
+    }
+    .overlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+    .overlay h1 {
+      font-size: clamp(1.8rem, 6vw, 3rem); font-weight: 900;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: .5rem;
+    }
+    .overlay p { color: var(--text-dim); text-align: center; max-width: 320px; line-height: 1.5; margin-bottom: 1.5rem; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: .5rem; padding: .85rem 2rem;
+      border: none; border-radius: 50px; font-family: inherit; font-weight: 700;
+      font-size: 1rem; cursor: pointer; text-decoration: none; color: white; transition: transform .15s;
+    }
+    .btn:active { transform: scale(.95); }
+    .btn-primary { background: linear-gradient(135deg, var(--primary), var(--accent)); box-shadow: 0 4px 20px var(--primary-glow); }
+    .btn-ghost { background: var(--surface); border: 1px solid var(--border); }
+
+    .scoreboard { display: flex; gap: 2.5rem; margin-bottom: 1.5rem; }
+    .score-cell { text-align: center; }
+    .score-cell .label { font-size: .75rem; color: var(--text-dim); }
+    .score-cell .value { font-size: 2.2rem; font-weight: 900; }
+    .score-cell.p1 .value { color: var(--accent); }
+    .score-cell.p2 .value { color: var(--primary); }
+
+    .penalty-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 1.5rem 2rem; text-align: center; max-width: 320px; margin-bottom: 1.5rem;
+      animation: popIn .4s cubic-bezier(.175,.885,.32,1.275);
+    }
+    .penalty-card.hidden { display: none; }
+    @keyframes popIn { from { transform: scale(.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .penalty-card .emoji { font-size: 2.5rem; margin-bottom: .5rem; }
+    .penalty-card .text  { font-size: 1.05rem; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <div class="game-wrapper">
+    <div class="ad-slot">AD · 상단 광고</div>
+
+    <div class="player-area top" id="area-p1">
+      <div class="player-level" id="p1-level">레벨: 0</div>
+      <div class="player-status" id="p1-status">대기 중</div>
+      <div class="color-grid" id="p1-grid">
+        <div class="color-btn red disabled" data-color="red"></div>
+        <div class="color-btn blue disabled" data-color="blue"></div>
+        <div class="color-btn green disabled" data-color="green"></div>
+        <div class="color-btn yellow disabled" data-color="yellow"></div>
+      </div>
+      <span class="player-label">PLAYER 1</span>
+    </div>
+
+    <div class="divider">
+      <div class="vs-badge">VS</div>
+    </div>
+
+    <div class="player-area bottom" id="area-p2">
+      <div class="player-level" id="p2-level">레벨: 0</div>
+      <div class="player-status" id="p2-status">대기 중</div>
+      <div class="color-grid" id="p2-grid">
+        <div class="color-btn red disabled" data-color="red"></div>
+        <div class="color-btn blue disabled" data-color="blue"></div>
+        <div class="color-btn green disabled" data-color="green"></div>
+        <div class="color-btn yellow disabled" data-color="yellow"></div>
+      </div>
+      <span class="player-label">PLAYER 2</span>
+    </div>
+
+    <div class="ad-slot">AD · 하단 광고</div>
+  </div>
+
+  <!-- START OVERLAY -->
+  <div class="overlay" id="overlay-start">
+    <h1>🎨 색깔 순서 기억</h1>
+    <p>색깔 블록이 빛나는 순서를 기억하고<br>
+       같은 순서로 터치하세요!<br>
+       번갈아가며 도전, 더 높은 레벨 클리어가 승리 🧠</p>
+    <button class="btn btn-primary" id="btn-start">START</button>
+    <a href="/games/" class="btn btn-ghost" style="margin-top:.75rem;">← 게임 목록</a>
+  </div>
+
+  <!-- RESULT OVERLAY -->
+  <div class="overlay hidden" id="overlay-result">
+    <h1 id="winner-text">🎉 승리!</h1>
+    <p id="result-detail"></p>
+    <div class="scoreboard">
+      <div class="score-cell p1"><div class="label">Player 1</div><div class="value" id="score-p1">0</div></div>
+      <div class="score-cell p2"><div class="label">Player 2</div><div class="value" id="score-p2">0</div></div>
+    </div>
+    <div class="penalty-card hidden" id="penalty-card">
+      <div class="emoji" id="penalty-emoji">🎰</div>
+      <div class="text" id="penalty-text"></div>
+    </div>
+    <button class="btn btn-primary" id="btn-penalty">🎰 커플 벌칙 룰렛</button>
+    <div style="display:flex; gap:.75rem; margin-top:.75rem;">
+      <button class="btn btn-ghost" id="btn-retry">🔄 다시 하기</button>
+      <a href="/games/" class="btn btn-ghost">📋 목록</a>
+    </div>
+  </div>
+
+  <script src="/games/common.js"></script>
+  <script>
+    (() => {
+      'use strict';
+      const GAME_ID = 'color-sequence';
+      const COLORS = ['red', 'blue', 'green', 'yellow'];
+      let scores = GameUtils.getScores(GAME_ID);
+      let currentPlayer = 1; // whose turn
+      let sequence = [];
+      let playerInput = [];
+      let p1Level = 0, p2Level = 0;
+      let isShowing = false;
+      let gameActive = false;
+
+      function getGrid(player) {
+        return document.getElementById(player === 1 ? 'p1-grid' : 'p2-grid');
+      }
+      function getStatus(player) {
+        return document.getElementById(player === 1 ? 'p1-status' : 'p2-status');
+      }
+      function getLevelEl(player) {
+        return document.getElementById(player === 1 ? 'p1-level' : 'p2-level');
+      }
+
+      function enableGrid(player) {
+        getGrid(player).querySelectorAll('.color-btn').forEach(b => b.classList.remove('disabled'));
+      }
+      function disableGrid(player) {
+        getGrid(player).querySelectorAll('.color-btn').forEach(b => b.classList.add('disabled'));
+      }
+
+      // Setup click handlers
+      [1, 2].forEach(player => {
+        getGrid(player).querySelectorAll('.color-btn').forEach(btn => {
+          btn.addEventListener('touchstart', e => {
+            e.preventDefault();
+            handleColorTap(player, btn.dataset.color, btn);
+          }, { passive: false });
+          btn.addEventListener('click', () => {
+            handleColorTap(player, btn.dataset.color, btn);
+          });
+        });
+      });
+
+      function startGame() {
+        document.getElementById('overlay-start').classList.add('hidden');
+        document.getElementById('overlay-result').classList.add('hidden');
+        document.getElementById('penalty-card').classList.add('hidden');
+        p1Level = 0; p2Level = 0;
+        gameActive = true;
+        currentPlayer = 1;
+        sequence = [];
+        getLevelEl(1).textContent = '레벨: 0';
+        getLevelEl(2).textContent = '레벨: 0';
+        getStatus(1).textContent = '🎮 차례입니다!';
+        getStatus(2).textContent = '⏳ 대기 중...';
+        disableGrid(1);
+        disableGrid(2);
+        nextLevel();
+      }
+
+      function nextLevel() {
+        // Add random color to sequence
+        sequence.push(COLORS[Math.floor(Math.random() * COLORS.length)]);
+        playerInput = [];
+
+        const activeGrid = getGrid(currentPlayer);
+        const otherPlayer = currentPlayer === 1 ? 2 : 1;
+        disableGrid(currentPlayer);
+        disableGrid(otherPlayer);
+        getStatus(currentPlayer).textContent = '👀 순서를 기억하세요!';
+
+        // Show sequence
+        isShowing = true;
+        let i = 0;
+        const showInterval = setInterval(() => {
+          if (i > 0) {
+            // Unlit previous
+            const prevBtn = activeGrid.querySelector(`.color-btn.${sequence[i - 1]}`);
+            prevBtn.classList.remove('lit');
+          }
+          if (i < sequence.length) {
+            const btn = activeGrid.querySelector(`.color-btn.${sequence[i]}`);
+            btn.classList.add('lit');
+            GameUtils.vibrate(20);
+            i++;
+          } else {
+            clearInterval(showInterval);
+            isShowing = false;
+            getStatus(currentPlayer).textContent = '👆 따라 터치하세요!';
+            enableGrid(currentPlayer);
+          }
+        }, 600);
+      }
+
+      function handleColorTap(player, color, btnEl) {
+        if (isShowing || !gameActive) return;
+        if (player !== currentPlayer) return;
+
+        GameUtils.vibrate(15);
+
+        // Flash
+        btnEl.classList.add('lit');
+        setTimeout(() => btnEl.classList.remove('lit'), 200);
+
+        playerInput.push(color);
+
+        // Check so far
+        const idx = playerInput.length - 1;
+        if (playerInput[idx] !== sequence[idx]) {
+          // Wrong!
+          const level = sequence.length - 1;
+          if (currentPlayer === 1) p1Level = level;
+          else p2Level = level;
+
+          getLevelEl(currentPlayer).textContent = `레벨: ${level}`;
+          getStatus(currentPlayer).textContent = '❌ 틀림!';
+          disableGrid(currentPlayer);
+          GameUtils.vibrate(200);
+
+          // Check if both players have played
+          if (currentPlayer === 1) {
+            // Player 2's turn
+            currentPlayer = 2;
+            sequence = [];
+            playerInput = [];
+            getStatus(2).textContent = '🎮 차례입니다!';
+            setTimeout(nextLevel, 1200);
+          } else {
+            // Both done, compare
+            setTimeout(endGame, 1000);
+          }
+          return;
+        }
+
+        // All correct for this level
+        if (playerInput.length === sequence.length) {
+          const level = sequence.length;
+          if (currentPlayer === 1) p1Level = level;
+          else p2Level = level;
+
+          getLevelEl(currentPlayer).textContent = `레벨: ${level}`;
+          getStatus(currentPlayer).textContent = '✅ 성공!';
+          disableGrid(currentPlayer);
+
+          setTimeout(nextLevel, 800);
+        }
+      }
+
+      function endGame() {
+        gameActive = false;
+        const winner = p1Level > p2Level ? 1 : p2Level > p1Level ? 2 : 0;
+        if (winner === 1) scores.p1++;
+        else if (winner === 2) scores.p2++;
+        GameUtils.saveScores(GAME_ID, scores);
+
+        document.getElementById('score-p1').textContent = scores.p1;
+        document.getElementById('score-p2').textContent = scores.p2;
+        document.getElementById('winner-text').textContent =
+          winner === 0 ? '🤝 무승부!' : `🎉 Player ${winner} 승리!`;
+        document.getElementById('result-detail').textContent =
+          `P1: 레벨 ${p1Level} | P2: 레벨 ${p2Level}`;
+        document.getElementById('overlay-result').classList.remove('hidden');
+      }
+
+      document.getElementById('btn-start').addEventListener('click', startGame);
+      document.getElementById('btn-retry').addEventListener('click', startGame);
+      document.getElementById('btn-penalty').addEventListener('click', () => {
+        const p = GameUtils.spinPenalty();
+        document.getElementById('penalty-emoji').textContent = p.slice(0, 2);
+        document.getElementById('penalty-text').textContent = p;
+        const card = document.getElementById('penalty-card');
+        card.classList.remove('hidden');
+        card.style.animation = 'none'; void card.offsetWidth; card.style.animation = '';
+        GameUtils.vibrate(50);
+      });
+    })();
+  </script>
+</body>
+</html>

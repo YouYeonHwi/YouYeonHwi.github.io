@@ -35,6 +35,11 @@ layout: post
 <section id="projects">
   <h2>프로젝트</h2>
   <article>
+    <h3>Neon Runner (Mini Game) 🎮</h3>
+    <p>포인트를 모아 스킨을 구매할 수 있는 중독성 있는 HTML5 미니 게임입니다. Git 블로그 내에서 별도의 프리미엄 레이아웃으로 구동됩니다.</p>
+    <a href="./game/">게임 플레이하기</a>
+  </article>
+  <article>
     <h3>Adaptive Korean LLM</h3>
     <p>한국어 데이터를 활용해 다양한 다운스트림 작업에서 적응적으로 학습하는 LLM을 개발하는 프로젝트입니다. 모델의 경량화와 성능 최적화에 초점을 맞추고 있습니다.</p>
     <a href="https://github.com/YouYeonHwi/k-llm-adaptive">GitHub 링크</a>

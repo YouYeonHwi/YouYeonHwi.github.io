@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0a0a0f">
+  <link rel="manifest" href="/games/manifest.json">
+
+  <title>타이밍 맞추기 | 커플 게임 광장</title>
+  <meta name="description" content="정확한 타이밍에 멈춰라! 정중앙에 가까울수록 고득점 🎯">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --primary: #a78bfa; --primary-glow: rgba(167,139,250,.35);
+      --accent: #f472b6; --accent-glow: rgba(244,114,182,.3);
+      --bg: #0a0a0f; --surface: rgba(255,255,255,.04);
+      --border: rgba(255,255,255,.08); --text: #e2e8f0; --text-dim: #64748b;
+      --radius: 20px;
+    }
+    html, body {
+      height: 100%; font-family: 'Outfit', sans-serif; background: var(--bg);
+      color: var(--text); overflow: hidden; touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent; user-select: none;
+    }
+
+    .game-wrapper { display: flex; flex-direction: column; height: 100dvh; }
+
+    .ad-slot {
+      width: 100%; min-height: 50px; background: var(--surface);
+      border: 1px dashed var(--border); display: flex; align-items: center;
+      justify-content: center; color: var(--text-dim); font-size: .6rem;
+      letter-spacing: 2px; text-transform: uppercase; flex-shrink: 0;
+    }
+
+    .player-area {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; position: relative; gap: .8rem; padding: 1rem;
+      cursor: pointer;
+    }
+    .player-area.top { transform: rotate(180deg); background: linear-gradient(135deg, #831843, #4a044e); }
+    .player-area.bottom { background: linear-gradient(135deg, #1e1b4b, #0c4a6e); }
+
+    .player-label {
+      font-size: .65rem; font-weight: 700; letter-spacing: 3px;
+      text-transform: uppercase; opacity: .4; position: absolute; bottom: .3rem;
+    }
+
+    .player-score-display {
+      font-size: 1.1rem; font-weight: 900; min-height: 1.5rem;
+    }
+    .top .player-score-display { color: #f472b6; }
+    .bottom .player-score-display { color: #a78bfa; }
+
+    .player-msg {
+      font-size: clamp(1rem, 3.5vw, 1.6rem); font-weight: 700; min-height: 1.5rem;
+      text-align: center;
+    }
+
+    .timing-track {
+      width: 90%; max-width: 300px; height: 30px; background: rgba(255,255,255,.06);
+      border-radius: 15px; position: relative; overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .timing-target {
+      position: absolute; top: 0; bottom: 0; width: 20%; left: 40%;
+      background: rgba(74, 222, 128, .2); border-left: 2px solid #4ade80;
+      border-right: 2px solid #4ade80;
+    }
+    .timing-target .center-line {
+      position: absolute; left: 50%; top: 0; bottom: 0; width: 2px;
+      background: #4ade80; transform: translateX(-50%);
+    }
+
+    .timing-needle {
+      position: absolute; top: -2px; bottom: -2px; width: 4px;
+      background: #fff; border-radius: 2px; box-shadow: 0 0 8px rgba(255,255,255,.6);
+      transition: none;
+    }
+
+    .timing-result {
+      font-size: .8rem; font-weight: 600; min-height: 1.2rem; color: var(--text-dim);
+    }
+
+    .round-dots {
+      display: flex; gap: .5rem;
+    }
+    .round-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: rgba(255,255,255,.15); border: 1px solid var(--border);
+    }
+    .round-dot.active { background: #4ade80; border-color: #4ade80; box-shadow: 0 0 6px rgba(74,222,128,.5); }
+    .round-dot.done { background: var(--text-dim); }
+
+    .divider {
+      width: 100%; height: 40px; display: flex; align-items: center;
+      justify-content: center; position: relative; flex-shrink: 0; z-index: 10; background: var(--bg);
+    }
+    .divider::before {
+      content: ''; position: absolute; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--primary), transparent);
+    }
+    .vs-badge {
+      background: var(--bg); border: 2px solid var(--primary); color: var(--primary);
+      font-weight: 900; font-size: .8rem; width: 38px; height: 38px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; z-index: 1;
+      box-shadow: 0 0 16px var(--primary-glow);
+    }
+    .round-info {
+      position: absolute; right: 1rem; font-size: .65rem; color: var(--text-dim); font-weight: 600;
+    }
+
+    /* Overlays */
+    .overlay {
+      position: fixed; inset: 0; background: rgba(10,10,15,.94);
+      backdrop-filter: blur(12px); display: flex; flex-direction: column;
+      align-items: center; justify-content: center; z-index: 999; padding: 2rem;
+      transition: opacity .3s, visibility .3s;
+    }
+    .overlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+    .overlay h1 {
+      font-size: clamp(1.8rem, 6vw, 3rem); font-weight: 900;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: .5rem;
+    }
+    .overlay p { color: var(--text-dim); text-align: center; max-width: 320px; line-height: 1.5; margin-bottom: 1.5rem; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: .5rem; padding: .85rem 2rem;
+      border: none; border-radius: 50px; font-family: inherit; font-weight: 700;
+      font-size: 1rem; cursor: pointer; text-decoration: none; color: white; transition: transform .15s;
+    }
+    .btn:active { transform: scale(.95); }
+    .btn-primary { background: linear-gradient(135deg, var(--primary), var(--accent)); box-shadow: 0 4px 20px var(--primary-glow); }
+    .btn-ghost { background: var(--surface); border: 1px solid var(--border); }
+
+    .scoreboard { display: flex; gap: 2.5rem; margin-bottom: 1.5rem; }
+    .score-cell { text-align: center; }
+    .score-cell .label { font-size: .75rem; color: var(--text-dim); }
+    .score-cell .value { font-size: 2.2rem; font-weight: 900; }
+    .score-cell.p1 .value { color: var(--accent); }
+    .score-cell.p2 .value { color: var(--primary); }
+
+    .penalty-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 1.5rem 2rem; text-align: center; max-width: 320px; margin-bottom: 1.5rem;
+      animation: popIn .4s cubic-bezier(.175,.885,.32,1.275);
+    }
+    .penalty-card.hidden { display: none; }
+    @keyframes popIn { from { transform: scale(.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .penalty-card .emoji { font-size: 2.5rem; margin-bottom: .5rem; }
+    .penalty-card .text  { font-size: 1.05rem; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <div class="game-wrapper">
+    <div class="ad-slot">AD · 상단 광고</div>
+
+    <div class="player-area top" id="area-p1">
+      <div class="player-score-display" id="p1-total">총점: 0</div>
+      <div class="timing-track" id="p1-track">
+        <div class="timing-target"><div class="center-line"></div></div>
+        <div class="timing-needle" id="p1-needle" style="left:0"></div>
+      </div>
+      <div class="player-msg" id="p1-msg">터치하여 멈추세요!</div>
+      <div class="timing-result" id="p1-result"></div>
+      <div class="round-dots" id="p1-dots"></div>
+      <span class="player-label">PLAYER 1</span>
+    </div>
+
+    <div class="divider">
+      <div class="vs-badge">VS</div>
+      <span class="round-info" id="round-info">1 / 3</span>
+    </div>
+
+    <div class="player-area bottom" id="area-p2">
+      <div class="player-score-display" id="p2-total">총점: 0</div>
+      <div class="timing-track" id="p2-track">
+        <div class="timing-target"><div class="center-line"></div></div>
+        <div class="timing-needle" id="p2-needle" style="left:0"></div>
+      </div>
+      <div class="player-msg" id="p2-msg">터치하여 멈추세요!</div>
+      <div class="timing-result" id="p2-result"></div>
+      <div class="round-dots" id="p2-dots"></div>
+      <span class="player-label">PLAYER 2</span>
+    </div>
+
+    <div class="ad-slot">AD · 하단 광고</div>
+  </div>
+
+  <!-- START OVERLAY -->
+  <div class="overlay" id="overlay-start">
+    <h1>🎯 타이밍 맞추기</h1>
+    <p>바늘이 움직입니다!<br>
+       <strong style="color:#4ade80;">초록 영역</strong> 정중앙에서 멈추면 만점!<br>
+       3라운드 합산 점수로 승부 💪</p>
+    <button class="btn btn-primary" id="btn-start">START</button>
+    <a href="/games/" class="btn btn-ghost" style="margin-top:.75rem;">← 게임 목록</a>
+  </div>
+
+  <!-- RESULT OVERLAY -->
+  <div class="overlay hidden" id="overlay-result">
+    <h1 id="winner-text">🎉 승리!</h1>
+    <p id="result-detail"></p>
+    <div class="scoreboard">
+      <div class="score-cell p1"><div class="label">Player 1</div><div class="value" id="score-p1">0</div></div>
+      <div class="score-cell p2"><div class="label">Player 2</div><div class="value" id="score-p2">0</div></div>
+    </div>
+    <div class="penalty-card hidden" id="penalty-card">
+      <div class="emoji" id="penalty-emoji">🎰</div>
+      <div class="text" id="penalty-text"></div>
+    </div>
+    <button class="btn btn-primary" id="btn-penalty">🎰 커플 벌칙 룰렛</button>
+    <div style="display:flex; gap:.75rem; margin-top:.75rem;">
+      <button class="btn btn-ghost" id="btn-retry">🔄 다시 하기</button>
+      <a href="/games/" class="btn btn-ghost">📋 목록</a>
+    </div>
+  </div>
+
+  <script src="/games/common.js"></script>
+  <script>
+    (() => {
+      'use strict';
+      const GAME_ID = 'timing-hit';
+      const TOTAL_ROUNDS = 3;
+      let scores = GameUtils.getScores(GAME_ID);
+      let round = 0;
+      let p1Total = 0, p2Total = 0;
+      let p1Stopped = false, p2Stopped = false;
+      let animId = null;
+      let needlePos = { p1: 0, p2: 0 };
+      let needleDir = { p1: 1, p2: 1 };
+      let speed = 2;
+      let running = false;
+
+      const p1Needle = document.getElementById('p1-needle');
+      const p2Needle = document.getElementById('p2-needle');
+      const areaP1 = document.getElementById('area-p1');
+      const areaP2 = document.getElementById('area-p2');
+
+      function buildDots(containerId) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+        for (let i = 0; i < TOTAL_ROUNDS; i++) {
+          const dot = document.createElement('div');
+          dot.className = 'round-dot';
+          container.appendChild(dot);
+        }
+      }
+
+      function updateDots() {
+        ['p1-dots', 'p2-dots'].forEach(id => {
+          const dots = document.getElementById(id).children;
+          for (let i = 0; i < TOTAL_ROUNDS; i++) {
+            dots[i].className = 'round-dot';
+            if (i < round - 1) dots[i].classList.add('done');
+            if (i === round - 1) dots[i].classList.add('active');
+          }
+        });
+      }
+
+      function startGame() {
+        document.getElementById('overlay-start').classList.add('hidden');
+        document.getElementById('overlay-result').classList.add('hidden');
+        document.getElementById('penalty-card').classList.add('hidden');
+        p1Total = 0; p2Total = 0; round = 0;
+        buildDots('p1-dots'); buildDots('p2-dots');
+        document.getElementById('p1-total').textContent = '총점: 0';
+        document.getElementById('p2-total').textContent = '총점: 0';
+        nextRound();
+      }
+
+      function nextRound() {
+        round++;
+        if (round > TOTAL_ROUNDS) return endGame();
+
+        document.getElementById('round-info').textContent = `${round} / ${TOTAL_ROUNDS}`;
+        updateDots();
+
+        p1Stopped = false; p2Stopped = false;
+        needlePos.p1 = 0; needlePos.p2 = 0;
+        needleDir.p1 = 1; needleDir.p2 = 1;
+        speed = 1.5 + round * 0.5;
+
+        p1Needle.style.left = '0%';
+        p2Needle.style.left = '0%';
+        document.getElementById('p1-msg').textContent = '터치하여 멈추세요!';
+        document.getElementById('p2-msg').textContent = '터치하여 멈추세요!';
+        document.getElementById('p1-result').textContent = '';
+        document.getElementById('p2-result').textContent = '';
+
+        running = true;
+        animate();
+      }
+
+      function animate() {
+        if (!running) return;
+
+        // Move needles
+        if (!p1Stopped) {
+          needlePos.p1 += speed * needleDir.p1;
+          if (needlePos.p1 >= 100 || needlePos.p1 <= 0) needleDir.p1 *= -1;
+          needlePos.p1 = Math.max(0, Math.min(100, needlePos.p1));
+          p1Needle.style.left = needlePos.p1 + '%';
+        }
+        if (!p2Stopped) {
+          needlePos.p2 += speed * needleDir.p2;
+          if (needlePos.p2 >= 100 || needlePos.p2 <= 0) needleDir.p2 *= -1;
+          needlePos.p2 = Math.max(0, Math.min(100, needlePos.p2));
+          p2Needle.style.left = needlePos.p2 + '%';
+        }
+
+        animId = requestAnimationFrame(animate);
+      }
+
+      function calculateScore(pos) {
+        // Center is 50%. Target zone is 40%-60%.
+        const dist = Math.abs(pos - 50);
+        if (dist <= 1) return 100;        // Perfect!
+        if (dist <= 5) return 90;         // Excellent
+        if (dist <= 10) return 70;        // Great
+        if (dist <= 20) return 40;        // Good
+        return Math.max(0, Math.round(30 - dist * 0.5));  // Ok
+      }
+
+      function getGrade(score) {
+        if (score >= 100) return 'PERFECT! 🎯';
+        if (score >= 90) return 'EXCELLENT! 🌟';
+        if (score >= 70) return 'GREAT! ✨';
+        if (score >= 40) return 'GOOD 👍';
+        return 'MISS 😅';
+      }
+
+      function handleStop(player) {
+        if (!running) return;
+        if (player === 1 && p1Stopped) return;
+        if (player === 2 && p2Stopped) return;
+
+        GameUtils.vibrate(20);
+
+        const pos = player === 1 ? needlePos.p1 : needlePos.p2;
+        const s = calculateScore(pos);
+
+        if (player === 1) {
+          p1Stopped = true;
+          const roundScore = s;
+          p1Total += roundScore;
+          document.getElementById('p1-msg').textContent = getGrade(s);
+          document.getElementById('p1-result').textContent = `+${roundScore}점`;
+          document.getElementById('p1-total').textContent = `총점: ${p1Total}`;
+        } else {
+          p2Stopped = true;
+          const roundScore = s;
+          p2Total += roundScore;
+          document.getElementById('p2-msg').textContent = getGrade(s);
+          document.getElementById('p2-result').textContent = `+${roundScore}점`;
+          document.getElementById('p2-total').textContent = `총점: ${p2Total}`;
+        }
+
+        if (p1Stopped && p2Stopped) {
+          running = false;
+          cancelAnimationFrame(animId);
+          setTimeout(nextRound, 1500);
+        }
+      }
+
+      // Event listeners
+      areaP1.addEventListener('touchstart', e => { e.preventDefault(); handleStop(1); }, { passive: false });
+      areaP2.addEventListener('touchstart', e => { e.preventDefault(); handleStop(2); }, { passive: false });
+      areaP1.addEventListener('mousedown', e => { e.preventDefault(); handleStop(1); });
+      areaP2.addEventListener('mousedown', e => { e.preventDefault(); handleStop(2); });
+
+      function endGame() {
+        const winner = p1Total > p2Total ? 1 : p2Total > p1Total ? 2 : 0;
+        if (winner === 1) scores.p1++;
+        else if (winner === 2) scores.p2++;
+        GameUtils.saveScores(GAME_ID, scores);
+
+        document.getElementById('score-p1').textContent = scores.p1;
+        document.getElementById('score-p2').textContent = scores.p2;
+        document.getElementById('winner-text').textContent =
+          winner === 0 ? '🤝 무승부!' : `🎉 Player ${winner} 승리!`;
+        document.getElementById('result-detail').textContent =
+          `P1: ${p1Total}점 vs P2: ${p2Total}점`;
+        document.getElementById('overlay-result').classList.remove('hidden');
+      }
+
+      document.getElementById('btn-start').addEventListener('click', startGame);
+      document.getElementById('btn-retry').addEventListener('click', startGame);
+      document.getElementById('btn-penalty').addEventListener('click', () => {
+        const p = GameUtils.spinPenalty();
+        document.getElementById('penalty-emoji').textContent = p.slice(0, 2);
+        document.getElementById('penalty-text').textContent = p;
+        const card = document.getElementById('penalty-card');
+        card.classList.remove('hidden');
+        card.style.animation = 'none'; void card.offsetWidth; card.style.animation = '';
+        GameUtils.vibrate(50);
+      });
+    })();
+  </script>
+</body>
+</html>

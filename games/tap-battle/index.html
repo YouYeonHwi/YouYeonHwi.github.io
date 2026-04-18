@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0a0a0f">
+  <link rel="manifest" href="/games/manifest.json">
+
+  <title>순발력 터치 대결 | 커플 게임 광장</title>
+  <meta name="description" content="화면 색이 변하는 순간, 먼저 터치한 사람이 승리! 커플 벌칙 룰렛까지 💕">
+  <meta property="og:title" content="⚡ 순발력 터치 대결 — 누가 더 빠를까?">
+  <meta property="og:description" content="연인과 마주보고 스마트폰 하나로 대결! 지는 사람은 커피 사기 ☕">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://YouYeonHwi.github.io/games/tap-battle/">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --primary: #a78bfa;
+      --primary-glow: rgba(167,139,250,.35);
+      --accent: #f472b6;
+      --accent-glow: rgba(244,114,182,.3);
+      --bg: #0a0a0f;
+      --surface: rgba(255,255,255,.04);
+      --border: rgba(255,255,255,.08);
+      --text: #e2e8f0;
+      --text-dim: #64748b;
+      --radius: 20px;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+
+      --p1-color: #f472b6;
+      --p1-bg: linear-gradient(135deg, #831843, #4a044e);
+      --p2-color: #a78bfa;
+      --p2-bg: linear-gradient(135deg, #1e1b4b, #0c4a6e);
+      --go-color: #4ade80;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    /* ═══════════════ GAME LAYOUT ═══════════════ */
+    .game-wrapper {
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+      padding-top: var(--safe-top);
+      padding-bottom: var(--safe-bottom);
+    }
+
+    .ad-slot {
+      width: 100%;
+      min-height: 50px;
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-dim);
+      font-size: .6rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    .player-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      transition: background .15s;
+    }
+
+    .player-area.top {
+      transform: rotate(180deg);
+      background: var(--p1-bg);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .player-area.bottom {
+      background: var(--p2-bg);
+      border-top: 1px solid var(--border);
+    }
+
+    .player-label {
+      font-size: .8rem;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      opacity: .5;
+      position: absolute;
+      bottom: 1rem;
+    }
+
+    .player-msg {
+      font-size: clamp(1.4rem, 5vw, 2.5rem);
+      font-weight: 900;
+      text-align: center;
+      padding: 0 1rem;
+      line-height: 1.3;
+    }
+
+    .divider {
+      width: 100%;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      flex-shrink: 0;
+      z-index: 10;
+      background: var(--bg);
+    }
+
+    .divider::before {
+      content: '';
+      position: absolute;
+      left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--primary), transparent);
+    }
+
+    .vs-badge {
+      background: var(--bg);
+      border: 2px solid var(--primary);
+      color: var(--primary);
+      font-weight: 900;
+      font-size: .85rem;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1;
+      box-shadow: 0 0 20px var(--primary-glow);
+    }
+
+    /* ═══════════════ OVERLAYS ═══════════════ */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(10,10,15,.94);
+      backdrop-filter: blur(12px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      padding: 2rem;
+      transition: opacity .3s, visibility .3s;
+    }
+
+    .overlay.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .overlay h1 {
+      font-size: clamp(1.8rem, 6vw, 3rem);
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: .5rem;
+    }
+
+    .overlay p {
+      color: var(--text-dim);
+      text-align: center;
+      max-width: 320px;
+      line-height: 1.5;
+      margin-bottom: 1.5rem;
+    }
+
+    /* ═══════════════ BUTTONS ═══════════════ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: .5rem;
+      padding: .85rem 2rem;
+      border: none;
+      border-radius: 50px;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: transform .15s, box-shadow .15s;
+      text-decoration: none;
+      color: white;
+    }
+
+    .btn:active { transform: scale(.95); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      box-shadow: 0 4px 20px var(--primary-glow);
+    }
+
+    .btn-ghost {
+      background: var(--surface);
+      border: 1px solid var(--border);
+    }
+
+    /* ═══════════════ SCOREBOARD ═══════════════ */
+    .scoreboard {
+      display: flex;
+      gap: 2.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .score-cell { text-align: center; }
+    .score-cell .label { font-size: .75rem; color: var(--text-dim); margin-bottom: .25rem; }
+    .score-cell .value { font-size: 2.2rem; font-weight: 900; }
+    .score-cell.p1 .value { color: var(--accent); }
+    .score-cell.p2 .value { color: var(--primary); }
+
+    /* ═══════════════ PENALTY CARD ═══════════════ */
+    .penalty-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem 2rem;
+      text-align: center;
+      max-width: 320px;
+      margin-bottom: 1.5rem;
+      animation: popIn .4s cubic-bezier(.175,.885,.32,1.275);
+    }
+
+    .penalty-card.hidden { display: none; }
+
+    @keyframes popIn {
+      from { transform: scale(.7); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+
+    .penalty-card .emoji { font-size: 2.5rem; margin-bottom: .5rem; }
+    .penalty-card .text  { font-size: 1.05rem; line-height: 1.5; }
+
+    /* ═══════════════ COUNTDOWN ═══════════════ */
+    .countdown {
+      font-size: 5rem;
+      font-weight: 900;
+      color: var(--primary);
+      animation: pulse .5s ease-in-out;
+    }
+
+    @keyframes pulse {
+      0%   { transform: scale(1.4); opacity: .5; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* ═══════════════ FLASH STATE ═══════════════ */
+    .player-area.flash-ready {
+      /* 대기 상태 — 기본 배경 유지 */
+    }
+
+    .player-area.flash-go {
+      background: linear-gradient(135deg, #166534, #15803d) !important;
+    }
+
+    .player-area.flash-early {
+      background: linear-gradient(135deg, #7f1d1d, #991b1b) !important;
+    }
+
+    .player-area.flash-win {
+      background: linear-gradient(135deg, #166534, #22c55e) !important;
+    }
+
+    .player-area.flash-lose {
+      background: linear-gradient(135deg, #450a0a, #7f1d1d) !important;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="game-wrapper">
+    <!-- AD TOP -->
+    <div class="ad-slot" id="ad-top">AD · 게임 시작 전 광고</div>
+
+    <!-- PLAYER 1 (TOP, ROTATED 180°) -->
+    <div class="player-area top" id="area-p1">
+      <span class="player-msg" id="msg-p1">준비!</span>
+      <span class="player-label">PLAYER 1</span>
+    </div>
+
+    <!-- VS DIVIDER -->
+    <div class="divider">
+      <div class="vs-badge">VS</div>
+    </div>
+
+    <!-- PLAYER 2 (BOTTOM) -->
+    <div class="player-area bottom" id="area-p2">
+      <span class="player-msg" id="msg-p2">준비!</span>
+      <span class="player-label">PLAYER 2</span>
+    </div>
+
+    <!-- AD BOTTOM -->
+    <div class="ad-slot" id="ad-bottom">AD · 게임 종료 후 광고</div>
+  </div>
+
+  <!-- ═══ START OVERLAY ═══ -->
+  <div class="overlay" id="overlay-start">
+    <div class="ad-slot" style="max-width:320px; margin-bottom:2rem; border-radius:12px; min-height:100px;">
+      AD · 대기 화면 광고
+    </div>
+    <h1>⚡ 순발력 대결</h1>
+    <p>화면이 <strong style="color:#4ade80;">초록색</strong>으로 변하면<br>
+       자기 쪽 화면을 먼저 터치하세요!<br>
+       초록 전에 누르면 <strong style="color:#ef4444;">반칙패</strong>💀</p>
+    <button class="btn btn-primary" id="btn-start">START</button>
+    <a href="/games/" class="btn btn-ghost" style="margin-top:.75rem;">← 게임 목록</a>
+  </div>
+
+  <!-- ═══ COUNTDOWN OVERLAY ═══ -->
+  <div class="overlay hidden" id="overlay-countdown">
+    <div class="countdown" id="countdown-number">3</div>
+  </div>
+
+  <!-- ═══ RESULT OVERLAY ═══ -->
+  <div class="overlay hidden" id="overlay-result">
+    <h1 id="winner-text">🎉 Player 1 승리!</h1>
+    <p id="reaction-time" style="margin-bottom:1rem;"></p>
+    <div class="scoreboard">
+      <div class="score-cell p1">
+        <div class="label">Player 1</div>
+        <div class="value" id="score-p1">0</div>
+      </div>
+      <div class="score-cell p2">
+        <div class="label">Player 2</div>
+        <div class="value" id="score-p2">0</div>
+      </div>
+    </div>
+    <div class="penalty-card hidden" id="penalty-card">
+      <div class="emoji" id="penalty-emoji">🎰</div>
+      <div class="text" id="penalty-text"></div>
+    </div>
+    <button class="btn btn-primary" id="btn-penalty">🎰 커플 벌칙 룰렛</button>
+    <div style="display:flex; gap:.75rem; margin-top:.75rem;">
+      <button class="btn btn-ghost" id="btn-retry">🔄 다시 하기</button>
+      <a href="/games/" class="btn btn-ghost">📋 목록</a>
+    </div>
+  </div>
+
+  <script src="/games/common.js"></script>
+  <script>
+    (() => {
+      'use strict';
+
+      /* ── DOM ── */
+      const areaP1       = document.getElementById('area-p1');
+      const areaP2       = document.getElementById('area-p2');
+      const msgP1        = document.getElementById('msg-p1');
+      const msgP2        = document.getElementById('msg-p2');
+      const overlayStart = document.getElementById('overlay-start');
+      const overlayCD    = document.getElementById('overlay-countdown');
+      const overlayRes   = document.getElementById('overlay-result');
+      const cdNumber     = document.getElementById('countdown-number');
+      const winnerText   = document.getElementById('winner-text');
+      const reactionText = document.getElementById('reaction-time');
+      const scoreP1      = document.getElementById('score-p1');
+      const scoreP2      = document.getElementById('score-p2');
+      const penaltyCard  = document.getElementById('penalty-card');
+      const penaltyEmoji = document.getElementById('penalty-emoji');
+      const penaltyText  = document.getElementById('penalty-text');
+      const btnStart     = document.getElementById('btn-start');
+      const btnPenalty   = document.getElementById('btn-penalty');
+      const btnRetry     = document.getElementById('btn-retry');
+
+      /* ── STATE ── */
+      const GAME_ID = 'tap-battle';
+      let scores = GameUtils.getScores(GAME_ID);
+      let state  = 'IDLE';        // IDLE | COUNTDOWN | WAITING | GO | ENDED
+      let goTimestamp = 0;
+      let waitTimer  = null;
+
+      scoreP1.textContent = scores.p1;
+      scoreP2.textContent = scores.p2;
+
+      /* ── START FLOW ── */
+      btnStart.addEventListener('click', beginRound);
+      btnRetry.addEventListener('click', beginRound);
+
+      function beginRound() {
+        hide(overlayStart);
+        hide(overlayRes);
+        penaltyCard.classList.add('hidden');
+        resetAreas();
+
+        // 카운트다운 3-2-1
+        show(overlayCD);
+        state = 'COUNTDOWN';
+        let count = 3;
+        cdNumber.textContent = count;
+
+        const cdTimer = setInterval(() => {
+          count--;
+          if (count > 0) {
+            cdNumber.textContent = count;
+            cdNumber.style.animation = 'none';
+            void cdNumber.offsetWidth; // reflow
+            cdNumber.style.animation = 'pulse .5s ease-in-out';
+          } else {
+            clearInterval(cdTimer);
+            hide(overlayCD);
+            startWaiting();
+          }
+        }, 800);
+      }
+
+      /* ── WAITING PHASE: 랜덤 시간 후 GO ── */
+      function startWaiting() {
+        state = 'WAITING';
+        msgP1.textContent = '기다려...';
+        msgP2.textContent = '기다려...';
+
+        const delay = GameUtils.randomBetween(1500, 4500);
+        waitTimer = setTimeout(() => {
+          state = 'GO';
+          goTimestamp = performance.now();
+          areaP1.classList.add('flash-go');
+          areaP2.classList.add('flash-go');
+          msgP1.textContent = '지금!';
+          msgP2.textContent = '지금!';
+          GameUtils.vibrate(50);
+        }, delay);
+      }
+
+      /* ── TOUCH HANDLERS ── */
+      function handleTap(player) {
+        if (state === 'COUNTDOWN' || state === 'IDLE' || state === 'ENDED') return;
+
+        if (state === 'WAITING') {
+          // 성급하게 누름 → 반칙패
+          clearTimeout(waitTimer);
+          state = 'ENDED';
+          const loser = player;
+          const winner = player === 1 ? 2 : 1;
+
+          if (winner === 1) scores.p1++; else scores.p2++;
+          GameUtils.saveScores(GAME_ID, scores);
+          GameUtils.vibrate(200);
+
+          const loserArea = player === 1 ? areaP1 : areaP2;
+          const winnerArea = player === 1 ? areaP2 : areaP1;
+          loserArea.classList.add('flash-early');
+          winnerArea.classList.add('flash-win');
+          const loserMsg = player === 1 ? msgP1 : msgP2;
+          loserMsg.textContent = '반칙! 💀';
+
+          setTimeout(() => showResult(winner, '반칙패! 너무 빨랐어요 😂'), 800);
+          return;
+        }
+
+        if (state === 'GO') {
+          state = 'ENDED';
+          const reaction = Math.round(performance.now() - goTimestamp);
+          const winner = player;
+          const loser = player === 1 ? 2 : 1;
+
+          if (winner === 1) scores.p1++; else scores.p2++;
+          GameUtils.saveScores(GAME_ID, scores);
+          GameUtils.vibrate(30);
+
+          const winnerArea = player === 1 ? areaP1 : areaP2;
+          const loserArea = player === 1 ? areaP2 : areaP1;
+          winnerArea.classList.add('flash-win');
+          loserArea.classList.add('flash-lose');
+
+          const winnerMsg = player === 1 ? msgP1 : msgP2;
+          winnerMsg.textContent = '승리! 🎉';
+          const loserMsg = player === 1 ? msgP2 : msgP1;
+          loserMsg.textContent = '아쉽...';
+
+          setTimeout(() => showResult(winner, `반응속도: ${reaction}ms`), 1000);
+        }
+      }
+
+      // Touch & Click for both areas
+      areaP1.addEventListener('touchstart', e => { e.preventDefault(); handleTap(1); });
+      areaP2.addEventListener('touchstart', e => { e.preventDefault(); handleTap(2); });
+      areaP1.addEventListener('mousedown',  e => { e.preventDefault(); handleTap(1); });
+      areaP2.addEventListener('mousedown',  e => { e.preventDefault(); handleTap(2); });
+
+      /* ── RESULT ── */
+      function showResult(winner, detail) {
+        scoreP1.textContent = scores.p1;
+        scoreP2.textContent = scores.p2;
+        winnerText.textContent = `🎉 Player ${winner} 승리!`;
+        reactionText.textContent = detail;
+        show(overlayRes);
+      }
+
+      /* ── PENALTY ROULETTE ── */
+      btnPenalty.addEventListener('click', () => {
+        const penalty = GameUtils.spinPenalty();
+        penaltyEmoji.textContent = penalty.slice(0, 2);
+        penaltyText.textContent = penalty;
+        penaltyCard.classList.remove('hidden');
+        penaltyCard.style.animation = 'none';
+        void penaltyCard.offsetWidth;
+        penaltyCard.style.animation = 'popIn .4s cubic-bezier(.175,.885,.32,1.275)';
+        GameUtils.vibrate(50);
+      });
+
+      /* ── HELPERS ── */
+      function resetAreas() {
+        [areaP1, areaP2].forEach(el => {
+          el.classList.remove('flash-go', 'flash-early', 'flash-win', 'flash-lose');
+        });
+        msgP1.textContent = '준비!';
+        msgP2.textContent = '준비!';
+      }
+
+      function show(el) { el.classList.remove('hidden'); }
+      function hide(el) { el.classList.add('hidden'); }
+    })();
+  </script>
+</body>
+</html>

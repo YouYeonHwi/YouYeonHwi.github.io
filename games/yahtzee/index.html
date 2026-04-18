@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0a0a0f">
+  <link rel="manifest" href="/games/manifest.json">
+
+  <title>커플 야추 | 커플 게임 광장</title>
+  <meta name="description" content="주사위 5개로 최고의 조합을 만들어라! 커플 야추 대결 🎲">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --primary: #a78bfa; --primary-glow: rgba(167,139,250,.35);
+      --accent: #f472b6; --accent-glow: rgba(244,114,182,.3);
+      --bg: #0a0a0f; --surface: rgba(255,255,255,.04);
+      --surface-hover: rgba(255,255,255,.08);
+      --border: rgba(255,255,255,.08); --text: #e2e8f0; --text-dim: #64748b;
+      --radius: 16px;
+      --p1: #f472b6; --p2: #a78bfa;
+    }
+    html, body {
+      height: 100%; font-family: 'Outfit', sans-serif; background: var(--bg);
+      color: var(--text); overflow-x: hidden; touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent; user-select: none;
+    }
+
+    /* ═══════════ LAYOUT ═══════════ */
+    .game-container {
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .ad-slot {
+      width: 100%; min-height: 50px; background: var(--surface);
+      border: 1px dashed var(--border); display: flex; align-items: center;
+      justify-content: center; color: var(--text-dim); font-size: .6rem;
+      letter-spacing: 2px; text-transform: uppercase; flex-shrink: 0;
+    }
+
+    /* ═══════════ TOP BAR ═══════════ */
+    .top-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .6rem 1rem; flex-shrink: 0;
+    }
+
+    .turn-indicator {
+      font-size: .85rem; font-weight: 700; padding: .35rem .9rem;
+      border-radius: 50px; transition: background .3s, color .3s;
+    }
+    .turn-indicator.p1 { background: rgba(244,114,182,.15); color: var(--p1); }
+    .turn-indicator.p2 { background: rgba(167,139,250,.15); color: var(--p2); }
+
+    .mini-scores {
+      display: flex; gap: 1rem; font-size: .8rem; font-weight: 700;
+    }
+    .mini-scores .ms-p1 { color: var(--p1); }
+    .mini-scores .ms-p2 { color: var(--p2); }
+
+    .back-link {
+      color: var(--text-dim); text-decoration: none; font-size: .75rem;
+      font-weight: 600;
+    }
+
+    /* ═══════════ DICE AREA ═══════════ */
+    .dice-section {
+      padding: .5rem 1rem;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .dice-row {
+      display: flex; justify-content: center; gap: 14px;
+      margin-bottom: 2rem; padding-top: 1rem;
+      perspective: 800px;
+    }
+
+    .die-scene {
+      width: 50px; height: 50px;
+      position: relative;
+      cursor: pointer;
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transform-style: preserve-3d;
+    }
+    .die-scene:active { transform: scale(0.85) !important; }
+    
+    .die-scene.held::after {
+      content: 'HOLD'; position: absolute; bottom: -22px; left: 0; width: 100%;
+      text-align: center; font-size: .65rem; font-weight: 800; color: #4ade80;
+      text-shadow: 0 0 8px rgba(74,222,128,.5); letter-spacing: 1px;
+    }
+    .die-scene.held::before {
+      content: ''; position: absolute; inset: -12px;
+      background: radial-gradient(circle, rgba(74,222,128,.25) 0%, transparent 60%);
+      border-radius: 50%; z-index: -1; transform: translateZ(-25px);
+    }
+
+    .die-cube {
+      width: 100%; height: 100%;
+      position: absolute;
+      transform-style: preserve-3d;
+      transition: transform 1s cubic-bezier(0.15, 0.85, 0.2, 1);
+      transform: rotateX(45deg) rotateY(45deg); /* Init orientation */
+    }
+
+    .die-face {
+      position: absolute; width: 50px; height: 50px;
+      background: linear-gradient(135deg, #f8fafc, #cbd5e1);
+      border: 1px solid rgba(0,0,0,0.1); border-radius: 8px;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.15);
+      display: grid; padding: 6px; gap: 2px;
+      grid-template-areas: "a . c" "e g f" "d . b";
+      grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr 1fr;
+    }
+
+    .die-scene.held .die-face {
+      background: linear-gradient(135deg, #dcfce7, #86efac);
+      border-color: #22c55e;
+      box-shadow: inset 0 0 12px rgba(34,197,94,0.4);
+    }
+
+    /* 3D Cube faces alignment */
+    .die-face.front  { transform: rotateY(0deg) translateZ(25px); }
+    .die-face.right  { transform: rotateY(90deg) translateZ(25px); }
+    .die-face.back   { transform: rotateY(180deg) translateZ(25px); }
+    .die-face.left   { transform: rotateY(-90deg) translateZ(25px); }
+    .die-face.top    { transform: rotateX(90deg) translateZ(25px); }
+    .die-face.bottom { transform: rotateX(-90deg) translateZ(25px); }
+
+    /* Dice Dots */
+    .dot {
+      background: #1e293b; border-radius: 50%; width: 100%; height: 100%;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+    }
+    .die-scene.held .dot { background: #14532d; }
+
+    .face-1 .dot:nth-child(1) { grid-area: g; }
+    .face-2 .dot:nth-child(1) { grid-area: a; } .face-2 .dot:nth-child(2) { grid-area: b; }
+    .face-3 .dot:nth-child(1) { grid-area: a; } .face-3 .dot:nth-child(2) { grid-area: g; } .face-3 .dot:nth-child(3) { grid-area: b; }
+    .face-4 .dot:nth-child(1) { grid-area: a; } .face-4 .dot:nth-child(2) { grid-area: c; } .face-4 .dot:nth-child(3) { grid-area: d; } .face-4 .dot:nth-child(4) { grid-area: b; }
+    .face-5 .dot:nth-child(1) { grid-area: a; } .face-5 .dot:nth-child(2) { grid-area: c; } .face-5 .dot:nth-child(3) { grid-area: d; } .face-5 .dot:nth-child(4) { grid-area: b; } .face-5 .dot:nth-child(5) { grid-area: g; }
+    .face-6 .dot:nth-child(1) { grid-area: a; } .face-6 .dot:nth-child(2) { grid-area: c; } .face-6 .dot:nth-child(3) { grid-area: e; } .face-6 .dot:nth-child(4) { grid-area: f; } .face-6 .dot:nth-child(5) { grid-area: d; } .face-6 .dot:nth-child(6) { grid-area: b; }
+
+    .roll-area {
+      display: flex; align-items: center; justify-content: center; gap: .8rem;
+    }
+
+    .btn-roll {
+      padding: .6rem 2rem; border-radius: 50px; border: none;
+      font-family: inherit; font-weight: 700; font-size: .95rem;
+      cursor: pointer; color: white; transition: transform .15s, opacity .2s;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      box-shadow: 0 4px 16px var(--primary-glow);
+    }
+    .btn-roll:active { transform: scale(.95); }
+    .btn-roll:disabled { opacity: .4; cursor: default; }
+
+    .rolls-left {
+      font-size: .75rem; color: var(--text-dim); font-weight: 600;
+    }
+
+    /* ═══════════ SCORE SHEET ═══════════ */
+    .score-section {
+      flex: 1; overflow-y: auto; padding: .5rem .75rem .5rem;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .score-table {
+      width: 100%; border-collapse: collapse; font-size: .72rem;
+    }
+
+    .score-table th {
+      padding: .35rem .3rem;
+      text-align: center;
+      font-weight: 700;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; background: var(--bg); z-index: 2;
+    }
+
+    .score-table th:first-child { text-align: left; }
+    .score-table th.p1-col { color: var(--p1); }
+    .score-table th.p2-col { color: var(--p2); }
+
+    .score-table td {
+      padding: .35rem .3rem;
+      text-align: center;
+      border-bottom: 1px solid rgba(255,255,255,.03);
+    }
+    .score-table td:first-child {
+      text-align: left; font-weight: 600; color: var(--text);
+    }
+
+    .score-table tr.section-header td {
+      font-weight: 700; color: var(--text-dim);
+      font-size: .6rem; letter-spacing: 1px; text-transform: uppercase;
+      padding-top: .5rem; background: rgba(255,255,255,.02);
+    }
+
+    .score-table tr.bonus-row td {
+      color: #fbbf24; font-weight: 700;
+    }
+
+    .score-table tr.total-row td {
+      font-weight: 900; font-size: .85rem;
+      border-top: 2px solid var(--border);
+      padding: .5rem .3rem;
+    }
+    .score-table tr.total-row td.p1-val { color: var(--p1); }
+    .score-table tr.total-row td.p2-val { color: var(--p2); }
+
+    .score-cell {
+      min-width: 36px;
+    }
+
+    .score-cell.filled {
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .score-cell.available {
+      cursor: pointer;
+      color: #4ade80;
+      font-weight: 700;
+      background: rgba(74,222,128,.06);
+      border-radius: 6px;
+      transition: background .15s;
+    }
+    .score-cell.available:active { background: rgba(74,222,128,.15); }
+
+    .score-cell.zero-available {
+      cursor: pointer;
+      color: #ef4444;
+      font-weight: 600;
+      opacity: .6;
+      background: rgba(239,68,68,.04);
+      border-radius: 6px;
+    }
+
+    .score-cell.empty {
+      color: rgba(255,255,255,.1);
+    }
+
+    /* ═══════════ OVERLAYS ═══════════ */
+    .overlay {
+      position: fixed; inset: 0; background: rgba(10,10,15,.94);
+      backdrop-filter: blur(12px); display: flex; flex-direction: column;
+      align-items: center; justify-content: center; z-index: 999; padding: 2rem;
+      transition: opacity .3s, visibility .3s;
+    }
+    .overlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+    .overlay h1 {
+      font-size: clamp(1.8rem, 6vw, 3rem); font-weight: 900;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: .5rem;
+    }
+    .overlay p { color: var(--text-dim); text-align: center; max-width: 320px; line-height: 1.5; margin-bottom: 1.5rem; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: .5rem; padding: .85rem 2rem;
+      border: none; border-radius: 50px; font-family: inherit; font-weight: 700;
+      font-size: 1rem; cursor: pointer; text-decoration: none; color: white; transition: transform .15s;
+    }
+    .btn:active { transform: scale(.95); }
+    .btn-primary { background: linear-gradient(135deg, var(--primary), var(--accent)); box-shadow: 0 4px 20px var(--primary-glow); }
+    .btn-ghost { background: var(--surface); border: 1px solid var(--border); }
+
+    .scoreboard { display: flex; gap: 2.5rem; margin-bottom: 1.5rem; }
+    .score-cell-overlay { text-align: center; }
+    .score-cell-overlay .label { font-size: .75rem; color: var(--text-dim); }
+    .score-cell-overlay .value { font-size: 2.2rem; font-weight: 900; }
+    .score-cell-overlay.p1 .value { color: var(--accent); }
+    .score-cell-overlay.p2 .value { color: var(--primary); }
+
+    .penalty-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 1.5rem 2rem; text-align: center; max-width: 320px; margin-bottom: 1.5rem;
+      animation: popIn .4s cubic-bezier(.175,.885,.32,1.275);
+    }
+    .penalty-card.hidden { display: none; }
+    @keyframes popIn { from { transform: scale(.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .penalty-card .emoji { font-size: 2.5rem; margin-bottom: .5rem; }
+    .penalty-card .text  { font-size: 1.05rem; line-height: 1.5; }
+
+    .final-scores {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1rem 1.5rem;
+      margin-bottom: 1.5rem; width: 100%; max-width: 300px;
+    }
+    .final-scores .fs-row {
+      display: flex; justify-content: space-between;
+      padding: .25rem 0; font-size: .85rem;
+    }
+    .final-scores .fs-row.total {
+      border-top: 1px solid var(--border);
+      padding-top: .5rem; margin-top: .25rem;
+      font-weight: 900; font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="game-container">
+    <div class="ad-slot">AD · 상단 광고</div>
+
+    <!-- TOP BAR -->
+    <div class="top-bar">
+      <div style="display:flex; align-items:center; gap:.5rem;">
+        <a href="/games/" class="back-link">← 목록</a>
+        <button id="btn-theme-toggle" style="background:var(--surface); border:1px solid var(--border); color:var(--text-dim); font-size:.7rem; padding:.2rem .5rem; border-radius:50px; cursor:pointer;">🎨 테마</button>
+      </div>
+      <div class="turn-indicator p1" id="turn-indicator">🎲 Player 1 차례</div>
+      <div class="mini-scores">
+        <span class="ms-p1" id="mini-p1">P1: 0</span>
+        <span class="ms-p2" id="mini-p2">P2: 0</span>
+      </div>
+    </div>
+
+    <!-- DICE -->
+    <div class="dice-section">
+      <div class="dice-row" id="dice-row">
+        <!-- Generated by JS 3D Layout -->
+      </div>
+      <div class="roll-area">
+        <button class="btn-roll" id="btn-roll">🎲 주사위 굴리기</button>
+        <span class="rolls-left" id="rolls-left">3회 남음</span>
+      </div>
+    </div>
+
+    <!-- SCORE SHEET -->
+    <div class="score-section">
+      <table class="score-table" id="score-table">
+        <thead>
+          <tr>
+            <th>조합</th>
+            <th class="p1-col">P1</th>
+            <th class="p2-col">P2</th>
+          </tr>
+        </thead>
+        <tbody id="score-body">
+          <!-- Generated by JS -->
+        </tbody>
+      </table>
+    </div>
+
+    <div class="ad-slot">AD · 하단 광고</div>
+  </div>
+
+  <!-- START OVERLAY -->
+  <div class="overlay" id="overlay-start">
+    <h1>🎲 커플 야추</h1>
+    <p>주사위 5개를 굴려 최고의 조합을 만드세요!<br>
+       턴마다 <strong>3번</strong>까지 굴릴 수 있고,<br>
+       유지할 주사위를 터치로 선택!<br>
+       13라운드 후 총점이 높은 사람이 승리 🏆</p>
+    <button class="btn btn-primary" id="btn-start">START</button>
+    <a href="/games/" class="btn btn-ghost" style="margin-top:.75rem;">← 게임 목록</a>
+  </div>
+
+  <!-- RESULT OVERLAY -->
+  <div class="overlay hidden" id="overlay-result">
+    <h1 id="winner-text">🎉 승리!</h1>
+    <div class="final-scores" id="final-scores"></div>
+    <div class="scoreboard">
+      <div class="score-cell-overlay p1"><div class="label">Player 1</div><div class="value" id="score-p1">0</div></div>
+      <div class="score-cell-overlay p2"><div class="label">Player 2</div><div class="value" id="score-p2">0</div></div>
+    </div>
+    <div class="penalty-card hidden" id="penalty-card">
+      <div class="emoji" id="penalty-emoji">🎰</div>
+      <div class="text" id="penalty-text"></div>
+    </div>
+    <button class="btn btn-primary" id="btn-penalty">🎰 커플 벌칙 룰렛</button>
+    <div style="display:flex; gap:.75rem; margin-top:.75rem;">
+      <button class="btn btn-ghost" id="btn-retry">🔄 다시 하기</button>
+      <a href="/games/" class="btn btn-ghost">📋 목록</a>
+    </div>
+  </div>
+
+  <script src="/games/common.js"></script>
+  <script>
+    (() => {
+      'use strict';
+      const GAME_ID = 'yahtzee';
+      let winScores = GameUtils.getScores(GAME_ID);
+
+      const ROTATIONS = {
+        1: { x: 0, y: 0 },
+        2: { x: 0, y: -90 },
+        3: { x: 0, y: 90 },
+        4: { x: -90, y: 0 },
+        5: { x: 90, y: 0 },
+        6: { x: 180, y: 0 }
+      };
+
+      let currentRotations = [
+        { x: 45, y: 45 }, { x: 45, y: -45 }, { x: -45, y: 45 }, { x: 45, y: 45 }, { x: -45, y: -45 }
+      ];
+
+      // Categories
+      const CATEGORIES = [
+        { id: 'ones',      name: '1️⃣ Ones',     section: 'upper', calc: d => sumOf(d, 1) },
+        { id: 'twos',      name: '2️⃣ Twos',     section: 'upper', calc: d => sumOf(d, 2) },
+        { id: 'threes',    name: '3️⃣ Threes',   section: 'upper', calc: d => sumOf(d, 3) },
+        { id: 'fours',     name: '4️⃣ Fours',    section: 'upper', calc: d => sumOf(d, 4) },
+        { id: 'fives',     name: '5️⃣ Fives',    section: 'upper', calc: d => sumOf(d, 5) },
+        { id: 'sixes',     name: '6️⃣ Sixes',    section: 'upper', calc: d => sumOf(d, 6) },
+        { id: 'threeKind', name: '🎯 3 of Kind', section: 'lower', calc: d => hasNOfKind(d, 3) ? sumAll(d) : 0 },
+        { id: 'fourKind',  name: '💎 4 of Kind', section: 'lower', calc: d => hasNOfKind(d, 4) ? sumAll(d) : 0 },
+        { id: 'fullHouse', name: '🏠 Full House',section: 'lower', calc: d => isFullHouse(d) ? 25 : 0 },
+        { id: 'smStr',     name: '📏 S.Straight', section: 'lower', calc: d => hasSmallStraight(d) ? 30 : 0 },
+        { id: 'lgStr',     name: '📐 L.Straight', section: 'lower', calc: d => hasLargeStraight(d) ? 40 : 0 },
+        { id: 'yahtzee',   name: '🎲 YAHTZEE',  section: 'lower', calc: d => hasNOfKind(d, 5) ? 50 : 0 },
+        { id: 'chance',    name: '🃏 Chance',    section: 'lower', calc: d => sumAll(d) },
+      ];
+
+      // State
+      let currentPlayer = 1;
+      let dice = [0, 0, 0, 0, 0];
+      let held = [false, false, false, false, false];
+      let rollsLeft = 3;
+      let hasRolled = false;
+      let scores = { 1: {}, 2: {} };
+      let roundsPlayed = 0; // total category picks (26 = game over)
+
+      // Scoring helpers
+      function sumOf(d, n) { return d.filter(v => v === n).reduce((a, b) => a + b, 0); }
+      function sumAll(d) { return d.reduce((a, b) => a + b, 0); }
+      function counts(d) {
+        const c = [0, 0, 0, 0, 0, 0, 0];
+        d.forEach(v => c[v]++);
+        return c;
+      }
+      function hasNOfKind(d, n) { return counts(d).some(c => c >= n); }
+      function isFullHouse(d) {
+        const c = counts(d).filter(v => v > 0);
+        return (c.includes(3) && c.includes(2));
+      }
+      function hasSmallStraight(d) {
+        const u = [...new Set(d)].sort();
+        const s = u.join('');
+        return s.includes('1234') || s.includes('2345') || s.includes('3456');
+      }
+      function hasLargeStraight(d) {
+        const u = [...new Set(d)].sort().join('');
+        return u === '12345' || u === '23456';
+      }
+
+      function getUpperTotal(player) {
+        return ['ones', 'twos', 'threes', 'fours', 'fives', 'sixes']
+          .reduce((s, id) => s + (scores[player][id] ?? 0), 0);
+      }
+
+      function getUpperBonus(player) {
+        return getUpperTotal(player) >= 63 ? 35 : 0;
+      }
+
+      function getLowerTotal(player) {
+        return ['threeKind', 'fourKind', 'fullHouse', 'smStr', 'lgStr', 'yahtzee', 'chance']
+          .reduce((s, id) => s + (scores[player][id] ?? 0), 0);
+      }
+
+      function getGrandTotal(player) {
+        return getUpperTotal(player) + getUpperBonus(player) + getLowerTotal(player);
+      }
+
+      // DOM
+      const btnRoll = document.getElementById('btn-roll');
+      const rollsLeftEl = document.getElementById('rolls-left');
+      const turnIndicator = document.getElementById('turn-indicator');
+      const miniP1 = document.getElementById('mini-p1');
+      const miniP2 = document.getElementById('mini-p2');
+
+      // Build score table
+      function buildScoreTable() {
+        const body = document.getElementById('score-body');
+        body.innerHTML = '';
+
+        // Upper section header
+        addSectionRow(body, '상단 (Ones~Sixes)');
+        CATEGORIES.filter(c => c.section === 'upper').forEach(c => addCategoryRow(body, c));
+        addCalcRow(body, 'upper-total', '상단 합계', p => getUpperTotal(p));
+        addCalcRow(body, 'upper-bonus', '보너스 (63+)', p => getUpperBonus(p), true);
+
+        // Lower section header
+        addSectionRow(body, '하단 (조합)');
+        CATEGORIES.filter(c => c.section === 'lower').forEach(c => addCategoryRow(body, c));
+        addCalcRow(body, 'lower-total', '하단 합계', p => getLowerTotal(p));
+
+        // Grand total
+        addTotalRow(body);
+      }
+
+      function addSectionRow(body, label) {
+        const tr = document.createElement('tr');
+        tr.className = 'section-header';
+        tr.innerHTML = `<td colspan="3">${label}</td>`;
+        body.appendChild(tr);
+      }
+
+      function addCategoryRow(body, cat) {
+        const tr = document.createElement('tr');
+        tr.id = `row-${cat.id}`;
+        tr.innerHTML = `
+          <td>${cat.name}</td>
+          <td class="score-cell empty" id="cell-${cat.id}-1">-</td>
+          <td class="score-cell empty" id="cell-${cat.id}-2">-</td>
+        `;
+        body.appendChild(tr);
+      }
+
+      function addCalcRow(body, id, label, calcFn, isBonus = false) {
+        const tr = document.createElement('tr');
+        if (isBonus) tr.className = 'bonus-row';
+        tr.innerHTML = `
+          <td>${label}</td>
+          <td id="calc-${id}-1">0</td>
+          <td id="calc-${id}-2">0</td>
+        `;
+        body.appendChild(tr);
+      }
+
+      function addTotalRow(body) {
+        const tr = document.createElement('tr');
+        tr.className = 'total-row';
+        tr.innerHTML = `
+          <td>총점</td>
+          <td class="p1-val" id="grand-total-1">0</td>
+          <td class="p2-val" id="grand-total-2">0</td>
+        `;
+        body.appendChild(tr);
+      }
+
+      function updateCalcRows() {
+        [1, 2].forEach(p => {
+          const utEl = document.getElementById(`calc-upper-total-${p}`);
+          const ubEl = document.getElementById(`calc-upper-bonus-${p}`);
+          const ltEl = document.getElementById(`calc-lower-total-${p}`);
+          const gtEl = document.getElementById(`grand-total-${p}`);
+          if (utEl) utEl.textContent = getUpperTotal(p);
+          if (ubEl) ubEl.textContent = getUpperBonus(p) > 0 ? '+35' : `(${getUpperTotal(p)}/63)`;
+          if (ltEl) ltEl.textContent = getLowerTotal(p);
+          if (gtEl) gtEl.textContent = getGrandTotal(p);
+        });
+        miniP1.textContent = `P1: ${getGrandTotal(1)}`;
+        miniP2.textContent = `P2: ${getGrandTotal(2)}`;
+      }
+
+      function updateAvailableScores() {
+        CATEGORIES.forEach(cat => {
+          [1, 2].forEach(p => {
+            const cell = document.getElementById(`cell-${cat.id}-${p}`);
+            if (!cell) return;
+
+            if (scores[p][cat.id] !== undefined) {
+              // Already filled
+              cell.className = 'score-cell filled';
+              cell.textContent = scores[p][cat.id];
+              cell.onclick = null;
+            } else if (p === currentPlayer && hasRolled) {
+              // Available for current player after rolling
+              const potential = cat.calc(dice);
+              cell.textContent = potential;
+              cell.className = potential > 0 ? 'score-cell available' : 'score-cell zero-available';
+              cell.onclick = () => pickCategory(cat.id, potential);
+            } else {
+              cell.className = 'score-cell empty';
+              cell.textContent = '-';
+              cell.onclick = null;
+            }
+          });
+        });
+      }
+
+      // 3D HTML Builder
+      function initDiceHTML() {
+        const row = document.getElementById('dice-row');
+        row.innerHTML = '';
+        for(let i=0; i<5; i++) {
+          row.innerHTML += `
+            <div class="die-scene" id="scene-${i}">
+              <div class="die-cube" id="cube-${i}">
+                <div class="die-face front face-1"><div class="dot"></div></div>
+                <div class="die-face right face-2"><div class="dot"></div><div class="dot"></div></div>
+                <div class="die-face left face-3"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+                <div class="die-face top face-4"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+                <div class="die-face bottom face-5"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+                <div class="die-face back face-6"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+              </div>
+            </div>
+          `;
+        }
+      }
+
+      function bindDiceEvents() {
+        for(let i=0; i<5; i++) {
+          const el = document.getElementById(`scene-${i}`);
+          el.addEventListener('click', () => toggleHold(i));
+          el.addEventListener('touchstart', e => { e.preventDefault(); toggleHold(i); }, { passive: false });
+        }
+      }
+
+      // Roll dice
+      function rollDice() {
+        if (rollsLeft <= 0) return;
+
+        rollsLeft--;
+        hasRolled = true;
+
+        dice.forEach((_, i) => {
+          if (!held[i]) {
+            const v = Math.floor(Math.random() * 6) + 1;
+            dice[i] = v;
+            
+            const baseRot = ROTATIONS[v];
+            const spinX = (Math.floor(Math.random() * 3) + 2) * 360; 
+            const spinY = (Math.floor(Math.random() * 3) + 2) * 360;
+
+            const targetX = currentRotations[i].x - (currentRotations[i].x % 360) + spinX + baseRot.x;
+            const targetY = currentRotations[i].y - (currentRotations[i].y % 360) + spinY + baseRot.y;
+
+            currentRotations[i] = { x: targetX, y: targetY };
+            const cube = document.getElementById(`cube-${i}`);
+            cube.style.transform = `rotateX(${targetX}deg) rotateY(${targetY}deg)`;
+          }
+        });
+
+        GameUtils.vibrate(30);
+        updateRollButton();
+        
+        // Disable picking until animation ends
+        btnRoll.disabled = true;
+        setTimeout(() => {
+          updateRollButton();
+          updateAvailableScores();
+        }, 1000);
+      }
+
+      function updateRollButton() {
+        rollsLeftEl.textContent = `${rollsLeft}회 남음`;
+        btnRoll.disabled = rollsLeft <= 0;
+        btnRoll.textContent = rollsLeft > 0 ? '🎲 주사위 굴리기' : '조합을 선택하세요';
+      }
+
+      // Toggle hold
+      function toggleHold(index) {
+        if (!hasRolled || rollsLeft <= 0) return;
+        held[index] = !held[index];
+        const scene = document.getElementById(`scene-${index}`);
+        scene.classList.toggle('held', held[index]);
+        scene.style.transform = held[index] ? 'translateY(-12px) scale(1.1)' : 'translateY(0) scale(1)';
+        
+        GameUtils.vibrate(10);
+      }
+
+      // Pick a category
+      function pickCategory(catId, value) {
+        scores[currentPlayer][catId] = value;
+        roundsPlayed++;
+        GameUtils.vibrate(20);
+
+        updateCalcRows();
+
+        // Check game over
+        if (roundsPlayed >= 26) {
+          endGame();
+          return;
+        }
+
+        // Switch player or next turn
+        if (currentPlayer === 1) {
+          currentPlayer = 2;
+        } else {
+          currentPlayer = 1;
+        }
+
+        resetTurn();
+      }
+
+      function resetTurn() {
+        dice = [0, 0, 0, 0, 0];
+        held = [false, false, false, false, false];
+        rollsLeft = 3;
+        hasRolled = false;
+
+        for(let i=0; i<5; i++) {
+          const scene = document.getElementById(`scene-${i}`);
+          if (scene) {
+            scene.classList.remove('held');
+            scene.style.transform = 'translateY(0) scale(1)';
+          }
+          // Reset visually to a random angle for readiness
+          currentRotations[i].x += 45;
+          currentRotations[i].y += 45;
+          const cube = document.getElementById(`cube-${i}`);
+          if (cube) cube.style.transform = `rotateX(${currentRotations[i].x}deg) rotateY(${currentRotations[i].y}deg)`;
+        }
+
+        updateRollButton();
+        updateTurnIndicator();
+        updateAvailableScores();
+      }
+
+      function updateTurnIndicator() {
+        turnIndicator.className = `turn-indicator p${currentPlayer}`;
+        turnIndicator.textContent = `🎲 Player ${currentPlayer} 차례`;
+      }
+
+      function endGame() {
+        const t1 = getGrandTotal(1);
+        const t2 = getGrandTotal(2);
+        const winner = t1 > t2 ? 1 : t2 > t1 ? 2 : 0;
+
+        if (winner === 1) winScores.p1++;
+        else if (winner === 2) winScores.p2++;
+        GameUtils.saveScores(GAME_ID, winScores);
+
+        document.getElementById('score-p1').textContent = winScores.p1;
+        document.getElementById('score-p2').textContent = winScores.p2;
+        document.getElementById('winner-text').textContent =
+          winner === 0 ? '🤝 무승부!' : `🎉 Player ${winner} 승리!`;
+
+        // Final scores detail
+        const fs = document.getElementById('final-scores');
+        fs.innerHTML = `
+          <div class="fs-row"><span>P1 상단</span><span>${getUpperTotal(1)} + ${getUpperBonus(1)}</span></div>
+          <div class="fs-row"><span>P1 하단</span><span>${getLowerTotal(1)}</span></div>
+          <div class="fs-row total"><span style="color:var(--p1)">P1 총점</span><span style="color:var(--p1)">${t1}</span></div>
+          <div class="fs-row" style="margin-top:.5rem"><span>P2 상단</span><span>${getUpperTotal(2)} + ${getUpperBonus(2)}</span></div>
+          <div class="fs-row"><span>P2 하단</span><span>${getLowerTotal(2)}</span></div>
+          <div class="fs-row total"><span style="color:var(--p2)">P2 총점</span><span style="color:var(--p2)">${t2}</span></div>
+        `;
+
+        document.getElementById('overlay-result').classList.remove('hidden');
+      }
+
+      function startGame() {
+        document.getElementById('overlay-start').classList.add('hidden');
+        document.getElementById('overlay-result').classList.add('hidden');
+        document.getElementById('penalty-card').classList.add('hidden');
+
+        scores = { 1: {}, 2: {} };
+        roundsPlayed = 0;
+        currentPlayer = 1;
+
+        buildScoreTable();
+        resetTurn();
+        updateCalcRows();
+      }
+
+      // Event listeners
+      btnRoll.addEventListener('click', rollDice);
+
+      document.getElementById('btn-start').addEventListener('click', startGame);
+      document.getElementById('btn-retry').addEventListener('click', startGame);
+      document.getElementById('btn-penalty').addEventListener('click', () => {
+        const p = GameUtils.spinPenalty();
+        document.getElementById('penalty-emoji').textContent = p.slice(0, 2);
+        document.getElementById('penalty-text').textContent = p;
+        const card = document.getElementById('penalty-card');
+        card.classList.remove('hidden');
+        card.style.animation = 'none'; void card.offsetWidth; card.style.animation = '';
+        GameUtils.vibrate(50);
+      });
+
+      // Init
+      initDiceHTML();
+      bindDiceEvents();
+      buildScoreTable();
+
+      // 테마 토글 버튼 연동
+      const themeBtn = document.getElementById('btn-theme-toggle');
+      if (themeBtn) {
+        themeBtn.addEventListener('click', () => GameUtils.nextTheme());
+      }
+    })();
+  </script>
+</body>
+</html>

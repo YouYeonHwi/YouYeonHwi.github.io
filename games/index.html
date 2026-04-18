@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0a0a0f">
+  <link rel="manifest" href="/games/manifest.json">
+
+  <title>커플 게임 광장 | 2인용 모바일 웹 게임 모음</title>
+  <meta name="description" content="하나의 스마트폰에서 두 명이 동시에! 연인과 함께 즐기는 모바일 대결 게임 모음 💕">
+  <meta property="og:title" content="커플 게임 광장 | 2인용 모바일 웹 게임">
+  <meta property="og:description" content="데이트할 때 이거 하나면 끝! 커플 전용 2인용 게임 모음 💕">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://YouYeonHwi.github.io/games/">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --primary: #a78bfa;
+      --primary-glow: rgba(167,139,250,.25);
+      --accent: #f472b6;
+      --accent-glow: rgba(244,114,182,.2);
+      --bg: #0a0a0f;
+      --surface: rgba(255,255,255,.04);
+      --surface-hover: rgba(255,255,255,.08);
+      --border: rgba(255,255,255,.08);
+      --text: #e2e8f0;
+      --text-dim: #64748b;
+      --radius: 20px;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ═══════════════ HEADER ═══════════════ */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(16px) saturate(1.4);
+      -webkit-backdrop-filter: blur(16px) saturate(1.4);
+      background: rgba(10,10,15,.75);
+      border-bottom: 1px solid var(--border);
+      padding: 0 1.25rem;
+    }
+
+    .header-inner {
+      max-width: 800px;
+      margin: 0 auto;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-weight: 900;
+      font-size: 1.15rem;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-decoration: none;
+    }
+
+    .nav-link {
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: .85rem;
+      font-weight: 600;
+      padding: .4rem .8rem;
+      border-radius: 8px;
+      transition: .2s;
+    }
+
+    .nav-link:hover, .nav-link.active {
+      color: var(--text);
+      background: var(--surface);
+    }
+
+    /* ═══════════════ HERO ═══════════════ */
+    .hero {
+      text-align: center;
+      padding: 3rem 1.5rem 1.5rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .hero-mascot img {
+      width: 130px;
+      height: 130px;
+      object-fit: cover;
+      border-radius: 50%;
+      margin-bottom: .75rem;
+      animation: float 3s ease-in-out infinite;
+      box-shadow: 0 10px 40px rgba(244,114,182,.4);
+      border: 3px solid var(--surface-hover);
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-8px); }
+    }
+
+    .hero h1 {
+      font-size: clamp(1.6rem, 5vw, 2.4rem);
+      font-weight: 900;
+      line-height: 1.2;
+      margin-bottom: .75rem;
+    }
+
+    .hero h1 .gradient {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      color: var(--text-dim);
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    /* ═══════════════ TOTAL SCOREBOARD ═══════════════ */
+    .total-scoreboard {
+      max-width: 800px;
+      margin: 0 auto 1.5rem;
+      padding: 0 1rem;
+    }
+
+    .score-card {
+      background: linear-gradient(135deg, rgba(124,58,237,.1), rgba(236,72,153,.06));
+      border: 1px solid rgba(167,139,250,.12);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .5rem;
+      flex-wrap: wrap;
+    }
+
+    .score-section {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .score-player {
+      text-align: center;
+    }
+
+    .score-player .label {
+      font-size: .65rem;
+      font-weight: 700;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: .15rem;
+    }
+
+    .score-player .num {
+      font-size: 2rem;
+      font-weight: 900;
+    }
+
+    .score-player.p1 .num { color: var(--accent); }
+    .score-player.p2 .num { color: var(--primary); }
+
+    .score-vs {
+      font-size: 1.2rem;
+      font-weight: 900;
+      color: var(--text-dim);
+    }
+
+    .score-reset {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      font-family: inherit;
+      font-size: .65rem;
+      font-weight: 600;
+      padding: .3rem .7rem;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: .2s;
+      margin-left: .5rem;
+    }
+
+    .score-reset:hover { color: var(--text); border-color: rgba(255,255,255,.2); }
+
+    /* ═══════════════ AD BANNER ═══════════════ */
+    .ad-banner {
+      max-width: 728px;
+      margin: 0 auto 1.5rem;
+      padding: 0 1rem;
+    }
+
+    .ad-slot {
+      width: 100%;
+      min-height: 60px;
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-dim);
+      font-size: .65rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    /* ═══════════════ DIFFICULTY FILTER ═══════════════ */
+    .filter-section {
+      max-width: 800px;
+      margin: 0 auto 1.25rem;
+      padding: 0 1rem;
+    }
+
+    .filter-tabs {
+      display: flex;
+      gap: .5rem;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      padding-bottom: .25rem;
+    }
+
+    .filter-tabs::-webkit-scrollbar { display: none; }
+
+    .filter-tab {
+      flex-shrink: 0;
+      padding: .5rem 1rem;
+      border-radius: 50px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-dim);
+      font-family: inherit;
+      font-size: .8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: .2s;
+      white-space: nowrap;
+    }
+
+    .filter-tab:hover {
+      background: var(--surface-hover);
+      color: var(--text);
+    }
+
+    .filter-tab.active {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: white;
+      border-color: transparent;
+    }
+
+    /* ═══════════════ GAME GRID ═══════════════ */
+    .section-title {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 0 1.25rem 1rem;
+      font-size: .8rem;
+      font-weight: 700;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .game-grid {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 0 1rem 3rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1.25rem;
+    }
+
+    /* ═══════════════ GAME CARD ═══════════════ */
+    .game-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      text-decoration: none;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      transition: transform .25s cubic-bezier(.4,0,.2,1), box-shadow .25s, border-color .25s, opacity .3s;
+    }
+
+    .game-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 12px 40px var(--primary-glow);
+      border-color: var(--primary);
+    }
+
+    .game-card:active {
+      transform: scale(.97);
+    }
+
+    .game-card.hidden-card {
+      display: none;
+    }
+
+    .card-visual {
+      height: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-visual::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: .15;
+    }
+
+    .card-visual.gradient-1::before { background: linear-gradient(135deg, #7c3aed, #ec4899); }
+    .card-visual.gradient-2::before { background: linear-gradient(135deg, #0ea5e9, #6366f1); }
+    .card-visual.gradient-3::before { background: linear-gradient(135deg, #f59e0b, #ef4444); }
+    .card-visual.gradient-4::before { background: linear-gradient(135deg, #10b981, #3b82f6); }
+    .card-visual.gradient-5::before { background: linear-gradient(135deg, #ec4899, #f97316); }
+    .card-visual.gradient-6::before { background: linear-gradient(135deg, #8b5cf6, #06b6d4); }
+    .card-visual.gradient-7::before { background: linear-gradient(135deg, #14b8a6, #a855f7); }
+
+    .card-body {
+      padding: 1.2rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: .5rem;
+      margin-bottom: .35rem;
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-size: .6rem;
+      font-weight: 700;
+      padding: .2rem .55rem;
+      border-radius: 50px;
+      letter-spacing: .5px;
+    }
+
+    .badge-live   { background: var(--accent); color: white; }
+    .badge-mobile { background: rgba(167,139,250,.2); color: var(--primary); }
+
+    .difficulty-badge {
+      font-size: .6rem;
+      font-weight: 700;
+      padding: .2rem .5rem;
+      border-radius: 50px;
+      letter-spacing: 0;
+      flex-shrink: 0;
+    }
+    .diff-easy { background: rgba(74,222,128,.15); color: #4ade80; }
+    .diff-medium { background: rgba(251,191,36,.15); color: #fbbf24; }
+    .diff-hard { background: rgba(239,68,68,.15); color: #ef4444; }
+
+    .card-score {
+      font-size: .65rem;
+      color: var(--text-dim);
+      font-weight: 600;
+      text-align: right;
+      white-space: nowrap;
+    }
+    .card-score .p1s { color: var(--accent); }
+    .card-score .p2s { color: var(--primary); }
+
+    .card-desc {
+      font-size: .85rem;
+      color: var(--text-dim);
+      line-height: 1.5;
+      flex: 1;
+    }
+
+    .card-tags {
+      display: flex;
+      gap: .5rem;
+      margin-top: .75rem;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      font-size: .65rem;
+      padding: .2rem .5rem;
+      border-radius: 6px;
+      background: var(--surface-hover);
+      color: var(--text-dim);
+    }
+
+    /* ═══════════════ FOOTER ═══════════════ */
+    .footer {
+      text-align: center;
+      padding: 2rem 1rem;
+      color: var(--text-dim);
+      font-size: .8rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .footer a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    /* ═══════════════ INSTALL BANNER ═══════════════ */
+    .install-banner {
+      max-width: 800px;
+      margin: 0 auto 2rem;
+      padding: 0 1rem;
+    }
+
+    .install-card {
+      background: linear-gradient(135deg, rgba(124,58,237,.12), rgba(236,72,153,.08));
+      border: 1px solid rgba(167,139,250,.15);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .install-card p {
+      font-size: .85rem;
+      color: var(--text-dim);
+      line-height: 1.4;
+    }
+
+    .install-card strong {
+      color: var(--text);
+    }
+
+    .btn-install {
+      flex-shrink: 0;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      border: none;
+      color: white;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: .8rem;
+      padding: .6rem 1.2rem;
+      border-radius: 50px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    /* ═══════════════ NO RESULTS ═══════════════ */
+    .no-results {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-dim);
+      font-size: .9rem;
+      display: none;
+    }
+
+    @media (max-width: 480px) {
+      .install-card { flex-direction: column; text-align: center; }
+      .game-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════════ HEADER ═══════════════ -->
+  <header class="header">
+    <div class="header-inner">
+      <div style="display:flex; align-items:center; gap:1rem;">
+        <a href="/" class="nav-link" style="padding-left:0; color:var(--text);"><i class="fa fa-home"></i> 🏠 블로그</a>
+        <a href="/games/" class="logo">💕 커플 게임 광장</a>
+      </div>
+      <nav style="display:flex; align-items:center; gap:.5rem;">
+        <button id="btn-theme-toggle" class="nav-link" style="background:var(--surface); border:1px solid var(--border); cursor:pointer;">🎨 테마 변경</button>
+        <a href="/games/" class="nav-link active">🎮 게임</a>
+      </nav>
+    </div>
+  </header>
+
+  <script>
+    // 테마 토글 버튼 이벤트 바인딩
+    document.addEventListener('DOMContentLoaded', () => {
+      const themeBtn = document.getElementById('btn-theme-toggle');
+      if (themeBtn) {
+        themeBtn.addEventListener('click', () => {
+          GameUtils.nextTheme();
+        });
+      }
+    });
+  </script>
+
+  <!-- ═══════════════ HERO ═══════════════ -->
+  <section class="hero">
+    <div class="hero-mascot">
+      <img src="/games/assets/shiba_mascot.png" alt="Black Shiba Mascot" />
+    </div>
+    <h1>하나의 폰으로,<br><span class="gradient">둘이 함께 대결!</span></h1>
+    <p>귀여운 까만 시바와 함께하는 2인용 미니게임 타임!<br>데이트할 때 가볍게 즐기고, 지는 사람이 커피 쏘기! 🐾</p>
+  </section>
+
+  <!-- ═══════════════ TOTAL SCOREBOARD ═══════════════ -->
+  <div class="total-scoreboard">
+    <div class="score-card">
+      <div class="score-section">
+        <div class="score-player p1">
+          <div class="label">Player 1</div>
+          <div class="num" id="total-p1">0</div>
+        </div>
+        <div class="score-vs">VS</div>
+        <div class="score-player p2">
+          <div class="label">Player 2</div>
+          <div class="num" id="total-p2">0</div>
+        </div>
+      </div>
+      <button class="score-reset" id="btn-reset-all" title="전체 전적 초기화">🗑️ 초기화</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════ AD BANNER ═══════════════ -->
+  <div class="ad-banner">
+    <!-- [ADSENSE SLOT] 허브 상단 배너 -->
+    <div class="ad-slot">ADVERTISEMENT · 728 × 90</div>
+  </div>
+
+  <!-- ═══════════════ PWA INSTALL BANNER ═══════════════ -->
+  <div class="install-banner" id="install-banner" style="display:none;">
+    <div class="install-card">
+      <p><strong>홈 화면에 추가</strong>하면 앱처럼 바로 열 수 있어요!</p>
+      <button class="btn-install" id="btn-install">설치하기</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════ DIFFICULTY FILTER ═══════════════ -->
+  <div class="filter-section">
+    <div class="filter-tabs" id="filter-tabs">
+      <button class="filter-tab active" data-filter="all">🎮 전체</button>
+      <button class="filter-tab" data-filter="easy">⭐ 초급</button>
+      <button class="filter-tab" data-filter="medium">⭐⭐ 중급</button>
+      <button class="filter-tab" data-filter="hard">⭐⭐⭐ 상급</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════ GAME GRID ═══════════════ -->
+  <div class="section-title">🔥 지금 플레이 가능 · <span id="game-count">8</span>개</div>
+  <div class="game-grid" id="game-grid">
+
+    <!-- CARD 1 — Tap Battle -->
+    <a href="/games/tap-battle/" class="game-card" id="card-tap-battle" data-difficulty="medium" data-game-id="tap-battle">
+      <div class="card-visual gradient-1">⚡</div>
+      <div class="card-body">
+        <div class="card-header">
+          <div class="card-title">
+            순발력 터치 대결
+            <span class="badge badge-live">LIVE</span>
+          </div>
+          <div class="difficulty-badge diff-medium">⭐⭐ 중급</div>
+        </div>
+        <div class="card-score" id="card-score-tap-battle"></div>
+        <p class="card-desc">색이 변하는 순간, 먼저 터치하면 승리! 반응속도로 승부를 정하세요.</p>
+        <div class="card-tags">
+          <span class="tag">2인용</span>
+          <span class="tag">순발력</span>
+          <span class="tag">벌칙 룰렛</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- CARD 2 — RPS -->
+    <a href="/games/rps/" class="game-card" id="card-rps" data-difficulty="easy" data-game-id="rps">
+      <div class="card-visual gradient-3">✊</div>
+      <div class="card-body">
+        <div class="card-header">
+          <div class="card-title">
+            가위바위보
+            <span class="badge badge-live">LIVE</span>
+          </div>
+          <div class="difficulty-badge diff-easy">⭐ 초급</div>
+        </div>
+        <div class="card-score" id="card-score-rps"></div>
+        <p class="card-desc">3판 2선승! 양쪽에서 동시에 선택하고 마지막에 결과 확인!</p>
+        <div class="card-tags">
+          <span class="tag">2인용</span>
+          <span class="tag">전략</span>
+          <span class="tag">벌칙 룰렛</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- CARD 3 — Ping Pong -->
+    <a href="/games/ping-pong/" class="game-card" id="card-ping-pong" data-difficulty="medium" data-game-id="ping-pong">
+      <div class="card-visual gradient-2">🏓</div>
+      <div class="card-body">
+        <div class="card-header">
+          <div class="card-title">
+            미니 핑퐁
+            <span class="badge badge-live">LIVE</span>
+          </div>
+          <div class="difficulty-badge diff-medium">⭐⭐ 중급</div>
+        </div>
+        <div class="card-score" id="card-score-ping-pong"></div>
+        <p class="card-desc">화면 양쪽에서 패들을 터치로 움직여 공을 주고 받는 탁구 대결!</p>
+        <div class="card-tags">
+          <span class="tag">2인용</span>
+          <span class="tag">스포츠</span>
+          <span class="tag">5점 선승</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- CARD 4 — Memory Numbers -->
+    <a href="/games/memory-numbers/" class="game-card" id="card-memory-numbers" data-difficulty="easy" data-game-id="memory-numbers">
+      <div class="card-visual gradient-4">🧠</div>
+      <div class="card-body">
+        <div class="card-header">
+          <div class="card-title">
+            숫자 기억력
+            <span class="badge badge-live">LIVE</span>
+          </div>
+          <div class="difficulty-badge diff-easy">⭐ 초급</div>
+        </div>
+        <div class="card-score" id="card-score-memory-numbers"></div>
+        <p class="card-desc">랜덤 숫자를 기억하고 빠르게 입력! 5라운드 두뇌 대결!</p>
+        <div class="card-tags">
+          <span class="tag">2인용</span>
+          <span class="tag">두뇌</span>
+          <span class="tag">기억력</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- CARD 5 — Balloon Pop -->
+    <a href="/games/balloon-pop/" class="game-card" id="card-balloon-pop" data-difficulty="easy" data-game-id="balloon-pop">
+      <div class="card-visual gradient-5">🎈</div>
+      <div class="card-body">
+        <div class="card-header">
+          <div class="card-title">
+            풍선 터뜨리기
+            <span class="badge badge-live">LIVE</span>
+          </div>
+          <div class="difficulty-badge diff-easy">⭐ 초급</div>
+        </div>
+        <div class="card-score" id="card-score-balloon-pop"></div>
+        <p class="card-desc">15초 타임어택! 각자 영역의 풍선을 미친 듯이 터뜨려라! 💥</p>
+        <div class="card-tags">
+          <span class="tag">2인용</span>
+          <span class="tag">터치</span>
+          <span class="tag">15초</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- CARD 6 — Color Sequence -->
+    <a href="/games/color-sequence/" class="game-card" id="card-color-sequence" data-difficulty="medium" data-game-id="color-sequence">
+      <div class="card-visual gradient-6">🎨</div>
+      <div class="card-body">
+        <div class="card-header">
+          <div class="card-title">
+            색깔 순서 기억
+            <span class="badge badge-live">LIVE</span>
+          </div>
+          <div class="difficulty-badge diff-medium">⭐⭐ 중급</div>
+        </div>
+        <div class="card-score" id="card-score-color-sequence"></div>
+        <p class="card-desc">사이먼 세이즈! 색깔 순서를 기억하고 따라 터치하세요. 더 높은 레벨이 승리!</p>
+        <div class="card-tags">
+          <span class="tag">2인용</span>
+          <span class="tag">기억력</span>
+          <span class="tag">번갈아 플레이</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- CARD 7 — Timing Hit -->
+    <a href="/games/timing-hit/" class="game-card" id="card-timing-hit" data-difficulty="hard" data-game-id="timing-hit">
+      <div class="card-visual gradient-7">🎯</div>
+      <div class="card-body">
+        <div class="card-header">
+          <div class="card-title">
+            타이밍 맞추기
+            <span class="badge badge-live">LIVE</span>
+          </div>
+          <div class="difficulty-badge diff-hard">⭐⭐⭐ 상급</div>
+        </div>
+        <div class="card-score" id="card-score-timing-hit"></div>
+        <p class="card-desc">움직이는 바를 정확한 타이밍에 멈춰라! 정중앙 = 만점! 3라운드 합산 승부!</p>
+        <div class="card-tags">
+          <span class="tag">2인용</span>
+          <span class="tag">집중력</span>
+          <span class="tag">정밀 터치</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- CARD 8 — Yahtzee -->
+    <a href="/games/yahtzee/" class="game-card" id="card-yahtzee" data-difficulty="hard" data-game-id="yahtzee">
+      <div class="card-visual gradient-1" style="background: linear-gradient(135deg, #1e3a8a, #3b82f6)">🎲</div>
+      <div class="card-body">
+        <div class="card-header">
+          <div class="card-title">
+            커플 야추
+            <span class="badge badge-live">LIVE</span>
+          </div>
+          <div class="difficulty-badge diff-hard">⭐⭐⭐ 상급</div>
+        </div>
+        <div class="card-score" id="card-score-yahtzee"></div>
+        <p class="card-desc">주사위 5개로 최고의 조합을 만들어라! 운소기대 커플 야추 대결.</p>
+        <div class="card-tags">
+          <span class="tag">2인용</span>
+          <span class="tag">턴제</span>
+          <span class="tag">전략</span>
+        </div>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- No results message -->
+  <div class="no-results" id="no-results">
+    해당 난이도의 게임이 없습니다 🙈
+  </div>
+
+  <!-- ═══════════════ AD BANNER BOTTOM ═══════════════ -->
+  <div class="ad-banner">
+    <!-- [ADSENSE SLOT] 허브 하단 배너 -->
+    <div class="ad-slot">ADVERTISEMENT · 320 × 100</div>
+  </div>
+
+  <!-- ═══════════════ FOOTER ═══════════════ -->
+  <footer class="footer">
+    <p>© 2024 <a href="/">DevWhistle</a> · 커플 게임 광장</p>
+    <p style="margin-top:.5rem;">문의: dusgnl0903@gmail.com</p>
+  </footer>
+
+  <!-- ═══════════════ SCRIPTS ═══════════════ -->
+  <script src="/games/common.js"></script>
+  <script>
+    (() => {
+      'use strict';
+
+      /* ── 전체 스코어보드 업데이트 ── */
+      function updateTotalScores() {
+        const total = GameUtils.getTotalScores();
+        document.getElementById('total-p1').textContent = total.p1;
+        document.getElementById('total-p2').textContent = total.p2;
+      }
+
+      /* ── 개별 게임 카드 스코어 업데이트 ── */
+      function updateCardScores() {
+        const allScores = GameUtils.getAllGameScores();
+        Object.entries(allScores).forEach(([gameId, s]) => {
+          const el = document.getElementById(`card-score-${gameId}`);
+          if (el) {
+            if (s.p1 === 0 && s.p2 === 0) {
+              el.textContent = '';
+            } else {
+              el.innerHTML = `<span class="p1s">P1: ${s.p1}</span> · <span class="p2s">P2: ${s.p2}</span>`;
+            }
+          }
+        });
+      }
+
+      updateTotalScores();
+      updateCardScores();
+
+      /* ── 전적 초기화 ── */
+      document.getElementById('btn-reset-all').addEventListener('click', () => {
+        if (confirm('모든 게임의 전적을 초기화할까요?')) {
+          GameUtils.resetAllScores();
+          updateTotalScores();
+          updateCardScores();
+        }
+      });
+
+      /* ── 난이도 필터 ── */
+      const filterTabs = document.getElementById('filter-tabs');
+      const gameCards = document.querySelectorAll('.game-card');
+      const gameCount = document.getElementById('game-count');
+      const noResults = document.getElementById('no-results');
+
+      filterTabs.addEventListener('click', e => {
+        const tab = e.target.closest('.filter-tab');
+        if (!tab) return;
+
+        // Update active tab
+        filterTabs.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        const filter = tab.dataset.filter;
+        let visible = 0;
+
+        gameCards.forEach(card => {
+          if (filter === 'all' || card.dataset.difficulty === filter) {
+            card.classList.remove('hidden-card');
+            visible++;
+          } else {
+            card.classList.add('hidden-card');
+          }
+        });
+
+        gameCount.textContent = visible;
+        noResults.style.display = visible === 0 ? 'block' : 'none';
+      });
+
+      /* ── PWA INSTALL ── */
+      let deferredPrompt;
+      window.addEventListener('beforeinstallprompt', e => {
+        e.preventDefault();
+        deferredPrompt = e;
+        document.getElementById('install-banner').style.display = 'block';
+      });
+
+      document.getElementById('btn-install')?.addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        document.getElementById('install-banner').style.display = 'none';
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0a0a0f">
+  <link rel="manifest" href="/games/manifest.json">
+
+  <!-- SEO defaults — 각 게임에서 common.js injectMeta()로 덮어씀 -->
+  <title>커플 게임 광장</title>
+  <meta name="description" content="하나의 스마트폰에서 두 명이 동시에! 연인과 함께 즐기는 모바일 대결 게임 💕">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    /* ═══════════════════ RESET & BASE ═══════════════════ */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --primary: #a78bfa;
+      --primary-glow: rgba(167,139,250,.35);
+      --accent: #f472b6;
+      --accent-glow: rgba(244,114,182,.3);
+      --bg: #0a0a0f;
+      --surface: rgba(255,255,255,.04);
+      --border: rgba(255,255,255,.08);
+      --text: #e2e8f0;
+      --text-dim: #64748b;
+      --radius: 20px;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    /* ═══════════════════ LAYOUT — 2-PLAYER SPLIT ═══════════════════ */
+    .game-wrapper {
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;                      /* dynamic viewport height */
+      padding-top: var(--safe-top);
+      padding-bottom: var(--safe-bottom);
+    }
+
+    /* ── 광고 슬롯 (게임 전/후) ── */
+    .ad-slot {
+      width: 100%;
+      min-height: 60px;
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-dim);
+      font-size: .7rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    /* ── 상단 플레이어 (180° 회전) ── */
+    .player-area {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .player-area.top {
+      transform: rotate(180deg);
+      border-bottom: 2px solid var(--border);
+    }
+
+    .player-area.bottom {
+      border-top: 2px solid var(--border);
+    }
+
+    /* ── 중앙 vs 구분선 ── */
+    .divider {
+      width: 100%;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      flex-shrink: 0;
+      z-index: 10;
+    }
+
+    .divider::before {
+      content: '';
+      position: absolute;
+      left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--primary), transparent);
+    }
+
+    .vs-badge {
+      background: var(--bg);
+      border: 2px solid var(--primary);
+      color: var(--primary);
+      font-weight: 900;
+      font-size: .9rem;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1;
+      box-shadow: 0 0 20px var(--primary-glow);
+    }
+
+    /* ── 게임 상태 오버레이 (시작/종료 화면) ── */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(10,10,15,.92);
+      backdrop-filter: blur(12px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      padding: 2rem;
+      transition: opacity .3s, visibility .3s;
+    }
+
+    .overlay.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .overlay h1 {
+      font-size: clamp(1.8rem, 6vw, 3rem);
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: .5rem;
+    }
+
+    .overlay p {
+      color: var(--text-dim);
+      text-align: center;
+      max-width: 300px;
+      line-height: 1.5;
+      margin-bottom: 1.5rem;
+    }
+
+    /* ── 공통 버튼 ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: .5rem;
+      padding: .9rem 2rem;
+      border: none;
+      border-radius: 50px;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: transform .15s, box-shadow .15s;
+      text-decoration: none;
+      color: white;
+    }
+
+    .btn:active { transform: scale(.95); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      box-shadow: 0 4px 20px var(--primary-glow);
+    }
+
+    .btn-ghost {
+      background: var(--surface);
+      border: 1px solid var(--border);
+    }
+
+    .btn-ghost:hover { background: rgba(255,255,255,.08); }
+
+    /* ── 전적 표시 ── */
+    .scoreboard {
+      display: flex;
+      gap: 2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .score-cell {
+      text-align: center;
+    }
+
+    .score-cell .label {
+      font-size: .75rem;
+      color: var(--text-dim);
+      margin-bottom: .25rem;
+    }
+
+    .score-cell .value {
+      font-size: 2rem;
+      font-weight: 900;
+    }
+
+    .score-cell.p1 .value { color: var(--accent); }
+    .score-cell.p2 .value { color: var(--primary); }
+
+    /* ── 벌칙 카드 ── */
+    .penalty-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      text-align: center;
+      max-width: 320px;
+      margin-bottom: 1.5rem;
+      animation: popIn .4s cubic-bezier(.175,.885,.32,1.275);
+    }
+
+    @keyframes popIn {
+      from { transform: scale(.7); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+
+    .penalty-card .emoji { font-size: 2.5rem; margin-bottom: .5rem; }
+    .penalty-card .text  { font-size: 1.1rem; line-height: 1.5; }
+
+    /* ── 반응형 유틸 ── */
+    @media (min-width: 768px) {
+      .ad-slot { min-height: 90px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="game-wrapper">
+    <!-- ╔══ AD: 게임 시작 전 상단 광고 ══╗ -->
+    <!-- [ADSENSE SLOT 1] 게임 로딩/대기 화면 상단 — 노출률 높음 -->
+    <div class="ad-slot" id="ad-top">AD · 게임 시작 전 광고</div>
+
+    <!-- ╔══ PLAYER 1 (TOP — 180° rotated) ══╗ -->
+    <div class="player-area top" id="area-p1">
+      <!-- 게임별 콘텐츠가 여기에 삽입됩니다 -->
+    </div>
+
+    <!-- ╔══ VS DIVIDER ══╗ -->
+    <div class="divider">
+      <div class="vs-badge">VS</div>
+    </div>
+
+    <!-- ╔══ PLAYER 2 (BOTTOM) ══╗ -->
+    <div class="player-area bottom" id="area-p2">
+      <!-- 게임별 콘텐츠가 여기에 삽입됩니다 -->
+    </div>
+
+    <!-- ╔══ AD: 게임 종료 후 하단 광고 ══╗ -->
+    <!-- [ADSENSE SLOT 2] 게임 오버 하단 — 클릭률 높음 -->
+    <div class="ad-slot" id="ad-bottom">AD · 게임 종료 후 광고</div>
+  </div>
+
+  <!-- ╔══ START OVERLAY ══╗ -->
+  <div class="overlay" id="overlay-start">
+    <!-- [ADSENSE SLOT 3] 시작 대기 화면 중앙 — 체류 시간 긴 구간 -->
+    <div class="ad-slot" style="max-width:320px; margin-bottom:2rem; border-radius:12px;">
+      AD · 대기 화면 광고
+    </div>
+    <h1 id="game-title">게임 이름</h1>
+    <p id="game-desc">게임 설명이 여기에 표시됩니다.</p>
+    <button class="btn btn-primary" id="btn-start" onclick="onStartClick()">START</button>
+    <a href="/games/" class="btn btn-ghost" style="margin-top:.75rem;">← 게임 목록</a>
+  </div>
+
+  <!-- ╔══ GAME OVER OVERLAY ══╗ -->
+  <div class="overlay hidden" id="overlay-end">
+    <h1 id="winner-text">🎉 승리!</h1>
+    <div class="scoreboard">
+      <div class="score-cell p1">
+        <div class="label">Player 1</div>
+        <div class="value" id="score-p1">0</div>
+      </div>
+      <div class="score-cell p2">
+        <div class="label">Player 2</div>
+        <div class="value" id="score-p2">0</div>
+      </div>
+    </div>
+    <div class="penalty-card hidden" id="penalty-card">
+      <div class="emoji" id="penalty-emoji">🎰</div>
+      <div class="text" id="penalty-text">벌칙을 돌려보세요!</div>
+    </div>
+    <button class="btn btn-primary" id="btn-penalty" onclick="onPenaltyClick()">🎰 커플 벌칙 룰렛</button>
+    <div style="display:flex; gap:.75rem; margin-top:.75rem;">
+      <button class="btn btn-ghost" onclick="onRestart()">🔄 다시 하기</button>
+      <a href="/games/" class="btn btn-ghost">📋 게임 목록</a>
+    </div>
+  </div>
+
+  <script src="/games/common.js"></script>
+  <!-- 각 게임의 JS가 여기에 삽입됩니다 -->
+</body>
+</html>

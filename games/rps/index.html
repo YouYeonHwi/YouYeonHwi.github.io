@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0a0a0f">
+  <link rel="manifest" href="/games/manifest.json">
+
+  <title>가위바위보 대결 | 커플 게임 광장</title>
+  <meta name="description" content="가위바위보로 내기하자! 3판 2선승, 지는 사람이 벌칙 💕">
+  <meta property="og:title" content="✊ 가위바위보 대결 — 3판 2선승!">
+  <meta property="og:description" content="커플 내기의 정석! 가위바위보 3판 2선승 ✌️">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --primary: #a78bfa; --primary-glow: rgba(167,139,250,.35);
+      --accent: #f472b6; --accent-glow: rgba(244,114,182,.3);
+      --bg: #0a0a0f; --surface: rgba(255,255,255,.04);
+      --border: rgba(255,255,255,.08); --text: #e2e8f0; --text-dim: #64748b;
+      --radius: 20px;
+      --p1-color: #f472b6; --p2-color: #a78bfa;
+    }
+    html, body {
+      height: 100%; font-family: 'Outfit', sans-serif; background: var(--bg);
+      color: var(--text); overflow: hidden; touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent; user-select: none;
+    }
+
+    .game-wrapper { display: flex; flex-direction: column; height: 100dvh; }
+
+    .ad-slot {
+      width: 100%; min-height: 50px; background: var(--surface);
+      border: 1px dashed var(--border); display: flex; align-items: center;
+      justify-content: center; color: var(--text-dim); font-size: .6rem;
+      letter-spacing: 2px; text-transform: uppercase; flex-shrink: 0;
+    }
+
+    .player-area {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; position: relative; gap: .8rem; padding: 1rem;
+    }
+    .player-area.top { transform: rotate(180deg); background: linear-gradient(135deg, #831843, #4a044e); }
+    .player-area.bottom { background: linear-gradient(135deg, #1e1b4b, #0c4a6e); }
+
+    .player-label {
+      font-size: .7rem; font-weight: 700; letter-spacing: 3px;
+      text-transform: uppercase; opacity: .4; position: absolute; bottom: .5rem;
+    }
+
+    .player-score {
+      font-size: 1.2rem; font-weight: 900; margin-bottom: .25rem;
+    }
+    .top .player-score { color: var(--p1-color); }
+    .bottom .player-score { color: var(--p2-color); }
+
+    .choices { display: flex; gap: 1rem; }
+
+    .choice-btn {
+      width: 72px; height: 72px; border-radius: 50%; border: 2px solid var(--border);
+      background: rgba(255,255,255,.06); font-size: 2rem; display: flex;
+      align-items: center; justify-content: center; cursor: pointer;
+      transition: transform .1s, border-color .2s, background .2s;
+    }
+    .choice-btn:active { transform: scale(.9); }
+    .choice-btn.selected { border-color: #4ade80; background: rgba(74,222,128,.15); }
+    .choice-btn.disabled { opacity: .3; pointer-events: none; }
+
+    .choices.locked {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .3s;
+    }
+
+    .locked-msg {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: rgba(74,222,128,.8);
+      position: absolute;
+      display: none;
+    }
+    .locked-msg.show { display: block; }
+
+    .result-emoji { font-size: 3rem; min-height: 3.5rem; }
+
+    .divider {
+      width: 100%; height: 40px; display: flex; align-items: center;
+      justify-content: center; position: relative; flex-shrink: 0; z-index: 10; background: var(--bg);
+    }
+    .divider::before {
+      content: ''; position: absolute; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--primary), transparent);
+    }
+    .vs-badge {
+      background: var(--bg); border: 2px solid var(--primary); color: var(--primary);
+      font-weight: 900; font-size: .8rem; width: 38px; height: 38px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; z-index: 1;
+      box-shadow: 0 0 16px var(--primary-glow);
+    }
+    .round-info {
+      position: absolute; right: 1rem; font-size: .7rem; color: var(--text-dim); font-weight: 600;
+    }
+
+    /* Overlays */
+    .overlay {
+      position: fixed; inset: 0; background: rgba(10,10,15,.94);
+      backdrop-filter: blur(12px); display: flex; flex-direction: column;
+      align-items: center; justify-content: center; z-index: 999; padding: 2rem;
+      transition: opacity .3s, visibility .3s;
+    }
+    .overlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+    .overlay h1 {
+      font-size: clamp(1.8rem, 6vw, 3rem); font-weight: 900;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: .5rem;
+    }
+    .overlay p { color: var(--text-dim); text-align: center; max-width: 320px; line-height: 1.5; margin-bottom: 1.5rem; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: .5rem; padding: .85rem 2rem;
+      border: none; border-radius: 50px; font-family: inherit; font-weight: 700;
+      font-size: 1rem; cursor: pointer; text-decoration: none; color: white; transition: transform .15s;
+    }
+    .btn:active { transform: scale(.95); }
+    .btn-primary { background: linear-gradient(135deg, var(--primary), var(--accent)); box-shadow: 0 4px 20px var(--primary-glow); }
+    .btn-ghost { background: var(--surface); border: 1px solid var(--border); }
+
+    .scoreboard { display: flex; gap: 2.5rem; margin-bottom: 1.5rem; }
+    .score-cell { text-align: center; }
+    .score-cell .label { font-size: .75rem; color: var(--text-dim); }
+    .score-cell .value { font-size: 2.2rem; font-weight: 900; }
+    .score-cell.p1 .value { color: var(--accent); }
+    .score-cell.p2 .value { color: var(--primary); }
+
+    .penalty-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 1.5rem 2rem; text-align: center; max-width: 320px; margin-bottom: 1.5rem;
+      animation: popIn .4s cubic-bezier(.175,.885,.32,1.275);
+    }
+    .penalty-card.hidden { display: none; }
+    @keyframes popIn { from { transform: scale(.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .penalty-card .emoji { font-size: 2.5rem; margin-bottom: .5rem; }
+    .penalty-card .text  { font-size: 1.05rem; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <div class="game-wrapper">
+    <div class="ad-slot">AD · 상단 광고</div>
+
+    <div class="player-area top" id="area-p1">
+      <div class="player-score" id="p1-wins">0 승</div>
+      <div class="result-emoji" id="p1-result"></div>
+      <div class="locked-msg" id="p1-locked">✅ 선택 완료!</div>
+      <div class="choices" id="p1-choices">
+        <button class="choice-btn" data-choice="scissors" onclick="choose(1,'scissors')">✌️</button>
+        <button class="choice-btn" data-choice="rock" onclick="choose(1,'rock')">✊</button>
+        <button class="choice-btn" data-choice="paper" onclick="choose(1,'paper')">🖐️</button>
+      </div>
+      <span class="player-label">PLAYER 1</span>
+    </div>
+
+    <div class="divider">
+      <div class="vs-badge">VS</div>
+      <span class="round-info" id="round-info">1 / 3</span>
+    </div>
+
+    <div class="player-area bottom" id="area-p2">
+      <div class="player-score" id="p2-wins">0 승</div>
+      <div class="result-emoji" id="p2-result"></div>
+      <div class="locked-msg" id="p2-locked">✅ 선택 완료!</div>
+      <div class="choices" id="p2-choices">
+        <button class="choice-btn" data-choice="scissors" onclick="choose(2,'scissors')">✌️</button>
+        <button class="choice-btn" data-choice="rock" onclick="choose(2,'rock')">✊</button>
+        <button class="choice-btn" data-choice="paper" onclick="choose(2,'paper')">🖐️</button>
+      </div>
+      <span class="player-label">PLAYER 2</span>
+    </div>
+
+    <div class="ad-slot">AD · 하단 광고</div>
+  </div>
+
+  <!-- START OVERLAY -->
+  <div class="overlay" id="overlay-start">
+    <h1>✊ 가위바위보</h1>
+    <p>3판 2선승!<br>양쪽에서 동시에 선택하세요.<br>먼저 선택한 사람의 패가 가려져요 🫣</p>
+    <button class="btn btn-primary" onclick="startGame()">START</button>
+    <a href="/games/" class="btn btn-ghost" style="margin-top:.75rem;">← 게임 목록</a>
+  </div>
+
+  <!-- RESULT OVERLAY -->
+  <div class="overlay hidden" id="overlay-result">
+    <h1 id="final-winner">🎉 승리!</h1>
+    <div class="scoreboard">
+      <div class="score-cell p1"><div class="label">Player 1</div><div class="value" id="final-p1">0</div></div>
+      <div class="score-cell p2"><div class="label">Player 2</div><div class="value" id="final-p2">0</div></div>
+    </div>
+    <div class="penalty-card hidden" id="penalty-card">
+      <div class="emoji" id="penalty-emoji">🎰</div>
+      <div class="text" id="penalty-text"></div>
+    </div>
+    <button class="btn btn-primary" id="btn-penalty" onclick="spinPenalty()">🎰 커플 벌칙 룰렛</button>
+    <div style="display:flex; gap:.75rem; margin-top:.75rem;">
+      <button class="btn btn-ghost" onclick="startGame()">🔄 다시 하기</button>
+      <a href="/games/" class="btn btn-ghost">📋 목록</a>
+    </div>
+  </div>
+
+  <script src="/games/common.js"></script>
+  <script>
+    const GAME_ID = 'rps';
+    let p1Choice = null, p2Choice = null;
+    let p1Wins = 0, p2Wins = 0, round = 0;
+    const WINS_NEEDED = 2, MAX_ROUNDS = 3;
+
+    function startGame() {
+      p1Choice = null; p2Choice = null; p1Wins = 0; p2Wins = 0; round = 0;
+      document.getElementById('overlay-start').classList.add('hidden');
+      document.getElementById('overlay-result').classList.add('hidden');
+      document.getElementById('penalty-card').classList.add('hidden');
+      nextRound();
+    }
+
+    function nextRound() {
+      round++;
+      p1Choice = null; p2Choice = null;
+      document.getElementById('round-info').textContent = `${round} / ${MAX_ROUNDS}`;
+      document.getElementById('p1-wins').textContent = `${p1Wins} 승`;
+      document.getElementById('p2-wins').textContent = `${p2Wins} 승`;
+      document.getElementById('p1-result').textContent = '';
+      document.getElementById('p2-result').textContent = '';
+      enableButtons(1); enableButtons(2);
+    }
+
+    function choose(player, choice) {
+      if (player === 1 && p1Choice) return;
+      if (player === 2 && p2Choice) return;
+
+      GameUtils.vibrate(20);
+
+      if (player === 1) {
+        p1Choice = choice;
+        // 버튼을 완전히 숨기고 "선택 완료" 메시지만 표시 (컨닝 방지)
+        document.getElementById('p1-choices').classList.add('locked');
+        document.getElementById('p1-locked').classList.add('show');
+      } else {
+        p2Choice = choice;
+        document.getElementById('p2-choices').classList.add('locked');
+        document.getElementById('p2-locked').classList.add('show');
+      }
+
+      if (p1Choice && p2Choice) {
+        setTimeout(resolveRound, 600);
+      }
+    }
+
+    function resolveRound() {
+      const emojiMap = { scissors: '✌️', rock: '✊', paper: '🖐️' };
+      document.getElementById('p1-result').textContent = emojiMap[p1Choice];
+      document.getElementById('p2-result').textContent = emojiMap[p2Choice];
+
+      const winner = getWinner(p1Choice, p2Choice);
+      if (winner === 1) p1Wins++;
+      else if (winner === 2) p2Wins++;
+
+      document.getElementById('p1-wins').textContent = `${p1Wins} 승`;
+      document.getElementById('p2-wins').textContent = `${p2Wins} 승`;
+
+      GameUtils.vibrate(winner === 0 ? 15 : 50);
+
+      if (p1Wins >= WINS_NEEDED || p2Wins >= WINS_NEEDED || round >= MAX_ROUNDS) {
+        setTimeout(showFinalResult, 1200);
+      } else {
+        setTimeout(nextRound, 1500);
+      }
+    }
+
+    function getWinner(a, b) {
+      if (a === b) return 0;
+      if ((a==='scissors'&&b==='paper')||(a==='rock'&&b==='scissors')||(a==='paper'&&b==='rock')) return 1;
+      return 2;
+    }
+
+    function showFinalResult() {
+      const scores = GameUtils.getScores(GAME_ID);
+      const w = p1Wins > p2Wins ? 1 : p2Wins > p1Wins ? 2 : 0;
+      if (w === 1) scores.p1++; else if (w === 2) scores.p2++;
+      GameUtils.saveScores(GAME_ID, scores);
+
+      document.getElementById('final-p1').textContent = scores.p1;
+      document.getElementById('final-p2').textContent = scores.p2;
+      document.getElementById('final-winner').textContent =
+        w === 0 ? '🤝 무승부!' : `🎉 Player ${w} 승리!`;
+      document.getElementById('overlay-result').classList.remove('hidden');
+    }
+
+    function spinPenalty() {
+      const p = GameUtils.spinPenalty();
+      document.getElementById('penalty-emoji').textContent = p.slice(0, 2);
+      document.getElementById('penalty-text').textContent = p;
+      const card = document.getElementById('penalty-card');
+      card.classList.remove('hidden');
+      card.style.animation = 'none'; void card.offsetWidth; card.style.animation = '';
+      GameUtils.vibrate(50);
+    }
+
+    function enableButtons(player) {
+      const container = document.getElementById(player === 1 ? 'p1-choices' : 'p2-choices');
+      container.classList.remove('locked');
+      container.querySelectorAll('.choice-btn').forEach(btn => {
+        btn.classList.remove('disabled', 'selected');
+      });
+      document.getElementById(player === 1 ? 'p1-locked' : 'p2-locked').classList.remove('show');
+    }
+  </script>
+</body>
+</html>

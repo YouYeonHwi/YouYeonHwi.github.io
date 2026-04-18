@@ -40,11 +40,10 @@
                 <a href="{{site.baseurl}}/" onclick="pageScrollToTop(this)">
                     {{ intro_page.title | default: site.title | escape }}
                 </a>
-                {% if site.toc.enabled %}
-                    {% if site.toc.enabled_index %}
-                        {% include toc.html html=content h_min=site.toc.h_min h_max=site.toc.h_max %}
-                    {% endif %}
-                {% endif %}
+            <li class="chapter" data-level="1.2">
+                <a href="{{site.baseurl}}/games/" style="color: #f472b6; font-weight: 900;">
+                    🎮 커플 게임 광장 <span class="badge" style="background: #f472b6; color: white; font-size: 0.6rem; padding: 2px 5px; border-radius: 4px; margin-left: 5px;">NEW</span>
+                </a>
             </li>
 
             <li class="divider"></li>
