@@ -44,7 +44,7 @@
 
   function startTimer() {
     timerInterval = setInterval(() => {
-      const state = GameUtils.RemoteManager.getRoomState()?.gameState;
+      const state = GameUtils.RemoteManager.getRoomState();
       if (!state || state.status !== 'playing') return;
       
       const newTime = state.timeLeft - 1;

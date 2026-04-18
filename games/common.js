@@ -368,6 +368,10 @@ const GameUtils = (() => {
       gameId = id;
       onSyncCallback = onSync;
       if (ensureDB()) {
+        // 기존 리스너가 있으면 제거 후 재등록
+        if (roomId && db) {
+          db.ref('rooms/' + roomId + '/gameState').off('value');
+        }
         listenToRoom();
       }
     }
@@ -479,62 +483,66 @@ const GameUtils = (() => {
       const roomRef = db.ref('rooms/' + roomId);
       const statusRef = roomRef.child('status');
       const p2JoinedRef = roomRef.child('p2Joined');
+      let started = false; // onStart 이중 실행 방지
+
+      function cleanup() {
+        statusRef.off('value');
+        p2JoinedRef.off('value');
+      }
+
+      function startGame() {
+        if (started) return;
+        started = true;
+        cleanup();
+        if (overlay.parentNode) overlay.remove();
+        if (onStart) onStart();
+      }
 
       statusRef.on('value', snapshot => {
         const st = snapshot.val();
         if (!st) return;
 
         if (st === 'ready') {
-          // 전환 애니메이션 적용
+          // 대기실 UI 전환
           if (!waitUI.classList.contains('hidden')) {
-             transitionTo(waitUI, readyUI, 'theme-ready');
+            transitionTo(waitUI, readyUI, 'theme-ready');
           } else if (!initUI.classList.contains('hidden')) {
-             transitionTo(initUI, readyUI, 'theme-ready');
+            transitionTo(initUI, readyUI, 'theme-ready');
           }
-          
           if (playerRole === 'p1') {
             overlay.querySelector('#btn-real-start').classList.remove('hidden');
           } else {
             overlay.querySelector('#ready-msg').style.display = 'block';
           }
         } else if (st === 'countdown') {
+          // 카운트다운은 양쪽 모두 실행
           showFastCountdown(() => {
-            // 리스너를 먼저 해제하여 playing 이벤트가 onStart를 이중 실행하는 것을 방지
-            statusRef.off('value');
-            p2JoinedRef.off('value');
-            overlay.remove();
             if (playerRole === 'p1') {
-              roomRef.update({ status: 'playing' }).then(() => {
-                if (onStart) onStart();
-              });
-            } else {
-              if (onStart) onStart();
+              // p1만 status를 playing으로 업데이트 (이 이벤트가 양쪽을 동시에 시작시킴)
+              roomRef.update({ status: 'playing' });
             }
+            // p2는 playing 이벤트를 기다림 (아래 'playing' 분기에서 처리)
           });
         } else if (st === 'playing') {
-          // p2가 이미 countdown에서 처리했거나, 늦게 입장한 경우를 위한 폴백
-          statusRef.off('value');
-          p2JoinedRef.off('value');
-          if (!overlay.parentNode) return; // 이미 제거됨
-          overlay.remove();
-          if (onStart) onStart();
+          // 양쪽 모두 이 이벤트에서 게임 시작
+          startGame();
         }
       });
 
-      // 상대방의 입퇴장을 모니터링 (방장 전용)
+      // 상대방 입퇴장 모니터링 (방장 전용)
       if (playerRole === 'p1') {
         p2JoinedRef.on('value', snapshot => {
-           const joined = snapshot.val();
-           if (joined === false) {
-             // 상대방이 나가면 다시 대기 화면으로 부드럽게 복구
-             if (!readyUI.classList.contains('hidden')) {
-                transitionTo(readyUI, waitUI, 'theme-wait');
-                roomRef.update({ status: 'lobby' });
-             }
-           }
+          const joined = snapshot.val();
+          if (joined === false && !started) {
+            if (!readyUI.classList.contains('hidden')) {
+              transitionTo(readyUI, waitUI, 'theme-wait');
+              roomRef.update({ status: 'lobby' });
+            }
+          }
         });
       }
     }
+
 
     // 부드러운 카드 전환 유틸리티
     function transitionTo(fromUI, toUI, themeClass) {

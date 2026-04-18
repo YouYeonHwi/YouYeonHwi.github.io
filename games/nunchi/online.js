@@ -27,7 +27,10 @@
       // 동기화 리스너 시작
       GameUtils.RemoteManager.init(GAME_ID, onSync);
 
-      startGame();
+      // p1(Host)만 초기 게임 상태를 기록
+      if (myRole === 'p1') {
+        startGame();
+      }
     });
   }
 

@@ -33,6 +33,8 @@
       
       resize();
       myX = W / 2 - PADDLE_W / 2;
+      currentState.p1X = W / 2 - PADDLE_W / 2;
+      currentState.p2X = W / 2 - PADDLE_W / 2;
       running = true;
 
       // 동기화 리스너 시작
@@ -40,10 +42,14 @@
 
       if (myRole === 'p1') {
         resetBall();
+        syncState(); // 초기 상태 동기화
         gameLoop();
       } else {
         renderLoop();
       }
+      // 네트워크 연결 완료 표시
+      netStatus.textContent = `연결됨 (${myRole === 'p1' ? 'Host' : 'Guest'})`;
+      setTimeout(() => { netStatus.style.opacity = '0'; }, 2000);
     });
   }
 

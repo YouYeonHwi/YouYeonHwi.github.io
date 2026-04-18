@@ -58,7 +58,7 @@
     // 2초 후 입력 단계로 전환
     setTimeout(() => {
       GameUtils.RemoteManager.updateState({
-        ...GameUtils.RemoteManager.getRoomState()?.gameState, // 최신 상태 가져오기
+        ...GameUtils.RemoteManager.getRoomState(), // 최신 상태 가져오기
         status: 'input'
       });
     }, 1500 + (round * 500));
@@ -140,7 +140,7 @@
     setTimeout(() => {
       if (state.round >= MAX_ROUNDS) {
         GameUtils.RemoteManager.updateState({
-            ...GameUtils.RemoteManager.getRoomState().gameState,
+            ...GameUtils.RemoteManager.getRoomState(),
             status: 'ended'
         });
       } else {
