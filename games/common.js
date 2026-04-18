@@ -349,9 +349,15 @@ const GameUtils = (() => {
 
     function ensureDB() {
       if (db) return true;
-      if (typeof firebase === 'undefined') return false;
+      if (typeof firebase === 'undefined') {
+        console.error('Firebase SDK not loaded');
+        return false;
+      }
       const config = window.firebaseConfig || window.FIREBASE_CONFIG;
-      if (!config) return false;
+      if (!config) {
+        console.error('Firebase config not found');
+        return false;
+      }
       if (!firebase.apps.length) firebase.initializeApp(config);
       db = firebase.database();
       return true;
@@ -367,15 +373,24 @@ const GameUtils = (() => {
     }
 
     function createRoom(initialState, callback, errorCallback) {
-      if (!ensureDB()) return alert('Firebase를 초기화할 수 없습니다.');
+      if (!ensureDB()) return alert('Firebase 초기화 실패: 설정 파일(firebase-config.js)을 확인하세요.');
       
+      let isTimedOut = false;
+      const timeout = setTimeout(() => {
+        isTimedOut = true;
+        if (errorCallback) errorCallback(new Error('네트워크 연결 시간 초과. Firebase 설정을 확인하세요.'));
+      }, 5000);
+
       const tryCreate = () => {
+        if (isTimedOut) return;
         const newRoomId = Math.floor(1000 + Math.random() * 9000).toString();
         const roomRef = db.ref('rooms/' + newRoomId);
         
         roomRef.once('value').then(snapshot => {
+          if (isTimedOut) return;
+          clearTimeout(timeout);
           if (snapshot.exists()) {
-            tryCreate(); // 중복이면 재시도
+            tryCreate();
           } else {
             roomRef.set({
               gameId: gameId,
@@ -387,7 +402,6 @@ const GameUtils = (() => {
             }).then(() => {
               roomId = newRoomId;
               playerRole = 'p1';
-              // 방장 종료 시 방 삭제 예약
               roomRef.onDisconnect().remove();
               if (callback) callback(newRoomId);
             }).catch(err => {
@@ -396,6 +410,8 @@ const GameUtils = (() => {
             });
           }
         }).catch(err => {
+          if (isTimedOut) return;
+          clearTimeout(timeout);
           if (errorCallback) errorCallback(err);
           else alert('데이터베이스 연결 실패: ' + err.message);
         });
@@ -645,9 +661,18 @@ const GameUtils = (() => {
         });
       };
 
-      overlay.querySelector('#btn-back').onclick = () => location.reload();
-      overlay.querySelector('#btn-cancel').onclick = () => { leaveRoom(); location.reload(); };
-      overlay.querySelector('#btn-ready-cancel').onclick = () => { leaveRoom(); location.reload(); };
+      const goHome = () => {
+        const path = location.pathname;
+        if (path.includes('online.html')) {
+          location.href = 'index.html';
+        } else {
+          location.reload();
+        }
+      };
+
+      overlay.querySelector('#btn-back').onclick = goHome;
+      overlay.querySelector('#btn-cancel').onclick = () => { leaveRoom(); goHome(); };
+      overlay.querySelector('#btn-ready-cancel').onclick = () => { leaveRoom(); goHome(); };
 
       overlay.querySelector('#btn-real-start').onclick = () => {
         if (playerRole === 'p1' && roomId && db) {
