@@ -366,14 +366,14 @@ const GameUtils = (() => {
       }
     }
 
-    function createRoom(initialState, callback) {
+    function createRoom(initialState, callback, errorCallback) {
       if (!ensureDB()) return alert('Firebase를 초기화할 수 없습니다.');
       
       const tryCreate = () => {
         const newRoomId = Math.floor(1000 + Math.random() * 9000).toString();
         const roomRef = db.ref('rooms/' + newRoomId);
         
-        roomRef.once('value', snapshot => {
+        roomRef.once('value').then(snapshot => {
           if (snapshot.exists()) {
             tryCreate(); // 중복이면 재시도
           } else {
@@ -390,8 +390,14 @@ const GameUtils = (() => {
               // 방장 종료 시 방 삭제 예약
               roomRef.onDisconnect().remove();
               if (callback) callback(newRoomId);
+            }).catch(err => {
+              if (errorCallback) errorCallback(err);
+              else alert('방 생성 실패: ' + err.message);
             });
           }
+        }).catch(err => {
+          if (errorCallback) errorCallback(err);
+          else alert('데이터베이스 연결 실패: ' + err.message);
         });
       };
       tryCreate();
@@ -400,7 +406,7 @@ const GameUtils = (() => {
     function joinRoom(id, callback, errorCallback) {
       if (!ensureDB()) return alert('Firebase를 초기화할 수 없습니다.');
       const roomRef = db.ref('rooms/' + id);
-      roomRef.once('value', snapshot => {
+      roomRef.once('value').then(snapshot => {
         const data = snapshot.val();
         if (data && !data.p2Joined) {
           if (data.gameId !== gameId) return errorCallback?.('다른 게임의 방입니다.');
@@ -413,10 +419,16 @@ const GameUtils = (() => {
             // 참여자 종료 시 p2Joined 상태만 false로
             roomRef.child('p2Joined').onDisconnect().set(false);
             if (callback) callback();
+          }).catch(err => {
+            if (errorCallback) errorCallback(err);
+            else alert('참여 처리 실패: ' + err.message);
           });
         } else {
           if (errorCallback) errorCallback('방이 없거나 이미 가득 찼습니다.');
         }
+      }).catch(err => {
+        if (errorCallback) errorCallback(err);
+        else alert('방 정보 조회 실패: ' + err.message);
       });
     }
 
@@ -609,6 +621,10 @@ const GameUtils = (() => {
           overlay.querySelector('#role-p1').textContent = "Host (나)";
           transitionTo(initUI, waitUI, 'theme-wait');
           monitorStatus(overlay, initUI, waitUI, readyUI, onStart);
+        }, (err) => {
+          alert('방 생성 실패: ' + err.message);
+          btnCreate.disabled = false;
+          btnCreate.textContent = "🏠 방 만들기 (Host)";
         });
       };
 
