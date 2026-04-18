@@ -265,8 +265,19 @@
         });
       }
 
+      window.onload = () => {
+        GameUtils.RemoteManager.showSelectionMenu('타이밍 맞추기',
+          () => { // Local
+            document.getElementById('overlay-start').classList.add('hidden');
+            startGame();
+          },
+          () => { // Online
+            window.location.href = 'online.html';
+          }
+        );
+      };
+
       function startGame() {
-        document.getElementById('overlay-start').classList.add('hidden');
         document.getElementById('overlay-result').classList.add('hidden');
         document.getElementById('penalty-card').classList.add('hidden');
         p1Total = 0; p2Total = 0; round = 0;

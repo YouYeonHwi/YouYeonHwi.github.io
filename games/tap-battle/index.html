@@ -399,6 +399,17 @@
       scoreP1.textContent = scores.p1;
       scoreP2.textContent = scores.p2;
 
+      window.onload = () => {
+        GameUtils.RemoteManager.showSelectionMenu('순발력 터치 대결',
+          () => { // Local
+            overlayStart.classList.add('hidden');
+          },
+          () => { // Online
+            window.location.href = 'online.html';
+          }
+        );
+      };
+
       /* ── START FLOW ── */
       btnStart.addEventListener('click', beginRound);
       btnRetry.addEventListener('click', beginRound);

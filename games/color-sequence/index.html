@@ -242,8 +242,19 @@
         });
       });
 
+      window.onload = () => {
+        GameUtils.RemoteManager.showSelectionMenu('색깔 순서 기억',
+          () => { // Local
+            document.getElementById('overlay-start').classList.add('hidden');
+            startGame();
+          },
+          () => { // Online
+            window.location.href = 'online.html';
+          }
+        );
+      };
+
       function startGame() {
-        document.getElementById('overlay-start').classList.add('hidden');
         document.getElementById('overlay-result').classList.add('hidden');
         document.getElementById('penalty-card').classList.add('hidden');
         p1Level = 0; p2Level = 0;

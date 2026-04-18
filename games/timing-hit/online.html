@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>타이밍 맞추기 (원격) | 커플 게임 광장</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --primary: #a78bfa; --accent: #f472b6; --bg: #0a0a0f;
+      --surface: rgba(255,255,255,.05); --text: #f8fafc;
+    }
+    html, body { height: 100%; font-family: 'Outfit', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; touch-action: manipulation; }
+    
+    .game-container { display: flex; flex-direction: column; height: 100dvh; }
+    .ad-slot { height: 50px; background: rgba(255,255,255,0.02); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: #475569; }
+    
+    .player-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; position: relative; }
+    .opponent { border-bottom: 1px solid rgba(255,255,255,0.1); background: rgba(244,114,182,0.03); }
+    .mine { background: rgba(167,139,250,0.03); cursor: pointer; }
+
+    .track {
+      width: 90%; max-width: 320px; height: 40px; background: rgba(255,255,255,0.05);
+      border-radius: 20px; position: relative; border: 1px solid rgba(255,255,255,0.1);
+      margin: 1rem 0; overflow: hidden;
+    }
+    .target-zone {
+      position: absolute; top:0; bottom:0; left:40%; width:20%;
+      background: rgba(74, 222, 128, 0.2); border-left: 2px solid #4ade80; border-right: 2px solid #4ade80;
+    }
+    .center-line { position: absolute; left: 50%; top:0; bottom:0; width:2px; background: #4ade80; transform: translateX(-50%); }
+    
+    .needle {
+      position: absolute; top: -5px; bottom: -5px; width: 6px;
+      background: #fff; border-radius: 3px; box-shadow: 0 0 10px rgba(255,255,255,0.5);
+      z-index: 5;
+    }
+
+    .msg { font-size: 1rem; font-weight: 800; min-height: 1.5rem; text-align: center; }
+    .score-badge { font-size: 0.8rem; font-weight: 900; color: var(--primary); margin-top: 0.5rem; }
+
+    .round-indicator { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10; background: var(--bg); padding: 0.3rem 0.8rem; border-radius: 50px; border: 1px solid var(--primary); font-size: 0.7rem; font-weight: 900; }
+
+    .result-overlay { position: fixed; inset: 0; background: rgba(10,10,15,0.96); backdrop-filter: blur(20px); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; animation: fadeIn 0.4s; }
+    .result-overlay.hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <div class="ad-slot">AD · TOP</div>
+
+    <!-- Opponent -->
+    <div class="player-area opponent">
+      <div class="msg" id="opp-msg">상대방 대기 중...</div>
+      <div class="track">
+        <div class="target-zone"><div class="center-line"></div></div>
+        <div class="needle" id="opp-needle" style="left:0%"></div>
+      </div>
+      <div class="score-badge" id="opp-total">총점: 0</div>
+    </div>
+
+    <!-- Divider -->
+    <div class="round-indicator" id="round-text">ROUND 1/3</div>
+
+    <!-- Mine -->
+    <div class="player-area mine" id="my-area">
+      <div class="msg" id="my-msg">대기 중...</div>
+      <div class="track">
+        <div class="target-zone"><div class="center-line"></div></div>
+        <div class="needle" id="my-needle" style="left:0%"></div>
+      </div>
+      <div class="score-badge" id="my-total">총점: 0</div>
+      <div style="font-size:0.6rem; color:#64748b; margin-top:1rem;">터치하여 멈추세요!</div>
+    </div>
+
+    <div class="ad-slot">AD · BOTTOM</div>
+  </div>
+
+  <div class="result-overlay hidden" id="result-overlay">
+    <h1 id="res-title" style="font-size:3rem; margin-bottom:1rem;">🎉 승리!</h1>
+    <p id="res-detail" style="margin-bottom:2rem; opacity:0.8; font-size:1.1rem;">나: 240점 | 상대: 210점</p>
+    <button onclick="location.reload()" style="padding:1rem 2.5rem; border-radius:50px; background:var(--primary); color:white; border:none; font-weight:800; cursor:pointer;">다시 하기</button>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+  <script src="../firebase-config.js"></script>
+  <script src="../common.js"></script>
+  <script src="online.js"></script>
+</body>
+</html>

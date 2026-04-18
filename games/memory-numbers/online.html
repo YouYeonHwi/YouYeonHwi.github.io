@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>숫자 기억력 (원격) | 커플 게임 광장</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --primary: #a78bfa; --secondary: #f472b6; --bg: #0a0a0f;
+      --surface: rgba(255,255,255,.05); --text: #f8fafc;
+    }
+    html, body { height: 100%; font-family: 'Outfit', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; touch-action: manipulation; }
+    
+    .game-container { display: flex; flex-direction: column; height: 100dvh; }
+    .ad-slot { height: 50px; background: rgba(255,255,255,0.02); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: #475569; }
+    
+    .opponent-area { height: 25%; background: rgba(244,114,182,0.05); border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+    .my-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; position: relative; }
+
+    .status-msg { font-size: 0.9rem; font-weight: 700; color: #94a3b8; margin-bottom: 0.5rem; text-align: center; }
+    
+    .number-display { font-size: 3rem; font-weight: 900; letter-spacing: 5px; color: #4ade80; min-height: 4rem; display: flex; align-items: center; }
+    .number-display.blur { filter: blur(8px); opacity: 0.3; }
+
+    .input-row { font-size: 2rem; font-weight: 900; letter-spacing: 3px; min-height: 3rem; margin-top: 1rem; color: var(--primary); }
+
+    .numpad {
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
+      width: 100%; max-width: 320px; margin-top: 2rem;
+    }
+    .num-btn {
+      aspect-ratio: 1.2; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
+      background: var(--surface); color: white; font-size: 1.2rem; font-weight: 800;
+      cursor: pointer; transition: all 0.1s;
+    }
+    .num-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.2); }
+    .num-btn.disabled { opacity: 0.2; pointer-events: none; }
+
+    .opp-ball { width: 12px; height: 12px; border-radius: 50%; background: #64748b; margin: 0 4px; }
+    .opp-ball.filled { background: var(--secondary); box-shadow: 0 0 8px var(--secondary); }
+
+    .result-overlay { position: fixed; inset: 0; background: rgba(10,10,15,0.96); backdrop-filter: blur(20px); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; animation: fadeIn 0.4s; }
+    .result-overlay.hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <div class="ad-slot">AD · TOP</div>
+
+    <!-- Opponent Mini View -->
+    <div class="opponent-area">
+      <div class="status-msg" id="opp-status">상대방 대기 중...</div>
+      <div style="display:flex;" id="opp-progress">
+        <!-- JS Injection -->
+      </div>
+      <div style="margin-top:0.5rem; font-size:0.75rem; color:var(--secondary); font-weight:800;">상대 점수: <span id="opp-score">0</span></div>
+    </div>
+
+    <!-- Main Game Area -->
+    <div class="my-area">
+      <div id="round-text" style="position:absolute; top:1rem; right:1.5rem; font-weight:900; color:rgba(255,255,255,0.2);">ROUND 1/5</div>
+      <div class="status-msg" id="my-status">로딩 중...</div>
+      <div class="number-display" id="main-number">----</div>
+      
+      <div class="input-row" id="my-input"></div>
+
+      <div class="numpad" id="numpad">
+        <button class="num-btn" data-num="1">1</button>
+        <button class="num-btn" data-num="2">2</button>
+        <button class="num-btn" data-num="3">3</button>
+        <button class="num-btn" data-num="4">4</button>
+        <button class="num-btn" data-num="5">5</button>
+        <button class="num-btn" data-num="6">6</button>
+        <button class="num-btn" data-num="7">7</button>
+        <button class="num-btn" data-num="8">8</button>
+        <button class="num-btn" data-num="9">9</button>
+        <button class="num-btn" data-num="0">0</button>
+      </div>
+      
+      <div style="margin-top:2rem; font-size:0.8rem; font-weight:800; color:var(--primary);">내 점수: <span id="my-score">0</span></div>
+    </div>
+
+    <div class="ad-slot">AD · BOTTOM</div>
+  </div>
+
+  <div class="result-overlay hidden" id="result-overlay">
+    <h1 id="res-title" style="font-size:3rem; margin-bottom:1rem;">패배...</h1>
+    <p id="res-detail" style="margin-bottom:2rem; opacity:0.7;">총 5라운드 중 3라운드 성공</p>
+    <button onclick="location.reload()" style="padding:1rem 2rem; border-radius:50px; background:var(--primary); color:white; border:none; font-weight:800; cursor:pointer;">홈으로 / 다시 하기</button>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+  <script src="../firebase-config.js"></script>
+  <script src="../common.js"></script>
+  <script src="online.js"></script>
+</body>
+</html>

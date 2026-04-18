@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>풍선 터뜨리기 (원격) | 커플 게임 광장</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --primary: #a78bfa; --secondary: #f472b6; --bg: #0a0a0f;
+      --surface: rgba(255,255,255,.05); --text: #f8fafc;
+    }
+    html, body { height: 100%; font-family: 'Outfit', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; touch-action: manipulation; }
+    
+    .game-container { display: flex; flex-direction: column; height: 100dvh; }
+    .ad-slot { height: 50px; background: rgba(255,255,255,0.02); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: #475569; }
+    
+    .opp-hud { height: 60px; background: rgba(244,114,182,0.1); display: flex; align-items: center; justify-content: space-between; padding: 0 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .my-area { flex: 1; position: relative; overflow: hidden; background: linear-gradient(180deg, var(--bg), #0f0f1a); }
+
+    .balloon {
+      position: absolute; font-size: 2.5rem; cursor: pointer;
+      user-select: none; transition: transform 0.1s;
+      animation: drift 3s linear infinite;
+    }
+    @keyframes drift {
+      0% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-10px) rotate(5deg); }
+      100% { transform: translateY(0) rotate(0deg); }
+    }
+
+    .timer-center {
+      position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      background: var(--secondary); color: white; padding: 0.2rem 1.5rem;
+      border-radius: 0 0 15px 15px; font-weight: 900; font-size: 0.9rem; z-index: 10;
+    }
+
+    .hud-label { font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+    .hud-val { font-size: 1.2rem; font-weight: 900; }
+
+    .result-overlay { position: fixed; inset: 0; background: rgba(10,10,15,0.96); backdrop-filter: blur(20px); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; animation: fadeIn 0.4s; }
+    .result-overlay.hidden { display: none; }
+    
+    .countdown-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 500; display: flex; align-items: center; justify-content: center; }
+    .countdown-num { font-size: 6rem; font-weight: 900; color: var(--primary); animation: scaleUp 1s infinite; }
+    @keyframes scaleUp { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1.2); opacity: 1; } }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <div class="ad-slot">AD · TOP</div>
+
+    <!-- Opponent Mini HUD -->
+    <div class="opp-hud">
+      <div>
+        <div class="hud-label">상대방</div>
+        <div class="hud-val" id="opp-count">💥 0</div>
+      </div>
+      <div id="opp-status" style="font-size:0.8rem; font-weight:700; color:var(--secondary);">기다리는 중...</div>
+    </div>
+
+    <!-- Main Game Area -->
+    <div class="my-area" id="game-field">
+      <div class="timer-center" id="game-timer">⏱ 15s</div>
+      
+      <!-- Balloons spawn here -->
+
+      <div style="position:absolute; bottom:1rem; left:1.5rem;">
+        <div class="hud-label">내 점수</div>
+        <div class="hud-val" id="my-count">💥 0</div>
+      </div>
+    </div>
+
+    <div class="ad-slot">AD · BOTTOM</div>
+  </div>
+
+  <div class="countdown-overlay hidden" id="overlay-countdown">
+    <div class="countdown-num" id="cd-num">3</div>
+  </div>
+
+  <div class="result-overlay hidden" id="result-overlay">
+    <h1 id="res-title" style="font-size:3.5rem; margin-bottom:1rem;">패배...</h1>
+    <p id="res-detail" style="margin-bottom:2rem; opacity:0.8; font-size:1.2rem;">내 기록: 24개 | 상대 기록: 30개</p>
+    <button onclick="location.reload()" style="padding:1rem 2.5rem; border-radius:50px; background:var(--primary); color:white; border:none; font-weight:900; cursor:pointer; font-size:1.2rem;">다시 하기 / 홈으로</button>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+  <script src="../firebase-config.js"></script>
+  <script src="../common.js"></script>
+  <script src="online.js"></script>
+</body>
+</html>

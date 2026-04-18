@@ -330,10 +330,21 @@
         animId = requestAnimationFrame(loop);
       }
 
+      window.onload = () => {
+        GameUtils.RemoteManager.showSelectionMenu('미니 핑퐁',
+          () => { // Local
+            document.getElementById('overlay-start').classList.add('hidden');
+            startGame();
+          },
+          () => { // Online
+            window.location.href = 'online.html';
+          }
+        );
+      };
+
       function startGame() {
         initGame();
         running = true;
-        document.getElementById('overlay-start').classList.add('hidden');
         document.getElementById('overlay-result').classList.add('hidden');
         document.getElementById('penalty-card').classList.add('hidden');
         loop();

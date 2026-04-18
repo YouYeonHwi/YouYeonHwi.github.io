@@ -132,11 +132,22 @@
     let historyArr = [];
     let cooldown = false;
 
+    window.onload = () => {
+      GameUtils.RemoteManager.showSelectionMenu('눈치 게임',
+        () => { // Local
+          document.getElementById('overlay-start').classList.add('hidden');
+          startGame();
+        },
+        () => { // Online
+          window.location.href = 'online.html';
+        }
+      );
+    };
+
     function startGame() {
       currentNum = 0; playing = true; lastTapPlayer = 0;
       tapTimestamps = { 1: 0, 2: 0 };
       historyArr = [];
-      document.getElementById('overlay-start').classList.add('hidden');
       document.getElementById('overlay-result').classList.add('hidden');
       document.getElementById('penalty-card').classList.add('hidden');
       document.getElementById('center-num').textContent = '0';

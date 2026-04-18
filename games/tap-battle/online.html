@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>순발력 터치 (원격) | 커플 게임 광장</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --primary: #a78bfa; --secondary: #f472b6; --bg: #0a0a0f;
+      --surface: rgba(255,255,255,.05); --text: #f8fafc;
+    }
+    html, body { height: 100%; font-family: 'Outfit', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; touch-action: none; }
+    
+    .game-container { display: flex; flex-direction: column; height: 100dvh; }
+    .ad-slot { height: 50px; background: rgba(255,255,255,0.02); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: #475569; }
+    
+    .tap-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; transition: background 0.2s; cursor: pointer; }
+    .tap-area.opponent { border-bottom: 2px solid rgba(255,255,255,0.1); background: rgba(244,114,182,0.03); }
+    .tap-area.mine { background: rgba(167,139,250,0.03); }
+    
+    .tap-area.go { background: #4ade80 !important; }
+    .tap-area.fail { background: #ef4444 !important; }
+
+    .status-msg { font-size: 1.5rem; font-weight: 900; text-align: center; pointer-events: none; }
+    .tap-count { font-size: 4rem; font-weight: 900; opacity: 0.2; position: absolute; }
+
+    .center-info { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10; background: var(--bg); padding: 0.5rem 1rem; border-radius: 50px; border: 1px solid var(--primary); font-weight: 800; font-size: 0.8rem; pointer-events: none; }
+
+    .result-overlay { position: fixed; inset: 0; background: rgba(10,10,15,0.95); backdrop-filter: blur(20px); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .result-overlay.hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <div class="ad-slot">AD · TOP</div>
+
+    <!-- Opponent -->
+    <div class="tap-area opponent" id="opp-area">
+      <div class="tap-count" id="opp-count">0</div>
+      <div class="status-msg" id="opp-msg">연결 대기 중...</div>
+    </div>
+
+    <!-- Divider -->
+    <div class="center-info" id="game-status">원격 대결</div>
+
+    <!-- Me -->
+    <div class="tap-area mine" id="my-area">
+      <div class="status-msg" id="my-msg">로딩 중...</div>
+      <div class="tap-count" id="my-count">0</div>
+    </div>
+
+    <div class="ad-slot">AD · BOTTOM</div>
+  </div>
+
+  <div class="result-overlay hidden" id="result-overlay">
+    <h1 id="result-winner" style="font-size:3.5rem; margin-bottom:1rem; background:linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">승리!</h1>
+    <p id="result-detail" style="font-size:1.2rem; opacity:0.8; margin-bottom:2rem;">반응 속도: 0.42s</p>
+    <button onclick="location.reload()" style="padding:1rem 2.5rem; border-radius:50px; background:linear-gradient(135deg, var(--primary), var(--secondary)); color:white; border:none; font-weight:900; font-size:1.2rem; cursor:pointer; box-shadow:0 10px 30px rgba(167,139,250,0.3);">다시 하기</button>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+  <script src="../firebase-config.js"></script>
+  <script src="../common.js"></script>
+  <script src="online.js"></script>
+</body>
+</html>

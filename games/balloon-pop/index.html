@@ -236,8 +236,19 @@
       let timeLeft = GAME_TIME;
       let running = false;
 
+      window.onload = () => {
+        GameUtils.RemoteManager.showSelectionMenu('풍선 터뜨리기',
+          () => { // Local
+            document.getElementById('overlay-start').classList.add('hidden');
+            startGame();
+          },
+          () => { // Online
+            window.location.href = 'online.html';
+          }
+        );
+      };
+
       function startGame() {
-        document.getElementById('overlay-start').classList.add('hidden');
         document.getElementById('overlay-result').classList.add('hidden');
         document.getElementById('penalty-card').classList.add('hidden');
         p1Count = 0; p2Count = 0; timeLeft = GAME_TIME; running = false;

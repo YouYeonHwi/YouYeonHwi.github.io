@@ -292,6 +292,227 @@ const GameUtils = (() => {
     document.head.appendChild(script);
   }
 
+  /* ───────────────────── 실시간 원격 엔진 (RemoteManager) ───────────────────── */
+  const RemoteManager = (() => {
+    let db = null;
+    let roomId = null;
+    let playerRole = null; // 'p1' or 'p2'
+    let onSyncCallback = null;
+    let gameId = '';
+
+    function init(id, onSync) {
+      if (!window.firebase) {
+        console.error('Firebase SDK가 로드되지 않았습니다.');
+        return;
+      }
+      if (!window.FIREBASE_CONFIG) {
+        console.error('FIREBASE_CONFIG가 없습니다.');
+        return;
+      }
+
+      firebase.initializeApp(window.FIREBASE_CONFIG);
+      db = firebase.database();
+      gameId = id;
+      onSyncCallback = onSync;
+    }
+
+    function createRoom(initialState, callback) {
+      const newId = Math.floor(1000 + Math.random() * 9000).toString();
+      roomId = newId;
+      playerRole = 'p1';
+      
+      db.ref('rooms/' + roomId).set({
+        gameId: gameId,
+        status: 'waiting',
+        gameState: initialState,
+        players: { p1: true },
+        updatedAt: firebase.database.ServerValue.TIMESTAMP
+      }).then(() => {
+        listen();
+        if (callback) callback(newId);
+      });
+    }
+
+    function joinRoom(id, callback, onError) {
+      db.ref('rooms/' + id).once('value', snapshot => {
+        const data = snapshot.val();
+        if (!data) return onError?.('존재하지 않는 방입니다.');
+        if (data.gameId !== gameId) return onError?.('다른 게임의 방입니다.');
+        if (data.status !== 'waiting') return onError?.('이미 시작된 방입니다.');
+
+        roomId = id;
+        playerRole = 'p2';
+        db.ref('rooms/' + roomId).update({
+          status: 'playing',
+          'players/p2': true
+        }).then(() => {
+          listen();
+          if (callback) callback();
+        });
+      });
+    }
+
+    function listen() {
+      db.ref('rooms/' + roomId).on('value', snapshot => {
+        const data = snapshot.val();
+        if (data && onSyncCallback) {
+          onSyncCallback(data.gameState, playerRole, data.status);
+        }
+      });
+    }
+
+    function updateState(newState) {
+      if (!roomId) return;
+      db.ref('rooms/' + roomId + '/gameState').set({
+        ...newState,
+        updatedAt: firebase.database.ServerValue.TIMESTAMP
+      });
+    }
+
+    function leaveRoom() {
+      if (roomId && playerRole === 'p1') {
+        db.ref('rooms/' + roomId).remove();
+      }
+      roomId = null;
+    }
+
+    /* ───────────────────── UI 동적 주입 (Lobby & Menu) ───────────────────── */
+    function injectStyles() {
+      if (document.getElementById('remote-manager-styles')) return;
+      const style = document.createElement('style');
+      style.id = 'remote-manager-styles';
+      style.textContent = `
+        .remote-overlay {
+          position: fixed; inset: 0; background: rgba(10,10,15,0.98);
+          backdrop-filter: blur(20px); z-index: 10000; display: flex;
+          flex-direction: column; align-items: center; justify-content: center;
+          padding: 2rem; color: #e2e8f0; font-family: 'Outfit', sans-serif;
+          animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .remote-card {
+          width: 100%; max-width: 320px; text-align: center;
+          background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 24px; padding: 2rem; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        .remote-card h1 { font-size: 1.8rem; font-weight: 900; margin-bottom: 0.5rem; background: linear-gradient(135deg, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .remote-card p { font-size: 0.85rem; color: #94a3b8; margin-bottom: 2rem; line-height: 1.5; }
+        .remote-btn {
+          width: 100%; padding: 1rem; border-radius: 50px; border: none;
+          font-weight: 800; font-size: 1rem; cursor: pointer; margin-bottom: 0.8rem;
+          transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .remote-btn-primary { background: linear-gradient(135deg, #a78bfa, #f472b6); color: white; box-shadow: 0 4px 15px rgba(167,139,250,0.4); }
+        .remote-btn-ghost { background: rgba(255,255,255,0.05); color: #e2e8f0; border: 1px solid rgba(255,255,255,0.1); }
+        .remote-btn:active { transform: scale(0.96); }
+        .remote-input {
+          width: 100%; padding: 1rem 1.5rem; border-radius: 50px; border: 1px solid rgba(255,255,255,0.1);
+          background: rgba(0,0,0,0.2); color: white; font-family: inherit; font-size: 1.1rem;
+          text-align: center; margin-bottom: 1rem; outline: none; transition: border-color 0.2s;
+        }
+        .remote-input:focus { border-color: #a78bfa; }
+        .room-code-display {
+          font-size: 3rem; font-weight: 900; color: #a78bfa; letter-spacing: 4px;
+          margin: 1.5rem 0; text-shadow: 0 0 20px rgba(167,139,250,0.3);
+        }
+        .hidden { display: none !important; }
+      `;
+      document.head.appendChild(style);
+    }
+
+    function showSelectionMenu(gameTitle, onLocal, onOnline) {
+      injectStyles();
+      const overlay = document.createElement('div');
+      overlay.className = 'remote-overlay';
+      overlay.innerHTML = `
+        <div class="remote-card">
+          <img src="/games/assets/shiba_mascot.png" style="width:80px; margin-bottom:1rem;">
+          <h1>${gameTitle}</h1>
+          <p>친구와 대결할 방식을 선택하세요!</p>
+          <button class="remote-btn remote-btn-primary" id="menu-local">📱 로컬 대결 (한 화면)</button>
+          <button class="remote-btn remote-btn-ghost" id="menu-online">🌐 원격 대결 (따로 플레이)</button>
+          <a href="/games/" style="color:#64748b; font-size:0.75rem; text-decoration:none; margin-top:1rem; display:inline-block;">← 게임 목록으로</a>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+
+      overlay.querySelector('#menu-local').onclick = () => {
+        overlay.remove();
+        onLocal();
+      };
+      overlay.querySelector('#menu-online').onclick = () => {
+        overlay.remove();
+        onOnline();
+      };
+    }
+
+    function openLobby(gameId, initialState, onStart) {
+      injectStyles();
+      const overlay = document.createElement('div');
+      overlay.className = 'remote-overlay';
+      overlay.innerHTML = `
+        <div class="remote-card" id="lobby-init">
+          <h1>원격 대결</h1>
+          <p>방을 만들거나 참여 코드를 입력하세요.</p>
+          <button class="remote-btn remote-btn-primary" id="btn-create">🏠 방 만들기 (Host)</button>
+          <div style="height:1px; background:rgba(255,255,255,0.1); margin:1.5rem 0;"></div>
+          <input type="text" class="remote-input" id="input-code" placeholder="방 번호 4자리" maxlength="4">
+          <button class="remote-btn remote-btn-ghost" id="btn-join">참여하기</button>
+          <button class="remote-btn" style="background:none; color:#64748b; font-size:0.8rem;" id="btn-back">← 취소</button>
+        </div>
+        <div class="remote-card hidden" id="lobby-wait">
+          <h1>대기 중...</h1>
+          <p>상대방에게 아래 코드를 전송하세요.</p>
+          <div class="room-code-display" id="room-code-val">----</div>
+          <button class="remote-btn remote-btn-ghost" id="btn-cancel">방 삭제 및 취소</button>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+
+      const initUI = overlay.querySelector('#lobby-init');
+      const waitUI = overlay.querySelector('#lobby-wait');
+      const input = overlay.querySelector('#input-code');
+
+      overlay.querySelector('#btn-create').onclick = () => {
+        createRoom(initialState, (newId) => {
+          initUI.classList.add('hidden');
+          waitUI.classList.remove('hidden');
+          overlay.querySelector('#room-code-val').textContent = newId;
+        });
+      };
+
+      overlay.querySelector('#btn-join').onclick = () => {
+        const code = input.value.trim();
+        if (code.length !== 4) return alert('4자리 코드를 입력하세요.');
+        joinRoom(code, () => {
+          overlay.remove();
+          onStart();
+        }, (err) => alert(err));
+      };
+
+      overlay.querySelector('#btn-back').onclick = () => location.reload();
+      overlay.querySelector('#btn-cancel').onclick = () => {
+        leaveRoom();
+        location.reload();
+      };
+
+      // Room state monitoring for host
+      const checkInterval = setInterval(() => {
+        if (getRole() === 'p1' && roomId) {
+          db.ref('rooms/' + roomId + '/status').once('value', snapshot => {
+            if (snapshot.val() === 'playing') {
+              clearInterval(checkInterval);
+              overlay.remove();
+              onStart();
+            }
+          });
+        }
+      }, 1000);
+    }
+
+    return { init, createRoom, joinRoom, updateState, leaveRoom, getRoomId: () => roomId, getRole: () => playerRole, showSelectionMenu, openLobby };
+  })();
+
   /* ───────────────────── 초기화 ───────────────────── */
   function init() {
     lockViewport();
@@ -328,6 +549,7 @@ const GameUtils = (() => {
     setTheme,
     applyTheme,
     nextTheme,
-    THEMES
+    THEMES,
+    RemoteManager
   };
 })();
