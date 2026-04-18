@@ -35,9 +35,9 @@ layout: post
 <section id="projects">
   <h2>프로젝트</h2>
   <article>
-    <h3>Neon Runner (Mini Game) 🎮</h3>
-    <p>포인트를 모아 스킨을 구매할 수 있는 중독성 있는 HTML5 미니 게임입니다. Git 블로그 내에서 별도의 프리미엄 레이아웃으로 구동됩니다.</p>
-    <a href="./game/">게임 플레이하기</a>
+    <h3>커플 게임 광장 🎮</h3>
+    <p>한 화면에서 두 명이 동시에 플레이할 수 있는 2인용 미니게임 모음(야추 3D, 가위바위보 등)입니다. 커플 데이트 시 가볍게 즐겨보세요!</p>
+    <a href="./games/">게임 광장 입장하기</a>
   </article>
   <article>
     <h3>Adaptive Korean LLM</h3>
