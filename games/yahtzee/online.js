@@ -36,7 +36,6 @@
     scores: { p1: {}, p2: {} },
     lastAction: null,
     lastScore: null, // { p, cat } 형태
-    yahtzeeTrigger: null, // { p, ts }
     winner: null
   };
 
@@ -109,15 +108,8 @@
     const prevRolls  = currentState.rollsLeft;
 
     // 상태 업데이트
-    const previousCelebrationTs = currentState.yahtzeeTrigger ? currentState.yahtzeeTrigger.ts : 0;
     currentState = state;
     myRole = role;
-
-    // 야추 애니메이션 동기화 트리거
-    const newCelebration = state.yahtzeeTrigger;
-    if (newCelebration && newCelebration.ts > previousCelebrationTs) {
-      showYahtzeeCelebration();
-    }
 
     // 주사위 애니메이션 결정 로직
     // 1. 주사위 숫자가 바뀌었는가?
@@ -257,7 +249,6 @@
       held: [false, false, false, false, false],
       lastAction: 'score',
       lastScore: { p: myRole, cat: catId },
-      yahtzeeTrigger: (catId === 'yahtzee' && score === 50) ? { p: myRole, ts: Date.now() } : currentState.yahtzeeTrigger,
       winner
     });
   }
@@ -490,37 +481,6 @@
       </div>`;
 
     overlay.classList.remove('hidden');
-  }
-
-  /* ── YAHTZEE CELEBRATION LOGIC ── */
-  function showYahtzeeCelebration() {
-    const overlay = document.getElementById('yahtzee-celebration');
-    const container = document.getElementById('celeb-dice-container');
-    if (!overlay || !container) return;
-
-    overlay.classList.add('active');
-    container.innerHTML = '';
-    
-    const diceEmojis = ['🎲', '🎲', '✨', '💎', '🔥'];
-    for (let i = 0; i < 30; i++) {
-      setTimeout(() => {
-        const die = document.createElement('div');
-        die.className = 'celeb-die';
-        die.textContent = diceEmojis[Math.floor(Math.random() * diceEmojis.length)];
-        die.style.left = Math.random() * 100 + '%';
-        die.style.animationDuration = (Math.random() * 2 + 1) + 's';
-        container.appendChild(die);
-        setTimeout(() => die.remove(), 4000);
-      }, i * 100);
-    }
-
-    if (window.navigator.vibrate) {
-      window.navigator.vibrate([100, 50, 100, 50, 300]);
-    }
-
-    setTimeout(() => {
-      overlay.classList.remove('active');
-    }, 4500);
   }
 
   // ── 버튼 이벤트 ──────────────────────────────────────────

@@ -359,38 +359,9 @@
       padding: .25rem 0; font-size: .85rem;
     }
     .final-scores .fs-row.total {
+      border-top: 1px solid var(--border);
       padding-top: .5rem; margin-top: .25rem;
       font-weight: 900; font-size: 1rem;
-    }
-
-    /* ═══════════════ YAHTZEE CELEBRATION ═══════════════ */
-    .yahtzee-celebration {
-      position: fixed; inset: 0; z-index: 2000;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);
-      pointer-events: none; opacity: 0; visibility: hidden;
-      transition: opacity 0.5s;
-    }
-    .yahtzee-celebration.active { opacity: 1; visibility: visible; }
-    
-    .celeb-title {
-      font-size: clamp(3rem, 15vw, 6rem); font-weight: 900;
-      color: #fbbf24; text-shadow: 0 0 30px rgba(251, 191, 36, 0.8), 0 0 60px rgba(251, 191, 36, 0.4);
-      transform: scale(0.5); transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      margin-bottom: 1rem;
-    }
-    .yahtzee-celebration.active .celeb-title { transform: scale(1); animation: celeb-bounce 2s infinite 0.6s; }
-    
-    @keyframes celeb-bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
-    
-    .celeb-dice-container { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
-    .celeb-die {
-      position: absolute; font-size: 2.5rem;
-      animation: fall-rotate 3s linear forwards;
-    }
-    @keyframes fall-rotate {
-      0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
-      100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
     }
   </style>
 </head>
@@ -497,13 +468,6 @@
       <button class="btn btn-ghost" id="btn-retry">🔄 다시 하기</button>
       <a href="/games/" class="btn btn-ghost">📋 목록</a>
     </div>
-  </div>
-
-  <!-- YAHTZEE CELEBRATION -->
-  <div class="yahtzee-celebration" id="yahtzee-celebration">
-    <div class="celeb-dice-container" id="celeb-dice-container"></div>
-    <div class="celeb-title">YAHTZEE!!</div>
-    <div style="font-size: 1.5rem; font-weight: 700; color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.5);">🎲 야추 달성! 🎲</div>
   </div>
 
   <script src="/games/common.js"></script>
@@ -799,11 +763,6 @@
         roundsPlayed++;
         GameUtils.vibrate(20);
 
-        // 야추 애니메이션 트리거
-        if (catId === 'yahtzee' && value === 50) {
-          showYahtzeeCelebration();
-        }
-
         updateCalcRows();
 
         // Check game over
@@ -913,42 +872,6 @@
         card.style.animation = 'none'; void card.offsetWidth; card.style.animation = '';
         GameUtils.vibrate(50);
       });
-
-      /* ── YAHTZEE CELEBRATION LOGIC ── */
-      function showYahtzeeCelebration() {
-        const overlay = document.getElementById('yahtzee-celebration');
-        const container = document.getElementById('celeb-dice-container');
-        if (!overlay || !container) return;
-
-        overlay.classList.add('active');
-        container.innerHTML = '';
-        
-        // 주사위 흩날리기 효과
-        const diceEmojis = ['🎲', '🎲', '✨', '💎', '🔥'];
-        for (let i = 0; i < 30; i++) {
-          setTimeout(() => {
-            const die = document.createElement('div');
-            die.className = 'celeb-die';
-            die.textContent = diceEmojis[Math.floor(Math.random() * diceEmojis.length)];
-            die.style.left = Math.random() * 100 + '%';
-            die.style.animationDuration = (Math.random() * 2 + 1) + 's';
-            container.appendChild(die);
-            
-            // 제거
-            setTimeout(() => die.remove(), 4000);
-          }, i * 100);
-        }
-
-        // 화면 강렬한 진동
-        if (window.navigator.vibrate) {
-          window.navigator.vibrate([100, 50, 100, 50, 300]);
-        }
-
-        // 4초 후 제거
-        setTimeout(() => {
-          overlay.classList.remove('active');
-        }, 4000);
-      }
 
       // Init
       initDiceHTML();
