@@ -100,13 +100,21 @@
 
     const prevDice   = [...currentState.dice];
     const prevTurn   = currentState.turn;
+    const prevRolls  = currentState.rollsLeft;
 
     // 상태 업데이트
     currentState = state;
     myRole = role;
 
-    // 주사위 애니메이션: 주사위가 실제로 변경된 경우에만
-    if (state.lastAction === 'roll' && JSON.stringify(prevDice) !== JSON.stringify(state.dice)) {
+    // 주사위 애니메이션 결정 로직
+    // 1. 주사위 숫자가 바뀌었는가?
+    const diceChanged = JSON.stringify(prevDice) !== JSON.stringify(state.dice);
+    // 2. 굴리기 횟수가 줄어들었는가? (굴리기 액션 발생)
+    const rollOccurred = state.rollsLeft < prevRolls;
+    // 3. 현재 턴이 유지되고 있는가? (턴 전환 리셋 방지)
+    const sameTurn = state.turn === prevTurn;
+
+    if (diceChanged && rollOccurred && sameTurn) {
       animateDice(state.dice);
     } else {
       updateDiceFaces(state.dice);
