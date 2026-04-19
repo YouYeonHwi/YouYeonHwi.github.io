@@ -187,5 +187,14 @@
   myArea.addEventListener('touchstart', (e) => { e.preventDefault(); handleTap(); });
   myArea.addEventListener('mousedown', handleTap);
 
+  // 도움말 제어
+  const btnShowHelp = document.getElementById('btn-show-help');
+  const btnCloseHelp = document.getElementById('btn-close-help');
+  const overlayHelp = document.getElementById('overlay-help');
+
+  const toggleHelp = () => overlayHelp.classList.toggle('hidden');
+  if (btnShowHelp) btnShowHelp.onclick = toggleHelp;
+  if (btnCloseHelp) btnCloseHelp.onclick = toggleHelp;
+
   init();
 })();

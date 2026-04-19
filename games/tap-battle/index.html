@@ -194,6 +194,14 @@
       margin-bottom: 1.5rem;
     }
 
+    /* ═══════════════ HELP MODAL ═══════════════ */
+    .help-content { text-align: left; max-width: 90%; max-height: 70vh; overflow-y: auto; font-size: .85rem; line-height: 1.6; color: #cbd5e1; }
+    .help-content h2 { color: var(--primary); margin-bottom: .8rem; font-size: 1.2rem; }
+    .help-content ul { list-style: none; margin-bottom: 1rem; }
+    .help-content li { margin-bottom: .4rem; padding-left: 1.2rem; position: relative; }
+    .help-content li::before { content: '•'; position: absolute; left: 0; color: var(--accent); }
+    .help-content b { color: #fff; }
+
     /* ═══════════════ BUTTONS ═══════════════ */
     .btn {
       display: inline-flex;
@@ -297,6 +305,13 @@
 <body>
 
   <div class="game-wrapper">
+    <div style="position: absolute; top: calc(var(--safe-top) + 0.5rem); left: 1rem; z-index: 100;">
+      <a href="/games/" class="btn btn-ghost" style="padding: 0.4rem 0.8rem; font-size: 0.75rem;">← 목록</a>
+    </div>
+    <div style="position: absolute; top: calc(var(--safe-top) + 0.5rem); right: 1rem; z-index: 100;">
+      <button id="btn-show-help-main" style="background:var(--surface); border:1px solid var(--border); color:var(--text-dim); font-size:1.1rem; padding:0.4rem; border-radius:50%; cursor:pointer; width:40px; height:40px; display:flex; align-items:center; justify-content:center;">📜</button>
+    </div>
+
     <!-- AD TOP -->
     <div class="ad-slot" id="ad-top">AD · 게임 시작 전 광고</div>
 
@@ -362,6 +377,24 @@
       <button class="btn btn-ghost" id="btn-retry">🔄 다시 하기</button>
       <a href="/games/" class="btn btn-ghost">📋 목록</a>
     </div>
+  </div>
+
+  <!-- ═══ HELP OVERLAY ═══ -->
+  <div class="overlay hidden" id="overlay-help">
+    <h1>⚡ 게임 방법</h1>
+    <div class="help-content">
+      <h2>핵심 규칙</h2>
+      <ul>
+        <li>화면이 <b>초록색(GO!)</b>으로 변하는 순간, 자기 쪽 화면을 누구보다 빠르게 터치하세요!</li>
+        <li>초록색으로 변하기 전에 먼저 터치하면 <b>반칙패(Early Tap)</b>로 인정됩니다.</li>
+      </ul>
+      <h2>팁</h2>
+      <ul>
+        <li>소리보다 시각적인 변화에 집중하면 더 빠른 반응이 가능합니다.</li>
+        <li>상대방의 움직임에 낚이지 않도록 주의하세요!</li>
+      </ul>
+    </div>
+    <button class="btn btn-primary" id="btn-close-help" style="margin-top:1.5rem;">확인</button>
   </div>
 
   <script src="/games/common.js"></script>
@@ -531,6 +564,17 @@
 
       function show(el) { el.classList.remove('hidden'); }
       function hide(el) { el.classList.add('hidden'); }
+
+      /* ── HELP TOGGLE ── */
+      const btnShowHelp = document.getElementById('btn-show-help-main');
+      const btnStartHelp = document.getElementById('btn-start-help');
+      const btnCloseHelp = document.getElementById('btn-close-help');
+      const overlayHelp = document.getElementById('overlay-help');
+
+      const toggleHelp = () => overlayHelp.classList.toggle('hidden');
+      if (btnShowHelp) btnShowHelp.onclick = toggleHelp;
+      if (btnStartHelp) btnStartHelp.onclick = toggleHelp;
+      if (btnCloseHelp) btnCloseHelp.onclick = toggleHelp;
     })();
   </script>
 </body>

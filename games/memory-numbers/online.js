@@ -198,5 +198,13 @@
     btn.onclick = () => handleInput(btn.dataset.num);
   });
 
+  // 도움말 버튼 제어
+  const btnShowHelp = document.getElementById('btn-show-help');
+  const overlayHelp = document.getElementById('overlay-help');
+
+  if (btnShowHelp) {
+    btnShowHelp.onclick = () => overlayHelp.classList.toggle('hidden');
+  }
+
   init();
 })();

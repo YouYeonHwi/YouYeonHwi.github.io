@@ -45,6 +45,18 @@
 
     .result-overlay { position: fixed; inset: 0; background: rgba(10,10,15,0.96); backdrop-filter: blur(20px); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; animation: fadeIn 0.4s; }
     .result-overlay.hidden { display: none; }
+
+    /* ═══════════════ HELP MODAL ═══════════════ */
+    .overlay { position: fixed; inset: 0; background: rgba(10,10,15,.96); backdrop-filter: blur(20px); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; padding: 2rem; transition: opacity .3s, visibility .3s; }
+    .overlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+    .help-content { text-align: left; max-width: 90%; max-height: 70vh; overflow-y: auto; font-size: .85rem; line-height: 1.6; color: #cbd5e1; }
+    .help-content h2 { color: var(--primary); margin-bottom: .8rem; font-size: 1.2rem; }
+    .help-content ul { list-style: none; margin-bottom: 1rem; }
+    .help-content li { margin-bottom: .4rem; padding-left: 1.2rem; position: relative; }
+    .help-content li::before { content: '•'; position: absolute; left: 0; color: var(--secondary); }
+    .help-content b { color: #fff; }
+
+    .help-btn { position: absolute; top: 1rem; right: 1rem; z-index: 20; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; backdrop-filter: blur(10px); }
   </style>
 </head>
 <body>
@@ -53,6 +65,7 @@
 
     <!-- Opponent Mini View -->
     <div class="opponent-area">
+      <button class="help-btn" id="btn-show-help">📜</button>
       <div class="status-msg" id="opp-status">상대방 대기 중...</div>
       <div style="display:flex;" id="opp-progress">
         <!-- JS Injection -->
@@ -90,7 +103,29 @@
   <div class="result-overlay hidden" id="result-overlay">
     <h1 id="res-title" style="font-size:3rem; margin-bottom:1rem;">패배...</h1>
     <p id="res-detail" style="margin-bottom:2rem; opacity:0.7;">총 5라운드 중 3라운드 성공</p>
-    <button onclick="location.reload()" style="padding:1rem 2rem; border-radius:50px; background:var(--primary); color:white; border:none; font-weight:800; cursor:pointer;">홈으로 / 다시 하기</button>
+    <button onclick="location.reload()" style="padding:1rem 2.5rem; border-radius:50px; background:var(--primary); color:white; border:none; font-weight:800; cursor:pointer;">홈으로 / 다시 하기</button>
+  </div>
+
+  <!-- HELP OVERLAY -->
+  <div class="overlay hidden" id="overlay-help">
+    <h1 style="color:white; font-size:2rem; margin-bottom:1rem; font-weight:900;">🧠 게임 방법</h1>
+    <div class="help-content">
+      <h2>핵심 규칙</h2>
+      <ul>
+        <li>라운드가 시작되면 중앙에 <b>암기할 숫자</b>가 나타납니다.</li>
+        <li>숫자가 사라지고 '?'로 바뀌면 하단의 패드를 이용해 정답을 입력하세요.</li>
+      </ul>
+      <h2>난이도 변화</h2>
+      <ul>
+        <li>총 <b>5라운드</b>로 진행됩니다.</li>
+        <li>라운드가 올라갈수록 숫자의 자릿수가 늘어나며 암기 난도가 높아집니다.</li>
+      </ul>
+      <h2>승리 요건</h2>
+      <ul>
+        <li>두 플레이어 중 5라운드 종료 시까지 더 많은 숫자를 정확히 맞춘 사람이 승리합니다.</li>
+      </ul>
+    </div>
+    <button onclick="document.getElementById('overlay-help').classList.add('hidden')" style="margin-top:1.5rem; padding:1rem 2rem; border-radius:50px; background:var(--primary); color:white; border:none; font-weight:800; cursor:pointer;">확인</button>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>

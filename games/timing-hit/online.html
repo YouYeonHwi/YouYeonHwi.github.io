@@ -46,6 +46,18 @@
 
     .result-overlay { position: fixed; inset: 0; background: rgba(10,10,15,0.96); backdrop-filter: blur(20px); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; animation: fadeIn 0.4s; }
     .result-overlay.hidden { display: none; }
+
+    /* ═══════════════ HELP MODAL ═══════════════ */
+    .overlay { position: fixed; inset: 0; background: rgba(10,10,15,.96); backdrop-filter: blur(20px); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; padding: 2rem; transition: opacity .3s, visibility .3s; }
+    .overlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+    .help-content { text-align: left; max-width: 90%; max-height: 70vh; overflow-y: auto; font-size: .85rem; line-height: 1.6; color: #cbd5e1; }
+    .help-content h2 { color: var(--primary); margin-bottom: .8rem; font-size: 1.2rem; }
+    .help-content ul { list-style: none; margin-bottom: 1rem; }
+    .help-content li { margin-bottom: .4rem; padding-left: 1.2rem; position: relative; }
+    .help-content li::before { content: '•'; position: absolute; left: 0; color: var(--secondary); }
+    .help-content b { color: #fff; }
+
+    .help-btn { position: absolute; top: 1rem; right: 1rem; z-index: 20; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; backdrop-filter: blur(10px); }
   </style>
 </head>
 <body>
@@ -54,6 +66,7 @@
 
     <!-- Opponent -->
     <div class="player-area opponent">
+      <button class="help-btn" id="btn-show-help">📜</button>
       <div class="msg" id="opp-msg">상대방 대기 중...</div>
       <div class="track">
         <div class="target-zone"><div class="center-line"></div></div>
@@ -83,6 +96,28 @@
     <h1 id="res-title" style="font-size:3rem; margin-bottom:1rem;">🎉 승리!</h1>
     <p id="res-detail" style="margin-bottom:2rem; opacity:0.8; font-size:1.1rem;">나: 240점 | 상대: 210점</p>
     <button onclick="location.reload()" style="padding:1rem 2.5rem; border-radius:50px; background:var(--primary); color:white; border:none; font-weight:800; cursor:pointer;">다시 하기</button>
+  </div>
+
+  <!-- HELP OVERLAY -->
+  <div class="overlay hidden" id="overlay-help">
+    <h1 style="color:white; font-size:2rem; margin-bottom:1rem; font-weight:900;">🎯 게임 방법</h1>
+    <div class="help-content">
+      <h2>핵심 규칙</h2>
+      <ul>
+        <li>좌우로 움직이는 바늘이 <b>초록색 영역(중앙)</b>에 왔을 때 멈추세요!</li>
+        <li>정중앙(50%)에 가까울수록 높은 점수(최대 100점)를 얻습니다.</li>
+      </ul>
+      <h2>게임 구성</h2>
+      <ul>
+        <li>총 <b>3라운드</b>로 진행되며, 라운드마다 바늘의 속도가 조금씩 빨라집니다.</li>
+        <li>모든 라운드가 끝난 후 합산 점수가 높은 사람이 최종 승리합니다.</li>
+      </ul>
+      <h2>조작법</h2>
+      <ul>
+        <li>자신의 화면 영역을 터치하면 움직이던 바늘이 즉시 고정됩니다.</li>
+      </ul>
+    </div>
+    <button onclick="document.getElementById('overlay-help').classList.add('hidden')" style="margin-top:1.5rem; padding:1rem 2rem; border-radius:50px; background:var(--primary); color:white; border:none; font-weight:800; cursor:pointer;">확인</button>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>

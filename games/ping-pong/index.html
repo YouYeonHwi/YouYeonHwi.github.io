@@ -88,10 +88,24 @@
     @keyframes popIn { from { transform: scale(.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     .penalty-card .emoji { font-size: 2.5rem; margin-bottom: .5rem; }
     .penalty-card .text  { font-size: 1.05rem; line-height: 1.5; }
+
+    /* ═══════════════ HELP MODAL ═══════════════ */
+    .help-content { text-align: left; max-width: 90%; max-height: 70vh; overflow-y: auto; font-size: .85rem; line-height: 1.6; color: #cbd5e1; }
+    .help-content h2 { color: var(--primary); margin-bottom: .8rem; font-size: 1.2rem; }
+    .help-content ul { list-style: none; margin-bottom: 1rem; }
+    .help-content li { margin-bottom: .4rem; padding-left: 1.2rem; position: relative; }
+    .help-content li::before { content: '•'; position: absolute; left: 0; color: var(--accent); }
+    .help-content b { color: #fff; }
   </style>
 </head>
 <body>
   <div class="game-wrapper">
+    <div style="position: absolute; top: 1rem; left: 1rem; z-index: 100;">
+      <a href="/games/" class="btn btn-ghost" style="padding: 0.4rem 0.8rem; font-size: 0.75rem;">← 목록</a>
+    </div>
+    <div style="position: absolute; top: 1rem; right: 1rem; z-index: 100;">
+      <button id="btn-show-help-main" style="background:var(--surface); border:1px solid var(--border); color:var(--text-dim); font-size:1.1rem; padding:0.4rem; border-radius:50%; cursor:pointer; width:40px; height:40px; display:flex; align-items:center; justify-content:center;">📜</button>
+    </div>
     <div class="ad-slot">AD · 상단 광고</div>
     <canvas id="gameCanvas"></canvas>
     <div class="ad-slot">AD · 하단 광고</div>
@@ -103,7 +117,30 @@
     <p>화면 양쪽 가장자리를 터치하여 패들을 움직이세요!<br>
        <strong>5점</strong> 먼저 따면 승리! 🏆</p>
     <button class="btn btn-primary" id="btn-start">START</button>
+    <button class="btn btn-ghost" id="btn-start-help" style="margin-top:.75rem; width: 100%; max-width: 200px;">게임 방법</button>
     <a href="/games/" class="btn btn-ghost" style="margin-top:.75rem;">← 게임 목록</a>
+  </div>
+
+  <!-- HELP OVERLAY -->
+  <div class="overlay hidden" id="overlay-help">
+    <h1>🏓 게임 방법</h1>
+    <div class="help-content">
+      <h2>핵심 규칙</h2>
+      <ul>
+        <li>날아오는 탁구공을 패들로 받아쳐 상대방 진영으로 넘기세요!</li>
+        <li>상대방이 공을 놓칠 때마다 득점하며, 먼저 <b>5점</b>을 획득하는 사람이 승리합니다.</li>
+      </ul>
+      <h2>조작법</h2>
+      <ul>
+        <li>화면의 아래쪽(자신의 진영) 대략적인 위치를 터치하거나 드래그하면 패들이 따라옵니다.</li>
+        <li>상대방 역시 화면 위쪽에서 동일하게 조작합니다.</li>
+      </ul>
+      <h2>팁</h2>
+      <ul>
+        <li>공이 패들의 가장자리에 맞으면 더 가파른 각도로 튕겨나갑니다. 이를 이용해 상대를 당황시켜보세요!</li>
+      </ul>
+    </div>
+    <button class="btn btn-primary" id="btn-close-help" style="margin-top:1.5rem;">확인</button>
   </div>
 
   <!-- RESULT OVERLAY -->
@@ -374,6 +411,21 @@
         card.style.animation = 'none'; void card.offsetWidth; card.style.animation = '';
         GameUtils.vibrate(50);
       });
+
+        card.style.animation = 'none'; void card.offsetWidth; card.style.animation = '';
+        GameUtils.vibrate(50);
+      });
+
+      /* ── HELP TOGGLE ── */
+      const btnShowHelp = document.getElementById('btn-show-help-main');
+      const btnStartHelp = document.getElementById('btn-start-help');
+      const btnCloseHelp = document.getElementById('btn-close-help');
+      const overlayHelp = document.getElementById('overlay-help');
+
+      const toggleHelp = () => overlayHelp.classList.toggle('hidden');
+      if (btnShowHelp) btnShowHelp.onclick = toggleHelp;
+      if (btnStartHelp) btnStartHelp.onclick = toggleHelp;
+      if (btnCloseHelp) btnCloseHelp.onclick = toggleHelp;
 
       window.addEventListener('resize', () => { if (running) resize(); });
     })();

@@ -145,6 +145,14 @@
     .penalty-card .emoji { font-size: 2.5rem; margin-bottom: .5rem; }
     .penalty-card .text  { font-size: 1.05rem; line-height: 1.5; }
 
+    /* ═══════════════ HELP MODAL ═══════════════ */
+    .help-content { text-align: left; max-width: 90%; max-height: 70vh; overflow-y: auto; font-size: .85rem; line-height: 1.6; color: #cbd5e1; }
+    .help-content h2 { color: var(--primary); margin-bottom: .8rem; font-size: 1.2rem; }
+    .help-content ul { list-style: none; margin-bottom: 1rem; }
+    .help-content li { margin-bottom: .4rem; padding-left: 1.2rem; position: relative; }
+    .help-content li::before { content: '•'; position: absolute; left: 0; color: var(--accent); }
+    .help-content b { color: #fff; }
+
     .countdown-overlay {
       position: fixed; inset: 0; background: rgba(10,10,15,.8);
       display: flex; align-items: center; justify-content: center; z-index: 1000;
@@ -160,6 +168,12 @@
 </head>
 <body>
   <div class="game-wrapper">
+    <div style="position: absolute; top: 1rem; left: 1rem; z-index: 100;">
+      <a href="/games/" class="btn btn-ghost" style="padding: 0.4rem 0.8rem; font-size: 0.75rem;">← 목록</a>
+    </div>
+    <div style="position: absolute; top: 1rem; right: 1rem; z-index: 100;">
+      <button id="btn-show-help-main" style="background:var(--surface); border:1px solid var(--border); color:var(--text-dim); font-size:1.1rem; padding:0.4rem; border-radius:50%; cursor:pointer; width:40px; height:40px; display:flex; align-items:center; justify-content:center;">📜</button>
+    </div>
     <div class="ad-slot">AD · 상단 광고</div>
 
     <div class="player-area top" id="area-p1">
@@ -200,7 +214,30 @@
     <p><strong>15초</strong> 안에 풍선을 최대한 많이 터뜨리세요!<br>
        더 많이 터뜨린 사람이 승리! 💥</p>
     <button class="btn btn-primary" id="btn-start">START</button>
+    <button class="btn btn-ghost" id="btn-start-help" style="margin-top:.75rem; width: 100%; max-width: 200px;">게임 방법</button>
     <a href="/games/" class="btn btn-ghost" style="margin-top:.75rem;">← 게임 목록</a>
+  </div>
+
+  <!-- HELP OVERLAY -->
+  <div class="overlay hidden" id="overlay-help">
+    <h1>🎈 게임 방법</h1>
+    <div class="help-content">
+      <h2>핵심 규칙</h2>
+      <ul>
+        <li>제한 시간 <b>15초</b> 동안 화면에 나타나는 풍선을 최대한 많이 터뜨리세요!</li>
+        <li>풍선을 터치하거나 클릭하면 점수가 올라갑니다.</li>
+      </ul>
+      <h2>주의사항</h2>
+      <ul>
+        <li>풍선은 나타난 뒤 일정 시간이 지나면 사라집니다. 사라지기 전에 빠르게 터뜨리세요!</li>
+        <li>두 플레이어가 각자의 화면 영역에서 동시에 경쟁합니다.</li>
+      </ul>
+      <h2>승리 요건</h2>
+      <ul>
+        <li>시간 종료 후 더 많은 풍선을 터뜨려 높은 점수를 기록한 사람이 승리합니다.</li>
+      </ul>
+    </div>
+    <button class="btn btn-primary" id="btn-close-help" style="margin-top:1.5rem;">확인</button>
   </div>
 
   <!-- RESULT OVERLAY -->
@@ -361,7 +398,20 @@
         card.classList.remove('hidden');
         card.style.animation = 'none'; void card.offsetWidth; card.style.animation = '';
         GameUtils.vibrate(50);
+        card.style.animation = 'none'; void card.offsetWidth; card.style.animation = '';
+        GameUtils.vibrate(50);
       });
+
+      /* ── HELP TOGGLE ── */
+      const btnShowHelp = document.getElementById('btn-show-help-main');
+      const btnStartHelp = document.getElementById('btn-start-help');
+      const btnCloseHelp = document.getElementById('btn-close-help');
+      const overlayHelp = document.getElementById('overlay-help');
+
+      const toggleHelp = () => overlayHelp.classList.toggle('hidden');
+      if (btnShowHelp) btnShowHelp.onclick = toggleHelp;
+      if (btnStartHelp) btnStartHelp.onclick = toggleHelp;
+      if (btnCloseHelp) btnCloseHelp.onclick = toggleHelp;
     })();
   </script>
 </body>

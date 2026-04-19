@@ -71,12 +71,26 @@
     .penalty-card .emoji { font-size: 2.5rem; margin-bottom: .5rem; }
     .penalty-card .text { font-size: 1.05rem; line-height: 1.5; }
 
+    /* ═══════════════ HELP MODAL ═══════════════ */
+    .help-content { text-align: left; max-width: 90%; max-height: 70vh; overflow-y: auto; font-size: .85rem; line-height: 1.6; color: #cbd5e1; }
+    .help-content h2 { color: var(--primary); margin-bottom: .8rem; font-size: 1.2rem; }
+    .help-content ul { list-style: none; margin-bottom: 1rem; }
+    .help-content li { margin-bottom: .4rem; padding-left: 1.2rem; position: relative; }
+    .help-content li::before { content: '•'; position: absolute; left: 0; color: var(--accent); }
+    .help-content b { color: #fff; }
+
     @keyframes bump { 0%{transform:scale(1)} 50%{transform:scale(1.3)} 100%{transform:scale(1)} }
     .bump { animation: bump .25s; }
   </style>
 </head>
 <body>
   <div class="game-wrapper">
+    <div style="position: absolute; top: 1rem; left: 1rem; z-index: 100;">
+      <a href="/games/" class="btn btn-ghost" style="padding: 0.4rem 0.8rem; font-size: 0.75rem;">← 목록</a>
+    </div>
+    <div style="position: absolute; top: 1rem; right: 1rem; z-index: 100;">
+      <button id="btn-show-help-main" style="background:var(--surface); border:1px solid var(--border); color:var(--text-dim); font-size:1.1rem; padding:0.4rem; border-radius:50%; cursor:pointer; width:40px; height:40px; display:flex; align-items:center; justify-content:center;">📜</button>
+    </div>
     <div class="ad-slot">AD · 상단 광고</div>
     <div class="player-area top" id="area-p1">
       <div class="player-msg" id="msg-p1">터치해서 숫자를 올려!</div>
@@ -98,10 +112,32 @@
     <h1>👀 눈치 게임</h1>
     <p>번갈아 터치해서 숫자를 1씩 올려요.<br>
        <strong style="color:#ef4444;">동시에 터치</strong>하면 <strong>둘 다 탈락!</strong><br>
-       목표 숫자 <strong style="color:#4ade80;">10</strong>을 먼저 부르면 승리!<br><br>
-       타이밍 심리전이 핵심이에요 🧠</p>
+       목표 숫자 <strong style="color:#4ade80;">10</strong>을 먼저 부르면 승리!</p>
     <button class="btn btn-primary" onclick="startGame()">START</button>
+    <button class="btn btn-ghost" id="btn-start-help" style="margin-top:.75rem; width: 100%; max-width: 200px;">게임 방법</button>
     <a href="/games/" class="btn btn-ghost" style="margin-top:.75rem;">← 게임 목록</a>
+  </div>
+
+  <!-- HELP OVERLAY -->
+  <div class="overlay hidden" id="overlay-help">
+    <h1>👀 게임 방법</h1>
+    <div class="help-content">
+      <h2>핵심 규칙</h2>
+      <ul>
+        <li>숫자를 <b>1부터 순서대로</b> 외치는 고전 게임입니다.</li>
+        <li>자신의 진영을 터치하여 다음 숫자를 외칠 수 있습니다.</li>
+        <li>상대방과 <b>동시에</b> 숫자를 외치면(터치하면) 즉시 <b>무승부로 종료</b>됩니다.</li>
+      </ul>
+      <h2>승리 요건</h2>
+      <ul>
+        <li>목표 숫자인 <b>10</b>을 누구보다 먼저 외치는 사람이 최종 승리합니다!</li>
+      </ul>
+      <h2>팁</h2>
+      <ul>
+        <li>상대방의 손가락 움직임을 잘 관찰하여 타이밍을 빼앗으세요.</li>
+      </ul>
+    </div>
+    <button class="btn btn-primary" id="btn-close-help" style="margin-top:1.5rem;">확인</button>
   </div>
 
   <div class="overlay hidden" id="overlay-result">
@@ -233,6 +269,17 @@
     document.getElementById('area-p2').addEventListener('touchstart', e => { e.preventDefault(); tap(2); });
     document.getElementById('area-p1').addEventListener('mousedown', e => { e.preventDefault(); tap(1); });
     document.getElementById('area-p2').addEventListener('mousedown', e => { e.preventDefault(); tap(2); });
+
+    /* ── HELP TOGGLE ── */
+    const btnShowHelp = document.getElementById('btn-show-help-main');
+    const btnStartHelp = document.getElementById('btn-start-help');
+    const btnCloseHelp = document.getElementById('btn-close-help');
+    const overlayHelp = document.getElementById('overlay-help');
+
+    const toggleHelp = () => overlayHelp.classList.toggle('hidden');
+    if (btnShowHelp) btnShowHelp.onclick = toggleHelp;
+    if (btnStartHelp) btnStartHelp.onclick = toggleHelp;
+    if (btnCloseHelp) btnCloseHelp.onclick = toggleHelp;
   </script>
 </body>
 </html>
