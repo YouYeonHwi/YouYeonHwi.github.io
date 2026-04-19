@@ -3,7 +3,9 @@
 
   const GAME_ID = 'yahtzee';
   const MAX_ROLLS = 3;
-  const CATS = ['ones','twos','threes','fours','fives','sixes','threeKind','fourKind','fullHouse','smStr','lgStr','yahtzee','chance'];
+  const UPPER = ['ones','twos','threes','fours','fives','sixes'];
+  const LOWER = ['threeKind','fourKind','fullHouse','smStr','lgStr','yahtzee','chance'];
+  const CATS = [...UPPER, ...LOWER];
 
   const ROTATIONS = {
     1: { x: 0,   y: 0   },
@@ -97,21 +99,21 @@
     if (!state) return;
 
     const prevDice   = [...currentState.dice];
-    const prevStatus = currentState.status;
+    const prevTurn   = currentState.turn;
 
     // 상태 업데이트
     currentState = state;
     myRole = role;
 
     // 주사위 애니메이션: 주사위가 실제로 변경된 경우에만
-    if (state.status === 'roll') {
+    if (state.lastAction === 'roll' && JSON.stringify(prevDice) !== JSON.stringify(state.dice)) {
       animateDice(state.dice);
     } else {
       updateDiceFaces(state.dice);
     }
 
     // 턴 교체 시 굴리기 보호 해제
-    if (state.turn !== currentState.turn) {
+    if (state.turn !== prevTurn) {
       isRolling = false;
     }
 
@@ -307,6 +309,28 @@
         cell.classList.toggle('active-column', currentState.turn === p);
       });
     });
+
+    // ── 보너스 및 최종 점수 업데이트 ──
+    [1, 2].forEach(idx => {
+      const p = idx === 1 ? 'p1' : 'p2';
+      const playerScores = currentState.scores[p] || {};
+      
+      const upperSum = UPPER.reduce((sum, id) => sum + (playerScores[id] || 0), 0);
+      const bonus = upperSum >= 63 ? 35 : 0;
+      const total = calcTotal(playerScores);
+
+      const subEl = document.getElementById(`cell-subtotal-${idx}`);
+      const bonEl = document.getElementById(`cell-bonus-${idx}`);
+      const totEl = document.getElementById(`cell-total-${idx}`);
+
+      if (subEl) subEl.textContent = `${upperSum} / 63`;
+      if (bonEl) {
+        bonEl.textContent = bonus > 0 ? `+${bonus}` : '0';
+        if (bonus > 0) bonEl.style.color = '#f472b6';
+        else bonEl.style.color = '';
+      }
+      if (totEl) totEl.textContent = total;
+    });
   }
 
   // ── 주사위 DOM 빌드 ──────────────────────────────────────
@@ -399,7 +423,10 @@
 
   function calcTotal(scores) {
     if (!scores) return 0;
-    return CATS.reduce((sum, c) => sum + (scores[c] || 0), 0);
+    const s = UPPER.reduce((sum, c) => sum + (scores[c] || 0), 0);
+    const bonus = s >= 63 ? 35 : 0;
+    const lower = LOWER.reduce((sum, c) => sum + (scores[c] || 0), 0);
+    return s + bonus + lower;
   }
 
   // ── 결과 화면 ─────────────────────────────────────────────
