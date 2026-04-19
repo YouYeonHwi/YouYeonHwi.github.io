@@ -127,7 +127,7 @@
     // 3. 현재 턴이 유지되고 있는가? (턴 전환 리셋 방지)
     const sameTurn = state.turn === prevTurn;
 
-    if (rollOccurred && sameTurn) {
+    if (diceChanged && rollOccurred && sameTurn) {
       animateDice(state.dice);
       // 원격 흔들림 효과 동기화
       if (diceRow) {

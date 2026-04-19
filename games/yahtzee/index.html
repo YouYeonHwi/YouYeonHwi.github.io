@@ -13,9 +13,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
-  
-  <!-- 구글 애드센스 자동 광고 -->
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2428685752915797" crossorigin="anonymous"></script>
 
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -400,16 +397,7 @@
 <body>
 
   <div class="game-container">
-    <div class="ad-slot">
-      <!-- 상단 배너 광고 -->
-      <ins class="adsbygoogle"
-           style="display:block"
-           data-ad-client="ca-pub-2428685752915797"
-           data-ad-slot="1234567890"
-           data-ad-format="horizontal"
-           data-full-width-responsive="true"></ins>
-      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-    </div>
+    <div class="ad-slot">AD · 상단 광고</div>
 
     <!-- TOP BAR -->
     <div class="top-bar">
@@ -451,16 +439,7 @@
       </table>
     </div>
 
-    <div class="ad-slot">
-      <!-- 하단 배너 광고 -->
-      <ins class="adsbygoogle"
-           style="display:block"
-           data-ad-client="ca-pub-2428685752915797"
-           data-ad-slot="0987654321"
-           data-ad-format="horizontal"
-           data-full-width-responsive="true"></ins>
-      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-    </div>
+    <div class="ad-slot">AD · 하단 광고</div>
   </div>
 
   <!-- START OVERLAY -->
@@ -765,8 +744,8 @@
             dice[i] = v;
             
             const baseRot = ROTATIONS[v];
-            const spinX = (Math.floor(Math.random() * 5) + 3) * 360; 
-            const spinY = (Math.floor(Math.random() * 5) + 3) * 360;
+            const spinX = (Math.floor(Math.random() * 3) + 2) * 360; 
+            const spinY = (Math.floor(Math.random() * 3) + 2) * 360;
 
             const targetX = currentRotations[i].x - (currentRotations[i].x % 360) + spinX + baseRot.x;
             const targetY = currentRotations[i].y - (currentRotations[i].y % 360) + spinY + baseRot.y;

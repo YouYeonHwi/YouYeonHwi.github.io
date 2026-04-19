@@ -18,29 +18,7 @@
                         <h1 id="{{ page.id }}">{{ site.title | escape }}</h1>
                     {% endif %}
 
-                    <!-- [ADSENSE] 본문 상단 광고 -->
-                    <div style="margin: 20px 0; text-align: center;">
-                        <ins class="adsbygoogle"
-                             style="display:block"
-                             data-ad-client="ca-pub-2428685752915797"
-                             data-ad-slot="1234567890"
-                             data-ad-format="horizontal"
-                             data-full-width-responsive="true"></ins>
-                        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-                    </div>
-
                     {{ content }}
-
-                    <!-- [ADSENSE] 본문 하단 광고 -->
-                    <div style="margin: 30px 0; text-align: center;">
-                        <ins class="adsbygoogle"
-                             style="display:block"
-                             data-ad-client="ca-pub-2428685752915797"
-                             data-ad-slot="0987654321"
-                             data-ad-format="horizontal"
-                             data-full-width-responsive="true"></ins>
-                        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-                    </div>
 
                     {%- if jekyll.environment != 'dev' and site.disqushandler -%}
                         {%- include disqus.html -%}
