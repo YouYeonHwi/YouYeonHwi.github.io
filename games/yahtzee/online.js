@@ -35,6 +35,7 @@
     turn: 'p1',
     scores: { p1: {}, p2: {} },
     lastAction: null,
+    lastScore: null, // { p, cat } 형태
     winner: null
   };
 
@@ -43,6 +44,9 @@
   const rollsLeftEl   = document.getElementById('rolls-left');
   const btnRoll       = document.getElementById('btn-roll');
   const diceRow       = document.getElementById('dice-row');
+  const btnShowHelp   = document.getElementById('btn-show-help');
+  const btnCloseHelp  = document.getElementById('btn-close-help');
+  const overlayHelp   = document.getElementById('overlay-help');
 
   // ── Firebase null 안전 래퍼 ───────────────────────────────
   // Firebase RTDB는 빈 객체{}를 null로 저장하므로 항상 방어적으로 처리
@@ -65,6 +69,7 @@
       status: raw.status || 'lobby',
       scores: safeScores(raw.scores),
       lastAction: raw.lastAction || null,
+      lastScore: raw.lastScore || null,
       winner: raw.winner || null
     };
   }
@@ -150,6 +155,13 @@
     isRolling = true;
     updateUI(); // 버튼 즉시 비활성화
 
+    // 화면 흔들림 효과
+    if (diceRow) {
+      diceRow.classList.remove('shake-anim');
+      void diceRow.offsetWidth; // reflow
+      diceRow.classList.add('shake-anim');
+    }
+
     const newDice = currentState.dice.map((v, i) =>
       currentState.held[i] ? v : Math.floor(Math.random() * 6) + 1
     );
@@ -230,6 +242,7 @@
       dice: [1, 1, 1, 1, 1],          // 주사위 초기화 (시각적 일관성)
       held: [false, false, false, false, false],
       lastAction: 'score',
+      lastScore: { p: myRole, cat: catId },
       winner
     });
   }
@@ -248,17 +261,7 @@
       ? (currentState.rollsLeft > 0 ? '🎲 주사위 굴리기' : '✅ 조합을 선택하세요')
       : '⏳ 상대방 턴 대기 중...');
 
-    turnIndicator.textContent = myTurn ? '✨ 나의 차례!' : '💤 상대방의 차례';
-    turnIndicator.className = `turn-indicator${myTurn ? ' active' : ''}`;
-
-    // 헤더 강조
-    const th1 = document.querySelector('th:nth-child(2)');
-    const th2 = document.querySelector('th:nth-child(3)');
-    if (th1 && th2) {
-      th1.classList.toggle('active-header', currentState.turn === 'p1');
-      th2.classList.toggle('active-header', currentState.turn === 'p2');
-    }
-
+    // 상단 플레이어 이름 강조로 턴 표시 대체
     updateScoreTable();
     updateMiniScores();
   }
@@ -315,6 +318,10 @@
 
         // 현재 턴 플레이어 열 강조
         cell.classList.toggle('active-column', currentState.turn === p);
+
+        // 마지막 기록 강조
+        const isLast = currentState.lastScore && currentState.lastScore.p === p && currentState.lastScore.cat === id;
+        cell.classList.toggle('last-move', isLast);
       });
     });
 
@@ -473,6 +480,9 @@
 
   // ── 버튼 이벤트 ──────────────────────────────────────────
   btnRoll.onclick = rollDice;
+
+  if (btnShowHelp)  btnShowHelp.onclick  = () => overlayHelp.classList.remove('hidden');
+  if (btnCloseHelp) btnCloseHelp.onclick = () => overlayHelp.classList.add('hidden');
 
   // ── 시작 ─────────────────────────────────────────────────
   init();

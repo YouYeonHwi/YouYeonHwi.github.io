@@ -96,6 +96,57 @@
     .btn-primary:hover { box-shadow: 0 6px 28px var(--primary-glow); }
     
     .status-badge { font-size: .65rem; background: var(--surface); padding: .2rem .6rem; border-radius: 50px; color: var(--text-dim); border: 1px solid var(--border); }
+
+    /* 도움말 팝업 스타일 */
+    .help-content { text-align: left; max-width: 90%; max-height: 70vh; overflow-y: auto; font-size: .85rem; line-height: 1.6; color: #cbd5e1; }
+    .help-content h2 { color: var(--primary); margin-bottom: .8rem; font-size: 1.2rem; }
+    .help-content ul { list-style: none; margin-bottom: 1rem; }
+    .help-content li { margin-bottom: .4rem; padding-left: 1.2rem; position: relative; }
+    .help-content li::before { content: '•'; position: absolute; left: 0; color: var(--accent); }
+    .help-content b { color: #fff; }
+
+    /* 툴팁 스타일 호환용 */
+    [data-tooltip] { position: relative; cursor: help; }
+    [data-tooltip]::after {
+      content: attr(data-tooltip); position: absolute; bottom: 120%; left: 0; 
+      background: #1e293b; color: white; padding: .5rem .8rem; border-radius: 8px;
+      font-size: .7rem; white-space: nowrap; z-index: 100; opacity: 0; visibility: hidden;
+      transition: all .2s; box-shadow: 0 4px 12px rgba(0,0,0,0.4); border: 1px solid var(--border);
+    }
+    [data-tooltip]:hover::after { opacity: 1; visibility: visible; bottom: 130%; }
+
+    /* 마지막 기록 강조 */
+    .last-move { 
+      animation: last-move-glow 2s infinite; 
+      color: #fff !important;
+      background: rgba(250, 204, 21, 0.2) !important;
+      font-weight: 900 !important;
+      border: 1px solid #facc15 !important;
+    }
+    @keyframes last-move-glow {
+      0%, 100% { box-shadow: inset 0 0 10px rgba(250, 204, 21, 0.4); }
+      50% { box-shadow: inset 0 0 20px rgba(250, 204, 21, 0.8); }
+    }
+
+    /* 화면 흔들림 */
+    .shake-anim { animation: shake 0.4s ease-in-out; }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-5px) rotate(-1deg); }
+      40% { transform: translateX(5px) rotate(1deg); }
+      60% { transform: translateX(-3px); }
+      80% { transform: translateX(3px); }
+    }
+
+    /* 점수 입력 팝업 */
+    .score-cell.filled { 
+      animation: score-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+      font-weight: 700; color: white;
+    }
+    @keyframes score-pop {
+      0% { transform: scale(0.5); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
   </style>
 </head>
 <body>
@@ -105,7 +156,7 @@
 
     <div class="top-bar">
       <a href="index.html" class="back-link">← 로비</a>
-      <div class="turn-indicator active" id="turn-indicator">연결 중...</div>
+      <div class="turn-indicator" id="btn-show-help" style="cursor:pointer">📜 게임 방법</div>
       <div class="mini-scores">
         <span class="ms-p1" id="mini-p1">P1: 0</span>
         <span class="ms-p2" id="mini-p2">P2: 0</span>
@@ -127,30 +178,30 @@
         </thead>
         <tbody id="score-body">
             <!-- JS Injection -->
-            <tr id="row-ones"><td>1️⃣ Ones</td><td class="score-cell" id="cell-ones-1">-</td><td class="score-cell" id="cell-ones-2">-</td></tr>
-            <tr id="row-twos"><td>2️⃣ Twos</td><td class="score-cell" id="cell-twos-1">-</td><td class="score-cell" id="cell-twos-2">-</td></tr>
-            <tr id="row-threes"><td>3️⃣ Threes</td><td class="score-cell" id="cell-threes-1">-</td><td class="score-cell" id="cell-threes-2">-</td></tr>
-            <tr id="row-fours"><td>4️⃣ Fours</td><td class="score-cell" id="cell-fours-1">-</td><td class="score-cell" id="cell-fours-2">-</td></tr>
-            <tr id="row-fives"><td>5️⃣ Fives</td><td class="score-cell" id="cell-fives-1">-</td><td class="score-cell" id="cell-fives-2">-</td></tr>
-            <tr id="row-sixes"><td>6️⃣ Sixes</td><td class="score-cell" id="cell-sixes-1">-</td><td class="score-cell" id="cell-sixes-2">-</td></tr>
+            <tr id="row-ones"><td data-tooltip="1의 눈의 합">1️⃣ Ones</td><td class="score-cell" id="cell-ones-1">-</td><td class="score-cell" id="cell-ones-2">-</td></tr>
+            <tr id="row-twos"><td data-tooltip="2의 눈의 합">2️⃣ Twos</td><td class="score-cell" id="cell-twos-1">-</td><td class="score-cell" id="cell-twos-2">-</td></tr>
+            <tr id="row-threes"><td data-tooltip="3의 눈의 합">3️⃣ Threes</td><td class="score-cell" id="cell-threes-1">-</td><td class="score-cell" id="cell-threes-2">-</td></tr>
+            <tr id="row-fours"><td data-tooltip="4의 눈의 합">4️⃣ Fours</td><td class="score-cell" id="cell-fours-1">-</td><td class="score-cell" id="cell-fours-2">-</td></tr>
+            <tr id="row-fives"><td data-tooltip="5의 눈의 합">5️⃣ Fives</td><td class="score-cell" id="cell-fives-1">-</td><td class="score-cell" id="cell-fives-2">-</td></tr>
+            <tr id="row-sixes"><td data-tooltip="6의 눈의 합">6️⃣ Sixes</td><td class="score-cell" id="cell-sixes-1">-</td><td class="score-cell" id="cell-sixes-2">-</td></tr>
             <tr style="background:rgba(244,114,182,0.05); font-weight:700">
-                <td>📊 Subtotal (63+ for Bonus)</td>
+                <td data-tooltip="상단 6개 항목의 합계 (63점 이상 시 보너스 +35)">📊 Subtotal (63+ for Bonus)</td>
                 <td id="cell-subtotal-1">0 / 63</td>
                 <td id="cell-subtotal-2">0 / 63</td>
             </tr>
             <tr style="background:rgba(244,114,182,0.1); font-weight:700">
-                <td>🎁 Bonus (+35)</td>
+                <td data-tooltip="상단 합계가 63점 이상일 때 획득">🎁 Bonus (+35)</td>
                 <td id="cell-bonus-1">0</td>
                 <td id="cell-bonus-2">0</td>
             </tr>
             <tr style="background:rgba(255,255,255,0.02)"><td colspan="3" style="font-size:0.6rem; text-align:center">LOWER SECTION</td></tr>
-            <tr id="row-threeKind"><td>🎯 3 of Kind</td><td class="score-cell" id="cell-threeKind-1">-</td><td class="score-cell" id="cell-threeKind-2">-</td></tr>
-            <tr id="row-fourKind"><td>💎 4 of Kind</td><td class="score-cell" id="cell-fourKind-1">-</td><td class="score-cell" id="cell-fourKind-2">-</td></tr>
-            <tr id="row-fullHouse"><td>🏠 Full House</td><td class="score-cell" id="cell-fullHouse-1">-</td><td class="score-cell" id="cell-fullHouse-2">-</td></tr>
-            <tr id="row-smStr"><td>📏 S.Straight</td><td class="score-cell" id="cell-smStr-1">-</td><td class="score-cell" id="cell-smStr-2">-</td></tr>
-            <tr id="row-lgStr"><td>📐 L.Straight</td><td class="score-cell" id="cell-lgStr-1">-</td><td class="score-cell" id="cell-lgStr-2">-</td></tr>
-            <tr id="row-yahtzee"><td>🎲 YAHTZEE</td><td class="score-cell" id="cell-yahtzee-1">-</td><td class="score-cell" id="cell-yahtzee-2">-</td></tr>
-            <tr id="row-chance"><td>🃏 Chance</td><td class="score-cell" id="cell-chance-1">-</td><td class="score-cell" id="cell-chance-2">-</td></tr>
+            <tr id="row-threeKind"><td data-tooltip="동일한 눈 3개 이상: 모든 눈의 합">🎯 3 of Kind</td><td class="score-cell" id="cell-threeKind-1">-</td><td class="score-cell" id="cell-threeKind-2">-</td></tr>
+            <tr id="row-fourKind"><td data-tooltip="동일한 눈 4개 이상: 모든 눈의 합">💎 4 of Kind</td><td class="score-cell" id="cell-fourKind-1">-</td><td class="score-cell" id="cell-fourKind-2">-</td></tr>
+            <tr id="row-fullHouse"><td data-tooltip="동일한 눈 3개 + 2개: 25점">🏠 Full House</td><td class="score-cell" id="cell-fullHouse-1">-</td><td class="score-cell" id="cell-fullHouse-2">-</td></tr>
+            <tr id="row-smStr"><td data-tooltip="이어지는 눈 4개 이상: 30점">📏 S.Straight</td><td class="score-cell" id="cell-smStr-1">-</td><td class="score-cell" id="cell-smStr-2">-</td></tr>
+            <tr id="row-lgStr"><td data-tooltip="이어지는 눈 5개: 40점">📐 L.Straight</td><td class="score-cell" id="cell-lgStr-1">-</td><td class="score-cell" id="cell-lgStr-2">-</td></tr>
+            <tr id="row-yahtzee"><td data-tooltip="동일한 눈 5개: 50점">🎲 YAHTZEE</td><td class="score-cell" id="cell-yahtzee-1">-</td><td class="score-cell" id="cell-yahtzee-2">-</td></tr>
+            <tr id="row-chance"><td data-tooltip="모든 눈의 합">🃏 Chance</td><td class="score-cell" id="cell-chance-1">-</td><td class="score-cell" id="cell-chance-2">-</td></tr>
             <tr style="background:rgba(167,139,250,0.15); border-top: 2px solid var(--primary)">
                 <td style="font-weight:900; font-size:0.85rem">🏆 TOTAL SCORE</td>
                 <td class="score-cell total" id="cell-total-1">0</td>
@@ -170,6 +221,32 @@
     <h1 id="winner-text">승리!</h1>
     <div id="final-scores"></div>
     <button class="btn btn-primary" onclick="location.reload()">🔄 다시 하기 (방 나가기)</button>
+  </div>
+
+  <!-- HELP OVERLAY -->
+  <div class="overlay hidden" id="overlay-help">
+    <h1>🎲 게임 방법</h1>
+    <div class="help-content">
+      <h2>핵심 규칙</h2>
+      <ul>
+        <li>주사위를 <b>최대 3번</b>까지 굴릴 수 있습니다.</li>
+        <li>보관하고 싶은 주사위는 <b>터치하여 HOLD</b> 하세요.</li>
+        <li>3번을 모두 굴리거나 중간에 원하는 족보가 나오면 점수판의 <b>내 영역(그린/레드)</b> 빈 칸을 터치해 점수를 기록하세요.</li>
+      </ul>
+      <h2>보너스 점수</h2>
+      <ul>
+        <li>상단 섹션(1~6)의 합계가 <b>63점 이상</b>이면 <b>+35점 보너스</b>를 받습니다!</li>
+      </ul>
+      <h2>주요 족보</h2>
+      <ul>
+        <li><b>3/4 of Kind</b>: 동일한 눈 3/4개 이상 (모든 눈의 합)</li>
+        <li><b>Full House</b>: 동일한 눈 3개 + 2개 (25점)</li>
+        <li><b>Small Straight</b>: 이어지는 눈 4개 (30점)</li>
+        <li><b>Large Straight</b>: 이어지는 눈 5개 (40점)</li>
+        <li><b>YAHTZEE</b>: 동일한 눈 5개 (50점)</li>
+      </ul>
+    </div>
+    <button class="btn btn-primary" id="btn-close-help">닫기</button>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
