@@ -36,10 +36,14 @@
     .ad-slot { width: 100%; min-height: 50px; background: var(--surface); border: 1px dashed var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-dim); font-size: .6rem; letter-spacing: 2px; text-transform: uppercase; flex-shrink: 0; }
     
     .top-bar { display: flex; align-items: center; justify-content: space-between; padding: .6rem 1rem; flex-shrink: 0; }
-    .turn-indicator { font-size: .85rem; font-weight: 700; padding: .35rem .9rem; border-radius: 50px; transition: all .3s; border: 1px solid transparent; }
-    .turn-indicator.active { 
-      background: rgba(167,139,250,.15); color: var(--primary); border-color: var(--primary-glow); 
-      box-shadow: 0 0 15px var(--primary-glow); animation: pulse-turn 2s infinite; transform: scale(1.05);
+    .turn-indicator { 
+      font-size: .85rem; font-weight: 700; padding: .4rem 1rem; border-radius: 50px; 
+      transition: all 0.3s; border: 1px solid var(--primary-glow);
+      background: rgba(167,139,250, 0.1); color: var(--primary);
+    }
+    .turn-indicator:hover { 
+      background: var(--primary); color: white; transform: translateY(-2px);
+      box-shadow: 0 4px 15px var(--primary-glow);
     }
     @keyframes pulse-turn {
       0% { box-shadow: 0 0 0 0 rgba(167,139,250, 0.4); }
@@ -105,27 +109,34 @@
     .help-content li::before { content: '•'; position: absolute; left: 0; color: var(--accent); }
     .help-content b { color: #fff; }
 
-    /* 툴팁 스타일 호환용 */
-    [data-tooltip] { position: relative; cursor: help; }
-    [data-tooltip]::after {
-      content: attr(data-tooltip); position: absolute; bottom: 120%; left: 0; 
-      background: #1e293b; color: white; padding: .5rem .8rem; border-radius: 8px;
-      font-size: .7rem; white-space: nowrap; z-index: 100; opacity: 0; visibility: hidden;
-      transition: all .2s; box-shadow: 0 4px 12px rgba(0,0,0,0.4); border: 1px solid var(--border);
+    /* 툴팁 스타일: 밑줄 추가로 안내 유도 */
+    [data-tooltip] { 
+      position: relative; cursor: help; 
+      text-decoration: underline dotted var(--primary-glow);
+      text-underline-offset: 4px;
     }
-    [data-tooltip]:hover::after { opacity: 1; visibility: visible; bottom: 130%; }
+    [data-tooltip]::after {
+      content: attr(data-tooltip); position: absolute; bottom: 125%; left: 0; 
+      background: #1e293b; color: white; padding: .6rem 1rem; border-radius: 8px;
+      font-size: .75rem; white-space: nowrap; z-index: 100; opacity: 0; visibility: hidden;
+      transition: all .25s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5); border: 1px solid var(--border);
+      pointer-events: none;
+    }
+    [data-tooltip]:hover::after { opacity: 1; visibility: visible; bottom: 135%; }
 
-    /* 마지막 기록 강조 */
+    /* 마지막 기록 강조: 팝업 애니메이션 후 글로우 효과가 이어지도록 체이닝 */
     .last-move { 
-      animation: last-move-glow 2s infinite; 
+      animation: score-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), last-move-glow 2s infinite 0.5s; 
       color: #fff !important;
       background: rgba(250, 204, 21, 0.2) !important;
       font-weight: 900 !important;
       border: 1px solid #facc15 !important;
+      z-index: 10;
     }
     @keyframes last-move-glow {
-      0%, 100% { box-shadow: inset 0 0 10px rgba(250, 204, 21, 0.4); }
-      50% { box-shadow: inset 0 0 20px rgba(250, 204, 21, 0.8); }
+      0%, 100% { box-shadow: inset 0 0 10px rgba(250, 204, 21, 0.4); border-color: rgba(250, 204, 21, 0.5); }
+      50% { box-shadow: inset 0 0 20px rgba(250, 204, 21, 0.8); border-color: rgba(250, 204, 21, 1); }
     }
 
     /* 화면 흔들림 */

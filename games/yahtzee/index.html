@@ -53,12 +53,18 @@
       padding: .6rem 1rem; flex-shrink: 0;
     }
 
-    .turn-indicator {
-      font-size: .85rem; font-weight: 700; padding: .35rem .9rem;
-      border-radius: 50px; transition: background .3s, color .3s;
+    .turn-indicator { 
+      font-size: .85rem; font-weight: 700; padding: .4rem 1rem; border-radius: 50px; 
+      transition: all 0.3s; border: 1px solid var(--primary-glow);
+      background: rgba(167,139,250, 0.1); color: var(--primary);
+      cursor: pointer;
     }
-    .turn-indicator.p1 { background: rgba(244,114,182,.15); color: var(--p1); }
-    .turn-indicator.p2 { background: rgba(167,139,250,.15); color: var(--p2); }
+    .turn-indicator:hover { 
+      background: var(--primary); color: white; transform: translateY(-2px);
+      box-shadow: 0 4px 15px var(--primary-glow);
+    }
+    .turn-indicator.p1 { background: rgba(244,114,182,.15); color: var(--p1); border-color: rgba(244,114,182,.3); }
+    .turn-indicator.p2 { background: rgba(167,139,250,.15); color: var(--p2); border-color: var(--primary-glow); }
 
     .mini-scores {
       display: flex; gap: 1rem; font-size: .8rem; font-weight: 700;
@@ -252,6 +258,56 @@
       color: rgba(255,255,255,.1);
     }
 
+    /* 툴팁 스타일: 밑줄 추가로 안내 유도 */
+    [data-tooltip] { 
+      position: relative; cursor: help; 
+      text-decoration: underline dotted var(--primary-glow);
+      text-underline-offset: 4px;
+    }
+    [data-tooltip]::after {
+      content: attr(data-tooltip); position: absolute; bottom: 125%; left: 0; 
+      background: #1e293b; color: white; padding: .6rem 1rem; border-radius: 8px;
+      font-size: .75rem; white-space: nowrap; z-index: 100; opacity: 0; visibility: hidden;
+      transition: all .25s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5); border: 1px solid var(--border);
+      pointer-events: none;
+    }
+    [data-tooltip]:hover::after { opacity: 1; visibility: visible; bottom: 135%; }
+
+    /* 마지막 기록 강조 */
+    .last-move { 
+      animation: score-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), last-move-glow 2s infinite 0.5s; 
+      color: #fff !important;
+      background: rgba(250, 204, 21, 0.2) !important;
+      font-weight: 900 !important;
+      border: 1px solid #facc15 !important;
+      z-index: 10;
+    }
+    @keyframes last-move-glow {
+      0%, 100% { box-shadow: inset 0 0 10px rgba(250, 204, 21, 0.4); border-color: rgba(250, 204, 21, 0.5); }
+      50% { box-shadow: inset 0 0 20px rgba(250, 204, 21, 0.8); border-color: rgba(250, 204, 21, 1); }
+    }
+
+    /* 화면 흔들림 */
+    .shake-anim { animation: shake 0.4s ease-in-out; }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-5px) rotate(-1deg); }
+      40% { transform: translateX(5px) rotate(1deg); }
+      60% { transform: translateX(-3px); }
+      80% { transform: translateX(3px); }
+    }
+
+    /* 점수 입력 팝업 */
+    .score-cell.filled { 
+      animation: score-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+      font-weight: 700; color: white;
+    }
+    @keyframes score-pop {
+      0% { transform: scale(0.5); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
     /* ═══════════ OVERLAYS ═══════════ */
     .overlay {
       position: fixed; inset: 0; background: rgba(10,10,15,.94);
@@ -318,7 +374,7 @@
     <div class="top-bar">
       <div style="display:flex; align-items:center; gap:.5rem;">
         <a href="/games/" class="back-link">← 목록</a>
-        <button id="btn-theme-toggle" style="background:var(--surface); border:1px solid var(--border); color:var(--text-dim); font-size:.7rem; padding:.2rem .5rem; border-radius:50px; cursor:pointer;">🎨 테마</button>
+        <div id="btn-show-help" style="font-size:1.1rem; cursor:pointer" title="게임 방법">📜</div>
       </div>
       <div class="turn-indicator p1" id="turn-indicator">🎲 Player 1 차례</div>
       <div class="mini-scores">
@@ -374,7 +430,25 @@
     </div>
 
     <!-- How to play helper link -->
-    <p style="font-size:0.7rem; margin-top:2rem; cursor:pointer; text-decoration:underline;" onclick="alert('룰: 주사위를 굴려 13가지 조합을 완성시키세요! 합계가 높은 사람이 승리!')">게임 방법 보기</p>
+    <p style="font-size:0.7rem; margin-top:2rem; cursor:pointer; text-decoration:underline;" id="btn-start-help">게임 방법 보기</p>
+  </div>
+
+  <!-- HELP OVERLAY -->
+  <div class="overlay hidden" id="overlay-help">
+    <h1>🎲 게임 방법</h1>
+    <div style="text-align: left; max-width: 90%; max-height: 70vh; overflow-y: auto; font-size: .85rem; line-height: 1.6; color: #cbd5e1;">
+      <h2 style="color: var(--primary); margin-bottom: .8rem; font-size: 1.2rem;">핵심 규칙</h2>
+      <ul style="list-style: none; margin-bottom: 1rem;">
+        <li style="margin-bottom: .4rem; padding-left: 1.2rem; position: relative;">주사위를 <b>최대 3번</b>까지 굴릴 수 있습니다.</li>
+        <li style="margin-bottom: .4rem; padding-left: 1.2rem; position: relative;">보관하고 싶은 주사위는 <b>터치하여 HOLD</b> 하세요.</li>
+        <li style="margin-bottom: .4rem; padding-left: 1.2rem; position: relative;">3번을 모두 굴리거나 원하는 족보가 나오면 점수판의 빈 칸을 터치해 점수를 기록하세요.</li>
+      </ul>
+      <h2 style="color: var(--primary); margin-bottom: .8rem; font-size: 1.2rem;">보너스 점수</h2>
+      <ul style="list-style: none; margin-bottom: 1rem;">
+        <li style="margin-bottom: .4rem; padding-left: 1.2rem; position: relative;">상단 섹션(1~6)의 합계가 <b>63점 이상</b>이면 <b>+35점 보너스</b>를 받습니다!</li>
+      </ul>
+    </div>
+    <button class="btn btn-primary" id="btn-close-help">닫기</button>
   </div>
 
   <!-- RESULT OVERLAY -->
@@ -418,19 +492,19 @@
 
       // Categories
       const CATEGORIES = [
-        { id: 'ones',      name: '1️⃣ Ones',     section: 'upper', calc: d => sumOf(d, 1) },
-        { id: 'twos',      name: '2️⃣ Twos',     section: 'upper', calc: d => sumOf(d, 2) },
-        { id: 'threes',    name: '3️⃣ Threes',   section: 'upper', calc: d => sumOf(d, 3) },
-        { id: 'fours',     name: '4️⃣ Fours',    section: 'upper', calc: d => sumOf(d, 4) },
-        { id: 'fives',     name: '5️⃣ Fives',    section: 'upper', calc: d => sumOf(d, 5) },
-        { id: 'sixes',     name: '6️⃣ Sixes',    section: 'upper', calc: d => sumOf(d, 6) },
-        { id: 'threeKind', name: '🎯 3 of Kind', section: 'lower', calc: d => hasNOfKind(d, 3) ? sumAll(d) : 0 },
-        { id: 'fourKind',  name: '💎 4 of Kind', section: 'lower', calc: d => hasNOfKind(d, 4) ? sumAll(d) : 0 },
-        { id: 'fullHouse', name: '🏠 Full House',section: 'lower', calc: d => isFullHouse(d) ? 25 : 0 },
-        { id: 'smStr',     name: '📏 S.Straight', section: 'lower', calc: d => hasSmallStraight(d) ? 30 : 0 },
-        { id: 'lgStr',     name: '📐 L.Straight', section: 'lower', calc: d => hasLargeStraight(d) ? 40 : 0 },
-        { id: 'yahtzee',   name: '🎲 YAHTZEE',  section: 'lower', calc: d => hasNOfKind(d, 5) ? 50 : 0 },
-        { id: 'chance',    name: '🃏 Chance',    section: 'lower', calc: d => sumAll(d) },
+        { id: 'ones',      name: '1️⃣ Ones',     section: 'upper', calc: d => sumOf(d, 1), tip: '1의 눈의 합' },
+        { id: 'twos',      name: '2️⃣ Twos',     section: 'upper', calc: d => sumOf(d, 2), tip: '2의 눈의 합' },
+        { id: 'threes',    name: '3️⃣ Threes',   section: 'upper', calc: d => sumOf(d, 3), tip: '3의 눈의 합' },
+        { id: 'fours',     name: '4️⃣ Fours',    section: 'upper', calc: d => sumOf(d, 4), tip: '4의 눈의 합' },
+        { id: 'fives',     name: '5️⃣ Fives',    section: 'upper', calc: d => sumOf(d, 5), tip: '5의 눈의 합' },
+        { id: 'sixes',     name: '6️⃣ Sixes',    section: 'upper', calc: d => sumOf(d, 6), tip: '6의 눈의 합' },
+        { id: 'threeKind', name: '🎯 3 of Kind', section: 'lower', calc: d => hasNOfKind(d, 3) ? sumAll(d) : 0, tip: '동일 눈 3개 이상: 합계' },
+        { id: 'fourKind',  name: '💎 4 of Kind', section: 'lower', calc: d => hasNOfKind(d, 4) ? sumAll(d) : 0, tip: '동일 눈 4개 이상: 합계' },
+        { id: 'fullHouse', name: '🏠 Full House',section: 'lower', calc: d => isFullHouse(d) ? 25 : 0, tip: '동일 눈 3개+2개: 25점' },
+        { id: 'smStr',     name: '📏 S.Straight', section: 'lower', calc: d => hasSmallStraight(d) ? 30 : 0, tip: '이어지는 눈 4개: 30점' },
+        { id: 'lgStr',     name: '📐 L.Straight', section: 'lower', calc: d => hasLargeStraight(d) ? 40 : 0, tip: '이어지는 눈 5개: 40점' },
+        { id: 'yahtzee',   name: '🎲 YAHTZEE',  section: 'lower', calc: d => hasNOfKind(d, 5) ? 50 : 0, tip: '동일 눈 5개: 50점' },
+        { id: 'chance',    name: '🃏 Chance',    section: 'lower', calc: d => sumAll(d), tip: '모든 눈의 합' },
       ];
 
       // State
@@ -440,6 +514,7 @@
       let rollsLeft = 3;
       let hasRolled = false;
       let scores = { 1: {}, 2: {} };
+      let lastScore = null; // { p, cat }
       let roundsPlayed = 0; // total category picks (26 = game over)
 
       // Scoring helpers
@@ -521,7 +596,7 @@
         const tr = document.createElement('tr');
         tr.id = `row-${cat.id}`;
         tr.innerHTML = `
-          <td>${cat.name}</td>
+          <td data-tooltip="${cat.tip}">${cat.name}</td>
           <td class="score-cell empty" id="cell-${cat.id}-1">-</td>
           <td class="score-cell empty" id="cell-${cat.id}-2">-</td>
         `;
@@ -573,7 +648,8 @@
 
             if (scores[p][cat.id] !== undefined) {
               // Already filled
-              cell.className = 'score-cell filled';
+              const isLast = lastScore && lastScore.p === p && lastScore.cat === cat.id;
+              cell.className = isLast ? 'score-cell filled last-move' : 'score-cell filled';
               cell.textContent = scores[p][cat.id];
               cell.onclick = null;
             } else if (p === currentPlayer && hasRolled) {
@@ -644,6 +720,14 @@
           }
         });
 
+        // 흔들림 효과
+        const diceRow = document.getElementById('dice-row');
+        if (diceRow) {
+          diceRow.classList.remove('shake-anim');
+          void diceRow.offsetWidth;
+          diceRow.classList.add('shake-anim');
+        }
+
         GameUtils.vibrate(30);
         updateRollButton();
         
@@ -675,6 +759,7 @@
       // Pick a category
       function pickCategory(catId, value) {
         scores[currentPlayer][catId] = value;
+        lastScore = { p: currentPlayer, cat: catId };
         roundsPlayed++;
         GameUtils.vibrate(20);
 
@@ -792,6 +877,17 @@
       initDiceHTML();
       bindDiceEvents();
       buildScoreTable();
+
+      // 도움말 제어
+      const btnShowHelp = document.getElementById('btn-show-help');
+      const btnStartHelp = document.getElementById('btn-start-help');
+      const btnCloseHelp = document.getElementById('btn-close-help');
+      const overlayHelp = document.getElementById('overlay-help');
+
+      const toggleHelp = () => overlayHelp.classList.toggle('hidden');
+      if (btnShowHelp) btnShowHelp.onclick = toggleHelp;
+      if (btnStartHelp) btnStartHelp.onclick = toggleHelp;
+      if (btnCloseHelp) btnCloseHelp.onclick = toggleHelp;
 
       // 테마 토글 버튼 연동
       const themeBtn = document.getElementById('btn-theme-toggle');

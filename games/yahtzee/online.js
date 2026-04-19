@@ -121,6 +121,12 @@
 
     if (diceChanged && rollOccurred && sameTurn) {
       animateDice(state.dice);
+      // 원격 흔들림 효과 동기화
+      if (diceRow) {
+        diceRow.classList.remove('shake-anim');
+        void diceRow.offsetWidth;
+        diceRow.classList.add('shake-anim');
+      }
     } else {
       updateDiceFaces(state.dice);
     }
@@ -295,11 +301,14 @@
 
         const playerScores = currentState.scores[p] || {};
         const score = playerScores[id];
+        
+        // 마지막 기록 여부 확인
+        const isLast = currentState.lastScore && currentState.lastScore.p === p && currentState.lastScore.cat === id;
 
         if (score !== undefined) {
           // ── 이미 기록된 점수 ──
           cell.textContent = score;
-          cell.className   = 'score-cell filled';
+          cell.className   = isLast ? 'score-cell filled last-move' : 'score-cell filled';
           cell.onclick     = null;
 
         } else if (p === myRole && myTurn && rolledOnce && !currentState.winner) {
@@ -318,10 +327,6 @@
 
         // 현재 턴 플레이어 열 강조
         cell.classList.toggle('active-column', currentState.turn === p);
-
-        // 마지막 기록 강조
-        const isLast = currentState.lastScore && currentState.lastScore.p === p && currentState.lastScore.cat === id;
-        cell.classList.toggle('last-move', isLast);
       });
     });
 
