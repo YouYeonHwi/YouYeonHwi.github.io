@@ -38,8 +38,10 @@ title: 🚀 유연휘의 개발 블로그 (Whistle's Dev Diary)
     box-shadow: 0 15px 30px rgba(0,0,0,0.1);
     border-color: #6366f1;
   }
+  .feature-card:hover .card-title { color: #6366f1; }
+  
   .card-icon { font-size: 3rem; margin-bottom: 1.5rem; }
-  .card-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 1rem; color: #1e293b; }
+  .card-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 1rem; color: #1e293b; transition: color 0.3s; }
   .card-desc { color: #64748b; line-height: 1.6; flex: 1; }
   
   .lecture-list {
@@ -93,19 +95,12 @@ title: 🚀 유연휘의 개발 블로그 (Whistle's Dev Diary)
 
 <div class="content-grid">
   <!-- 파이썬 교육 자료 섹션 -->
-  <div class="feature-card">
+  <a href="/pages/파이썬 기초문법/index/" class="feature-card">
     <div class="card-icon">🐍</div>
     <div class="card-title">파이썬 기초 문법</div>
     <p class="card-desc">파이썬의 핵심 자료형, 제어문, 함수 등에 대해 아주 기초부터 차근차근 정리한 학습 자료입니다.</p>
-    <ul class="lecture-list">
-      <li><a href="/pages/파이썬 기초문법/number/">1. 숫자형 (Numeric Types)</a></li>
-      <li><a href="/pages/파이썬 기초문법/string/">2. 문자열 (String)</a></li>
-      <li><a href="/pages/파이썬 기초문법/list/">3. 리스트 (List)</a></li>
-      <li><a href="/pages/파이썬 기초문법/dictionary/">4. 딕셔너리 (Dictionary)</a></li>
-      <li><a href="/pages/파이썬 기초문법/loops/">5. 반복문 (Loops)</a></li>
-    </ul>
-    <a href="/pages/파이썬 기초문법/" class="btn-primary">전체 강좌 보기 →</a>
-  </div>
+    <div class="btn-primary">전체 강좌 보기 →</div>
+  </a>
 
   <!-- 게임 섹션 -->
   <a href="/games/" class="feature-card">

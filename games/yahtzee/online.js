@@ -17,6 +17,7 @@
   // ── 상태 ──────────────────────────────────────────────────
   let myRole = null;
   let resultShown = false; // 결과 화면 중복 표시 방지
+  let isRolling = false;   // 주사위 회전 중 클릭 가드
 
   // 주사위별 누적 회전값 — 매 굴리기마다 360° 추가해 같은 눈값에도 항상 애니메이션 발생
   const diceBaseRot = [
@@ -103,10 +104,15 @@
     myRole = role;
 
     // 주사위 애니메이션: 주사위가 실제로 변경된 경우에만
-    if (state.lastAction === 'roll' && JSON.stringify(prevDice) !== JSON.stringify(state.dice)) {
+    if (state.status === 'roll') {
       animateDice(state.dice);
     } else {
       updateDiceFaces(state.dice);
+    }
+
+    // 턴 교체 시 굴리기 보호 해제
+    if (state.turn !== currentState.turn) {
+      isRolling = false;
     }
 
     // 게임 UI 전체 갱신
@@ -129,6 +135,10 @@
     if (!isMyTurn()) return;
     if (currentState.rollsLeft <= 0) return;
     if (currentState.status !== 'playing') return;
+    if (isRolling) return; // 이미 굴리는 중이면 무시
+
+    isRolling = true;
+    updateUI(); // 버튼 즉시 비활성화
 
     const newDice = currentState.dice.map((v, i) =>
       currentState.held[i] ? v : Math.floor(Math.random() * 6) + 1
@@ -141,6 +151,12 @@
       lastAction: 'roll'
     });
     GameUtils.vibrate(30);
+
+    // 0.8s 후 굴리기 상태 해제 (상대방 턴 전환 시에도 안전하도록)
+    setTimeout(() => {
+      isRolling = false;
+      updateUI();
+    }, 800);
   }
 
   // ── 주사위 홀드 토글 ─────────────────────────────────────
@@ -217,13 +233,21 @@
     const rolledOnce = currentState.rollsLeft < MAX_ROLLS;
 
     rollsLeftEl.textContent = `${currentState.rollsLeft}회 남음`;
-    btnRoll.disabled = !canRoll;
-    btnRoll.textContent = myTurn
+    btnRoll.disabled = !canRoll || isRolling;
+    btnRoll.textContent = isRolling ? '🎲 주사위 굴리는 중...' : (myTurn
       ? (currentState.rollsLeft > 0 ? '🎲 주사위 굴리기' : '✅ 조합을 선택하세요')
-      : '⏳ 상대방 턴 대기 중...';
+      : '⏳ 상대방 턴 대기 중...');
 
     turnIndicator.textContent = myTurn ? '✨ 나의 차례!' : '💤 상대방의 차례';
     turnIndicator.className = `turn-indicator${myTurn ? ' active' : ''}`;
+
+    // 헤더 강조
+    const th1 = document.querySelector('th:nth-child(2)');
+    const th2 = document.querySelector('th:nth-child(3)');
+    if (th1 && th2) {
+      th1.classList.toggle('active-header', currentState.turn === 'p1');
+      th2.classList.toggle('active-header', currentState.turn === 'p2');
+    }
 
     updateScoreTable();
     updateMiniScores();
@@ -234,8 +258,14 @@
     const s2 = calcTotal(currentState.scores.p2);
     const mini1 = document.getElementById('mini-p1');
     const mini2 = document.getElementById('mini-p2');
-    if (mini1) mini1.textContent = `P1: ${s1}`;
-    if (mini2) mini2.textContent = `P2: ${s2}`;
+    if (mini1) {
+      mini1.textContent = `P1: ${s1}`;
+      mini1.classList.toggle('ms-active', currentState.turn === 'p1');
+    }
+    if (mini2) {
+      mini2.textContent = `P2: ${s2}`;
+      mini2.classList.toggle('ms-active', currentState.turn === 'p2');
+    }
   }
 
   function updateScoreTable() {
@@ -264,7 +294,6 @@
           const pot = calculateScore(id, currentState.dice);
           cell.textContent = pot;
           cell.className   = pot > 0 ? 'score-cell available' : 'score-cell zero-available';
-          // 클릭 시 pickCategory 호출 (catId 캡처)
           cell.onclick = ((catId) => () => pickCategory(catId))(id);
 
         } else {
@@ -273,6 +302,9 @@
           cell.className   = 'score-cell empty';
           cell.onclick     = null;
         }
+
+        // 현재 턴 플레이어 열 강조
+        cell.classList.toggle('active-column', currentState.turn === p);
       });
     });
   }
