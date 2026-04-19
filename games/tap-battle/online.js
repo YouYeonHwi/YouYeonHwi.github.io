@@ -41,30 +41,53 @@
     GameUtils.RemoteManager.updateState({ ...currentState, status: 'waiting' });
     
     setTimeout(() => {
-      // "GO" 신호 발생
-      GameUtils.RemoteManager.getRoomState((state) => {
-          if (state && state.status === 'waiting') {
-            GameUtils.RemoteManager.updateState({
-              ...state,
-              status: 'go',
-              startTime: Date.now()
-            });
-          }
-      });
+      // "GO" 신호 발생 — getRoomState()는 동기 반환
+      const state = GameUtils.RemoteManager.getRoomState();
+      if (state && state.status === 'waiting') {
+        GameUtils.RemoteManager.updateState({
+          ...state,
+          status: 'go',
+          startTime: Date.now()
+        });
+      }
     }, delay);
   }
 
-  function onSync(state, role) {
+  // ── Firebase null 안전 래퍼 ───────────────────────────────
+  function safeState(raw) {
+    if (!raw) return null;
+    return {
+      status: raw.status || 'lobby',
+      startTime: raw.startTime || 0,
+      p1Time: raw.p1Time || 0,
+      p2Time: raw.p2Time || 0,
+      p1Fail: !!raw.p1Fail,
+      p2Fail: !!raw.p2Fail
+    };
+  }
+
+  function onSync(rawState, role) {
+    const state = safeState(rawState);
     if (!state) return;
-    const oldStatus = currentState.status;
+
     currentState = state;
     myRole = role;
 
     // UI 동기화
     updateUI();
 
-    // 결과 체크 (끝났을 때)
-    if (state.status === 'ended' || (state.p1Time && state.p2Time) || (state.p1Fail && state.p2Fail)) {
+    // Host(P1)가 두 명의 완료 여부를 확인하여 상태 전환 (Race Condition 방지)
+    const p1Done = state.p1Time > 0 || state.p1Fail;
+    const p2Done = state.p2Time > 0 || state.p2Fail;
+
+    if (p1Done && p2Done && state.status !== 'ended') {
+      if (myRole === 'p1') {
+        GameUtils.RemoteManager.updateField('status', 'ended');
+      }
+    }
+
+    // 결과 표시
+    if (state.status === 'ended') {
       showResult();
     }
   }
@@ -105,37 +128,27 @@
   }
 
   function handleTap() {
-    if (currentState.status === 'ended') return;
+    if (currentState.status === 'ended' || currentState.status === 'lobby') return;
 
     const now = Date.now();
-    const update = {};
+    const fieldPrefix = myRole === 'p1' ? 'p1' : 'p2';
+    
+    // 이미 기록이 있으면 무시
+    const alreadyDone = myRole === 'p1' 
+      ? (currentState.p1Time > 0 || currentState.p1Fail)
+      : (currentState.p2Time > 0 || currentState.p2Fail);
+    if (alreadyDone) return;
 
     if (currentState.status === 'waiting') {
       // 조기 터치 실패
-      if (myRole === 'p1') update.p1Fail = true;
-      else update.p2Fail = true;
+      GameUtils.RemoteManager.updateField(`${fieldPrefix}Fail`, true);
       GameUtils.vibrate(100);
     } else if (currentState.status === 'go') {
       // 정상 터치
       const reaction = (now - currentState.startTime) / 1000;
-      if (myRole === 'p1') {
-        if (currentState.p1Time) return;
-        update.p1Time = reaction;
-      } else {
-        if (currentState.p2Time) return;
-        update.p2Time = reaction;
-      }
+      GameUtils.RemoteManager.updateField(`${fieldPrefix}Time`, reaction);
       GameUtils.vibrate(20);
-    } else {
-      return;
     }
-
-    // 상태 업데이트 및 자동 종료 체크
-    const nextState = { ...currentState, ...update };
-    if ((nextState.p1Time || nextState.p1Fail) && (nextState.p2Time || nextState.p2Fail)) {
-      nextState.status = 'ended';
-    }
-    GameUtils.RemoteManager.updateState(nextState);
   }
 
   function showResult() {

@@ -457,6 +457,13 @@ const GameUtils = (() => {
       db.ref('rooms/' + roomId + '/gameState').set(state);
     }
 
+    // gameState 전체를 덮어쓰지 않고 특정 하위 필드만 업데이트
+    // 예: updateField('p2X', 120) → rooms/{id}/gameState/p2X 만 변경
+    function updateField(subPath, value) {
+      if (!roomId || !db) return;
+      db.ref('rooms/' + roomId + '/gameState/' + subPath).set(value);
+    }
+
     function listenToRoom() {
       if (!roomId || !db) return;
       db.ref('rooms/' + roomId + '/gameState').on('value', snapshot => {
@@ -737,7 +744,7 @@ const GameUtils = (() => {
       document.head.appendChild(style);
     }
 
-    return { init, createRoom, joinRoom, updateState, leaveRoom, getRoomId: () => roomId, getRole: () => playerRole, showSelectionMenu, openLobby, getRoomState };
+    return { init, createRoom, joinRoom, updateState, updateField, leaveRoom, getRoomId: () => roomId, getRole: () => playerRole, showSelectionMenu, openLobby, getRoomState };
   })();
 
   /* ───────────────────── 초기화 ───────────────────── */

@@ -64,6 +64,22 @@
             <li class="divider"></li>
 
             <li class="chapter">
+                <span style="font-weight: 700;">🐍 파이썬 기초 문법</span>
+                <ul class="articles">
+                    {% assign python_lessons = site.pages | where: "category", "파이썬 기초 문법" | sort: "weight" %}
+                    {% for lesson in python_lessons %}
+                    <li class="chapter {% if page.url == lesson.url %}active{% endif %}" data-path="{{site.baseurl}}{{lesson.url}}">
+                        <a href="{{site.baseurl}}{{lesson.url}}" onclick="pageScrollToTop(this)">
+                            {{ lesson.title | escape }}
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </li>
+
+            <li class="divider"></li>
+
+            <li class="chapter">
                 <span>Information</span>
                 <ul class="articles">
                     <li class="chapter"><a href="{{site.baseurl}}/about.html">정보 (About)</a></li>

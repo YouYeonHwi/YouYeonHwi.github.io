@@ -67,18 +67,17 @@
       btn.classList.add('done');
       myNext++;
       
-      const update = myRole === 'p1' ? { p1Next: myNext } : { p2Next: myNext };
+      const fieldPrefix = myRole === 'p1' ? 'p1' : 'p2';
       
       if (myNext > MAX_NUM) {
         const elapsed = (Date.now() - startTime) / 1000;
-        if (myRole === 'p1') { update.p1Time = elapsed; }
-        else { update.p2Time = elapsed; }
+        GameUtils.RemoteManager.updateField(`${fieldPrefix}Time`, elapsed);
         nextNumEl.textContent = 'FINISH!';
       } else {
         nextNumEl.textContent = myNext;
       }
 
-      GameUtils.RemoteManager.updateState({ ...currentState, ...update });
+      GameUtils.RemoteManager.updateField(`${fieldPrefix}Next`, myNext);
     } else {
       GameUtils.vibrate(100);
       btn.classList.add('error');
@@ -86,8 +85,22 @@
     }
   }
 
-  function onSync(state, role) {
+  // ── Firebase null 안전 래퍼 ───────────────────────────────
+  function safeState(raw) {
+    if (!raw) return null;
+    return {
+      status: raw.status || 'lobby',
+      p1Next: raw.p1Next || 1,
+      p2Next: raw.p2Next || 1,
+      p1Time: raw.p1Time || 0,
+      p2Time: raw.p2Time || 0
+    };
+  }
+
+  function onSync(rawState, role) {
+    const state = safeState(rawState);
     if (!state) return;
+
     currentState = state;
     myRole = role;
 
@@ -95,8 +108,12 @@
     oppLvEl.textContent = oppNext > MAX_NUM ? 'FINISH!' : `최근: ${oppNext - 1}`;
     updateOppProgress(oppNext - 1);
 
+    // ended 상태 전환은 p1(Host)만 처리 — race condition 방지
     if (state.p1Time > 0 && state.p2Time > 0 && state.status !== 'ended') {
-      GameUtils.RemoteManager.updateState({ ...state, status: 'ended' });
+      if (myRole === 'p1') {
+        GameUtils.RemoteManager.updateField('status', 'ended');
+      }
+      return; // p2는 다음 onSync(status:'ended') 때 showFinalResult 호출
     }
 
     if (state.status === 'ended') {

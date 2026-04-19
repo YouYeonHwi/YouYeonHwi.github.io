@@ -70,21 +70,38 @@
     H = rect.height;
   }
 
-  function onSync(state, role) {
+  // ── Firebase null 안전 래퍼 ───────────────────────────────
+  function safeState(raw) {
+    if (!raw) return null;
+    return {
+      status: raw.status || 'lobby',
+      p1Score: raw.p1Score || 0,
+      p2Score: raw.p2Score || 0,
+      ball: raw.ball || { x: W/2, y: H/2, vx: 0, vy: 0 },
+      p1X: raw.p1X || 0,
+      p2X: raw.p2X || 0
+    };
+  }
+
+  function onSync(rawState, role) {
+    const state = safeState(rawState);
     if (!state) return;
     myRole = role;
-    
-    // Guest일 때만 위치 정보를 덮어씀 (Host는 본인이 계산함)
-    if (myRole === 'p2') {
-        currentState = state;
+
+    if (myRole === 'p1') {
+      // Host: 상대방 패들 위치와 점수만 반영 (공은 본인이 계산)
+      currentState.p2X = state.p2X;
+      currentState.p1Score = state.p1Score;
+      currentState.p2Score = state.p2Score;
+      if (state.status === 'ended') currentState.status = 'ended';
     } else {
-        // Host인 경우 상대방 패들 정보만 업데이트
-        currentState.p2X = state.p2X;
-        currentState.p1Score = state.p1Score;
-        currentState.p2Score = state.p2Score;
+      // Guest: 전체 상태를 Host에서 받되, 내 패들(p2X)은 로컬값 유지
+      const savedMyX = myX;
+      currentState = state;
+      myX = savedMyX; // 로컬 패들 위치 보호
     }
 
-    if (state.status === 'ended' && running) {
+    if (currentState.status === 'ended' && running) {
       running = false;
       showResult();
     }
@@ -111,10 +128,10 @@
   function renderLoop() {
     if (!running) return;
     
-    // 내 패들 위치를 서버로 전송 (Guest용 패들 동기화)
+    // 내 패들 위치만 서버로 전송 (gameState 전체 덮어쓰기 금지!)
     const now = Date.now();
     if (now - lastSyncTime > 40) {
-      GameUtils.RemoteManager.updateState({ ...currentState, p2X: myX });
+      GameUtils.RemoteManager.updateField('p2X', myX);
       lastSyncTime = now;
     }
 

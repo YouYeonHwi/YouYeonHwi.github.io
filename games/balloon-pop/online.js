@@ -13,6 +13,17 @@
     p2Count: 0
   };
 
+  // ── Firebase null 안전 래퍼 ───────────────────────────────
+  function safeState(raw) {
+    if (!raw) return null;
+    return {
+      status: raw.status || 'lobby',
+      timeLeft: raw.timeLeft || 0,
+      p1Count: raw.p1Count || 0,
+      p2Count: raw.p2Count || 0
+    };
+  }
+
   let localCount = 0;
   let lastSyncCount = 0;
   let spawnInterval = null;
@@ -57,8 +68,10 @@
     }, 1000);
   }
 
-  function onSync(state, role) {
+  function onSync(rawState, role) {
+    const state = safeState(rawState);
     if (!state) return;
+
     const oldStatus = currentState.status;
     currentState = state;
     myRole = role;
@@ -70,7 +83,6 @@
 
     if (state.status === 'countdown') {
       cdOverlay.classList.remove('hidden');
-      // Simple local countdown display logic could be added here if needed
     } else if (state.status === 'playing') {
       cdOverlay.classList.add('hidden');
       if (oldStatus !== 'playing') startLocalGame();
@@ -132,8 +144,8 @@
 
   function syncCount() {
     lastSyncCount = localCount;
-    const update = myRole === 'p1' ? { p1Count: localCount } : { p2Count: localCount };
-    GameUtils.RemoteManager.updateState({ ...currentState, ...update });
+    const field = myRole === 'p1' ? 'p1Count' : 'p2Count';
+    GameUtils.RemoteManager.updateField(field, localCount);
   }
 
   function showFinalResult(state) {

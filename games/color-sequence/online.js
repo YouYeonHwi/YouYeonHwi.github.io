@@ -39,38 +39,40 @@
   }
 
   function startTurn(player) {
-    GameUtils.RemoteManager.updateState({
+    const newState = {
       ...currentState,
       currentPlayer: player,
       sequence: [],
       status: 'showing',
       litColor: null
-    });
-    setTimeout(() => nextLevel(), 1000);
+    };
+    GameUtils.RemoteManager.updateState(newState);
+    setTimeout(() => nextLevel(newState), 1000);
   }
 
-  function nextLevel() {
-    const state = GameUtils.RemoteManager.getRoomState();
+  function nextLevel(baseState) {
+    const state = baseState || currentState;
     const newSeq = [...state.sequence, COLORS[Math.floor(Math.random() * COLORS.length)]];
     
-    GameUtils.RemoteManager.updateState({
+    const updatedState = {
       ...state,
       sequence: newSeq,
       status: 'showing',
       litColor: null
-    });
-
-    showSequence(newSeq);
+    };
+    GameUtils.RemoteManager.updateState(updatedState);
+    showSequence(newSeq, updatedState);
   }
 
-  function showSequence(seq) {
+  function showSequence(seq, baseState) {
     isShowing = true;
     let i = 0;
     const intv = setInterval(() => {
       if (i < seq.length) {
         // Sync the lit color so both see it
         GameUtils.RemoteManager.updateState({
-          ...GameUtils.RemoteManager.getRoomState(),
+          ...(baseState || currentState),
+          sequence: seq,
           litColor: seq[i]
         });
         GameUtils.vibrate(20);
@@ -78,7 +80,8 @@
       } else {
         clearInterval(intv);
         GameUtils.RemoteManager.updateState({
-          ...GameUtils.RemoteManager.getRoomState(),
+          ...(baseState || currentState),
+          sequence: seq,
           litColor: null,
           status: 'input'
         });
@@ -87,8 +90,23 @@
     }, 800);
   }
 
-  function onSync(state, role) {
+  // ── Firebase null 안전 래퍼 ───────────────────────────────
+  function safeState(raw) {
+    if (!raw) return null;
+    return {
+      currentPlayer: raw.currentPlayer || 'p1',
+      status: raw.status || 'lobby',
+      sequence: Array.isArray(raw.sequence) ? raw.sequence : [],
+      p1Lv: raw.p1Lv || 0,
+      p2Lv: raw.p2Lv || 0,
+      litColor: raw.litColor || null
+    };
+  }
+
+  function onSync(rawState, role) {
+    const state = safeState(rawState);
     if (!state) return;
+
     currentState = state;
     myRole = role;
 
@@ -105,6 +123,11 @@
     if (state.status === 'input') {
       gameMsg.textContent = isMyTurn ? '순서대로 터치하세요!' : '상대방이 입력 중...';
       if (isMyTurn) enableGrid(true); else enableGrid(false);
+
+      // p1(Host)이 p2의 실패를 감지해 자동으로 p1 턴으로 전환
+      if (myRole === 'p1' && state.currentPlayer === 'p2' && state.p2Lv > 0 && state.p1Lv === 0 && !isShowing) {
+        setTimeout(() => startTurn('p1'), 600);
+      }
     } else if (state.status === 'showing') {
       gameMsg.textContent = '순서를 기억하세요!';
       enableGrid(false);
@@ -115,7 +138,6 @@
 
   function updateGridVisuals(color, player) {
     const targetGrid = player === myRole ? myGrid : oppGrid;
-    const otherGrid = player === myRole ? oppGrid : myGrid;
 
     // Reset all
     [myGrid, oppGrid].forEach(g => {
@@ -130,37 +152,44 @@
 
   function handleTap(color) {
     if (currentState.status !== 'input' || isShowing) return;
+    if (currentState.currentPlayer !== myRole) return;
     
     playerInput.push(color);
     GameUtils.vibrate(10);
 
-    // Flash locally first for responsiveness
     const btn = myGrid.querySelector(`[data-color="${color}"]`);
     btn.classList.add('active');
     setTimeout(() => btn.classList.remove('active'), 200);
 
     const idx = playerInput.length - 1;
     if (playerInput[idx] !== currentState.sequence[idx]) {
-      // Wrong!
+      // 틀렸을 때
       GameUtils.vibrate(100);
       const finalLv = currentState.sequence.length - 1;
-      const update = myRole === 'p1' ? { p1Lv: finalLv } : { p2Lv: finalLv };
-      
-      if (myRole === 'p1') {
-        // P2 turn start
-        playerInput = [];
-        startTurn('p2');
+      const field = myRole === 'p1' ? 'p1Lv' : 'p2Lv';
+      GameUtils.RemoteManager.updateField(field, finalLv);
+      playerInput = [];
+
+      const otherPlayer = myRole === 'p1' ? 'p2' : 'p1';
+      const otherLv = myRole === 'p1' ? currentState.p2Lv : currentState.p1Lv;
+
+      if (otherLv > 0) {
+        GameUtils.RemoteManager.updateField('status', 'ended');
       } else {
-        // Game Over
-        GameUtils.RemoteManager.updateState({ ...currentState, ...update, status: 'ended' });
+        if (myRole === 'p1') {
+          setTimeout(() => startTurn(otherPlayer), 600);
+        }
       }
     } else if (playerInput.length === currentState.sequence.length) {
-      // Correct!
+      // 정답!
       playerInput = [];
       const currentLv = currentState.sequence.length;
-      const update = myRole === 'p1' ? { p1Lv: currentLv } : { p2Lv: currentLv };
-      GameUtils.RemoteManager.updateState({ ...currentState, ...update });
-      setTimeout(() => { if (myRole === currentState.currentPlayer) nextLevel(); }, 500);
+      const field = myRole === 'p1' ? 'p1Lv' : 'p2Lv';
+      GameUtils.RemoteManager.updateField(field, currentLv);
+      
+      setTimeout(() => {
+        if (myRole === currentState.currentPlayer) nextLevel();
+      }, 500);
     }
   }
 

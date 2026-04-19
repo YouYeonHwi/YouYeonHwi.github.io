@@ -33,8 +33,23 @@
     });
   }
 
-  function onSync(state, role, roomStatus) {
+  // ── Firebase null 안전 래퍼 ───────────────────────────────
+  function safeState(raw) {
+    if (!raw) return null;
+    return {
+      round: raw.round || 1,
+      p1Choice: raw.p1Choice || null,
+      p2Choice: raw.p2Choice || null,
+      p1Score: raw.p1Score || 0,
+      p2Score: raw.p2Score || 0,
+      status: raw.status || 'playing'
+    };
+  }
+
+  function onSync(rawState, role, roomStatus) {
+    const state = safeState(rawState);
     if (!state) return;
+    
     currentState = state;
     myRole = role;
 
@@ -49,7 +64,14 @@
     const oppChoice = myRole === 'p1' ? state.p2Choice : state.p1Choice;
 
     myChoiceEl.textContent = emojiMap[myChoice] || '❔';
-    
+
+    // 새 라운드 시작 — 버튼 재활성화
+    if (state.status === 'playing' && !myChoice) {
+      choiceBtns.forEach(btn => {
+        btn.classList.remove('disabled', 'selected');
+      });
+    }
+
     // 상대방 선택 상태 표시
     if (oppChoice && !myChoice) {
       oppStatusEl.textContent = '상대방 선택 완료! (당신을 기다림)';
@@ -75,28 +97,35 @@
 
   function resolveRound(state) {
     const winner = getWinner(state.p1Choice, state.p2Choice);
-    const nextState = { ...state, status: 'resolving' };
-    
-    if (winner === 1) nextState.p1Score++;
-    else if (winner === 2) nextState.p2Score++;
+    // 점수 계산
+    const p1Score = state.p1Score + (winner === 1 ? 1 : 0);
+    const p2Score = state.p2Score + (winner === 2 ? 1 : 0);
 
-    // 3판 2선승제 또는 최대 라운드 체크
-    if (nextState.p1Score >= 2 || nextState.p2Score >= 2 || nextState.round >= 5) {
-      nextState.status = 'ended';
-    } else {
-      // 2초 후 다음 라운드 준비
-      setTimeout(() => {
-        GameUtils.RemoteManager.updateState({
-          ...nextState,
-          round: nextState.round + 1,
-          p1Choice: null,
-          p2Choice: null,
-          status: 'playing'
-        });
-      }, 2000);
+    // 3판 2선승제 또는 최대 라운드 체크 → 종료
+    if (p1Score >= 2 || p2Score >= 2 || state.round >= 5) {
+      GameUtils.RemoteManager.updateState({
+        ...state,
+        p1Score,
+        p2Score,
+        status: 'ended'
+      });
+      return;
     }
-    
-    GameUtils.RemoteManager.updateState(nextState);
+
+    // 결과를 먼저 표시 (resolving 상태로 보여줌)
+    const resolvedState = { ...state, p1Score, p2Score, status: 'resolving' };
+    GameUtils.RemoteManager.updateState(resolvedState);
+
+    // 2초 후 다음 라운드 준비 — 이 한 번의 업데이트로만 전환
+    setTimeout(() => {
+      GameUtils.RemoteManager.updateState({
+        ...resolvedState,
+        round: resolvedState.round + 1,
+        p1Choice: null,
+        p2Choice: null,
+        status: 'playing'
+      });
+    }, 2000);
   }
 
   function getWinner(p1, p2) {
@@ -109,16 +138,15 @@
 
   function handleChoice(choice) {
     if (currentState.status !== 'playing') return;
-    const update = {};
+    
     if (myRole === 'p1') {
       if (currentState.p1Choice) return;
-      update.p1Choice = choice;
+      GameUtils.RemoteManager.updateField('p1Choice', choice);
     } else {
       if (currentState.p2Choice) return;
-      update.p2Choice = choice;
+      GameUtils.RemoteManager.updateField('p2Choice', choice);
     }
     
-    GameUtils.RemoteManager.updateState({ ...currentState, ...update });
     GameUtils.vibrate(20);
     
     // 버튼 비활성화

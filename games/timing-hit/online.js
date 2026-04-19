@@ -15,6 +15,20 @@
     speed: 2
   };
 
+  // ── Firebase null 안전 래퍼 ───────────────────────────────
+  function safeState(raw) {
+    if (!raw) return null;
+    return {
+      round: raw.round || 1,
+      status: raw.status || 'lobby',
+      p1Total: raw.p1Total || 0,
+      p2Total: raw.p2Total || 0,
+      p1StopPos: raw.p1StopPos !== undefined ? raw.p1StopPos : null,
+      p2StopPos: raw.p2StopPos !== undefined ? raw.p2StopPos : null,
+      speed: raw.speed || 2
+    };
+  }
+
   let localPos = 0;
   let localDir = 1;
   let isMoving = false;
@@ -56,8 +70,10 @@
     });
   }
 
-  function onSync(state, role) {
+  function onSync(rawState, role) {
+    const state = safeState(rawState);
     if (!state) return;
+    
     const oldStatus = currentState.status;
     currentState = state;
     myRole = role;
@@ -71,7 +87,6 @@
         startLocalMovement(state.speed);
       }
       
-      // 상대방이 먼저 멈췄는지 확인
       const oppStop = myRole === 'p1' ? state.p2StopPos : state.p1StopPos;
       if (oppStop !== null) {
         oppNeedle.style.left = oppStop + '%';
@@ -86,6 +101,11 @@
         myMsg.textContent = '대기 중...';
       } else {
         myMsg.textContent = '터치하여 멈추세요!';
+      }
+
+      // Host(P1)가 두 명의 완료 여부를 확인하여 상태 전환
+      if (myRole === 'p1' && state.p1StopPos !== null && state.p2StopPos !== null) {
+        resolveRound(state);
       }
     } 
     else if (state.status === 'resolving') {
@@ -140,20 +160,11 @@
     GameUtils.vibrate(20);
     const score = calculateScore(localPos);
     
-    const update = myRole === 'p1' ? 
-      { p1StopPos: localPos, p1Total: currentState.p1Total + score } : 
-      { p2StopPos: localPos, p2Total: currentState.p2Total + score };
+    const fieldPrefix = myRole === 'p1' ? 'p1' : 'p2';
+    const oldTotal = myRole === 'p1' ? currentState.p1Total : currentState.p2Total;
 
-    const nextState = { ...currentState, ...update };
-    
-    // 둘 다 멈췄는지 체크
-    if (nextState.p1StopPos !== null && nextState.p2StopPos !== null) {
-      if (myRole === 'p1') {
-        resolveRound(nextState);
-      }
-    }
-    
-    GameUtils.RemoteManager.updateState(nextState);
+    GameUtils.RemoteManager.updateField(`${fieldPrefix}StopPos`, localPos);
+    GameUtils.RemoteManager.updateField(`${fieldPrefix}Total`, oldTotal + score);
   }
 
   function calculateScore(pos) {

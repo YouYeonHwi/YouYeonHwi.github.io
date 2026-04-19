@@ -14,6 +14,18 @@
     history: []
   };
 
+  // ── Firebase null 안전 래퍼 ───────────────────────────────
+  function safeState(raw) {
+    if (!raw) return null;
+    return {
+      status: raw.status || 'lobby',
+      currentNum: raw.currentNum || 0,
+      lastTapPlayer: raw.lastTapPlayer || null,
+      lastTapTime: raw.lastTapTime || 0,
+      history: Array.isArray(raw.history) ? raw.history : []
+    };
+  }
+
   const numEl = document.getElementById('current-num');
   const tapBtn = document.getElementById('tap-btn');
   const gameMsg = document.getElementById('game-msg');
@@ -51,39 +63,37 @@
     const now = Date.now();
     const otherPlayer = myRole === 'p1' ? 'p2' : 'p1';
     
-    // 동시성 체크 (내 터치 시점 기준 0.3초 이내에 상대가 이미 눌렀는지 확인)
+    // 동시성 체크 (로컬 상태 기준 즉시 확인)
     if (currentState.lastTapPlayer === otherPlayer && (now - currentState.lastTapTime < SIMULTANEOUS_WINDOW)) {
-      failGame('동시 터치!');
+      failGame();
       return;
     }
 
-    // 정상적인 숫자 올리기
     const nextNum = currentState.currentNum + 1;
     const nextHistory = [...currentState.history, myRole];
 
     GameUtils.vibrate(20);
     
-    const update = {
-      currentNum: nextNum,
-      lastTapPlayer: myRole,
-      lastTapTime: now,
-      history: nextHistory
-    };
+    // 개별 필드 업데이트
+    GameUtils.RemoteManager.updateField('lastTapPlayer', myRole);
+    GameUtils.RemoteManager.updateField('lastTapTime', now);
+    GameUtils.RemoteManager.updateField('history', nextHistory);
+    GameUtils.RemoteManager.updateField('currentNum', nextNum);
 
     if (nextNum >= TARGET) {
-      GameUtils.RemoteManager.updateState({ ...currentState, ...update, status: 'ended' });
-    } else {
-      GameUtils.RemoteManager.updateState({ ...currentState, ...update });
+      GameUtils.RemoteManager.updateField('status', 'ended');
     }
   }
 
-  function failGame(reason) {
-    GameUtils.RemoteManager.updateState({ ...currentState, status: 'failed' });
+  function failGame() {
+    GameUtils.RemoteManager.updateField('status', 'failed');
     GameUtils.vibrate(200);
   }
 
-  function onSync(state, role) {
+  function onSync(rawState, role) {
+    const state = safeState(rawState);
     if (!state) return;
+
     const oldNum = currentState.currentNum;
     currentState = state;
     myRole = role;
