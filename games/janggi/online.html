@@ -105,23 +105,27 @@
       display: flex; align-items: center; justify-content: space-between;
       padding: .6rem 1rem; flex-shrink: 0;
     }
-    .back-btn {
-      color: var(--text-dim); font-size: .8rem; font-weight: 600;
-      cursor: pointer; padding: .3rem .5rem; border-radius: 8px;
-      border: 1px solid var(--border); background: none; text-decoration: none;
+    .back-link {
+      color: var(--text-dim); text-decoration: none; font-size: .75rem; font-weight: 600;
+      padding: .25rem .5rem; border-radius: 8px; border: 1px solid var(--border);
     }
-    .turn-indicator { 
-      font-size: .85rem; font-weight: 800; padding: .4rem 1.2rem; border-radius: 50px; 
+    .mini-scores { display: flex; gap: 0.8rem; font-size: .85rem; font-weight: 700; }
+    .ms-p1 { color: var(--p1); }
+    .ms-p2 { color: var(--p2); }
+    .ms-active { transform: scale(1.2); text-shadow: 0 0 10px currentColor; }
+
+    .turn-indicator {
+      font-size: .75rem; font-weight: 700; padding: .35rem .9rem; border-radius: 50px;
       transition: all 0.3s; border: 1px solid var(--border);
-      background: var(--surface); color: var(--text-dim);
+      background: rgba(255,255,255,0.05); color: var(--text-dim);
     }
-    .turn-indicator.active.p1 { 
-      background: rgba(239, 68, 68, 0.15); color: var(--p1); 
-      border-color: rgba(239, 68, 68, 0.4); box-shadow: 0 0 15px rgba(239, 68, 68, 0.3); 
+    .turn-indicator.active.p1 {
+      border-color: var(--p1); color: var(--p1); background: rgba(239, 68, 68, 0.1);
+      box-shadow: 0 0 15px rgba(239, 68, 68, 0.2);
     }
-    .turn-indicator.active.p2 { 
-      background: rgba(74, 222, 128, 0.15); color: var(--p2); 
-      border-color: rgba(74, 222, 128, 0.4); box-shadow: 0 0 15px rgba(74, 222, 128, 0.3); 
+    .turn-indicator.active.p2 {
+      border-color: var(--p2); color: var(--p2); background: rgba(74, 222, 128, 0.1);
+      box-shadow: 0 0 15px rgba(74, 222, 128, 0.2);
     }
 
     /* Play Area (Board) */
@@ -260,34 +264,7 @@
 </head>
 <body>
 
-<!-- ═══ LOBBY OVERLAY ═══ -->
-<div id="overlay-lobby" class="overlay">
-  <div class="overlay-logo">사이버 장기</div>
-  <div class="overlay-sub" style="margin-bottom:0.5rem">온라인으로 친구와 실시간 대결을 펼치세요!</div>
-
-  <!-- 방 생성 후 화면 -->
-  <div class="lobby-card hidden" id="card-create">
-    <h3>🏠 방 생성됨</h3>
-    <div class="room-code-display" id="room-code-display">—</div>
-    <div class="code-hint">이 코드를 친구에게 알려주세요<br>친구가 참여하면 자동으로 시작됩니다</div>
-    <div style="text-align:left; font-size:.75rem; color:var(--text-dim);">
-      <span class="status-dot" id="opp-status-dot"></span>
-      <span id="opp-status-text">상대방 기다리는 중...</span>
-    </div>
-  </div>
-
-  <!-- 방 참여 폼 화면 -->
-  <div class="lobby-card" id="card-join">
-    <h3>🔑 방 참여</h3>
-    <input class="input-field" id="join-code-input" type="text" maxlength="4" placeholder="ABCD" autocomplete="off" spellcheck="false" autocorrect="off">
-  </div>
-
-  <div class="menu-group">
-    <button id="btn-create" class="btn btn-primary">🏠 방 만들기</button>
-    <button id="btn-join"   class="btn btn-primary">🔑 방 참여하기</button>
-    <a href="index.html" class="btn btn-ghost" id="btn-lobby-back">← 돌아가기</a>
-  </div>
-</div>
+<!-- ═══ LOBBY OVERLAY REMOVED (Handled by common.js openLobby) ═══ -->
 
 <!-- ═══ RESULT OVERLAY ═══ -->
 <div id="overlay-result" class="overlay hidden">
@@ -302,10 +279,13 @@
 <!-- ═══ GAME SCREEN ═══ -->
 <div id="game-screen" class="hidden">
   <div class="top-bar">
-    <a href="#" id="btn-quit" class="back-btn">← 나가기</a>
-    <div id="turn-p2" class="turn-indicator p2">초 (Cho) - <span id="label-p2"></span></div>
-    <div style="font-weight:900; font-size:.8rem; color:var(--surface2);">VS</div>
-    <div id="turn-p1" class="turn-indicator p1 active">한 (Han) - <span id="label-p1"></span></div>
+    <a href="/games/" class="back-link">← 목록</a>
+    <div class="mini-scores">
+      <span id="ms-p1" class="ms-p1">한 0</span>
+      <span style="color:var(--border)">:</span>
+      <span id="ms-p2" class="ms-p2">초 0</span>
+    </div>
+    <div id="turn-indicator" class="turn-indicator">대기 중</div>
   </div>
 
   <div class="play-area" id="play-area">
@@ -338,76 +318,29 @@
   let gameActive = false;
   let preventNextSync = false;
 
-  // Initialize DB Connection
-  GameUtils.RemoteManager.init(GAME_ID, onRemoteSync);
+  // Initialize DB Connection and Lobby
+  const initState = {
+    boardState: null,
+    currentTurn: 'p1',
+    winner: null,
+    gameOver: false,
+    lastMove: null
+  };
 
-  /* ════════════ LOBBY ════════════ */
-  $('btn-create').addEventListener('click', doCreate);
-  $('btn-join').addEventListener('click', doJoin);
+  GameUtils.RemoteManager.openLobby(GAME_ID, initState, () => {
+    myRole = GameUtils.RemoteManager.getRole();
+    GameUtils.RemoteManager.init(GAME_ID, onRemoteSync);
 
-  function doCreate() {
-    const btn = $('btn-create');
-    btn.disabled = true;
-    const oldText = btn.textContent;
-    btn.textContent = '방 생성 중...';
-
-    const initState = {
-      boardState: null, // Will be set initialized by p1 later or we can compute it now
-      currentTurn: 'p1',
-      winner: null,
-      gameOver: false,
-      lastMove: null
-    };
-
-    GameUtils.RemoteManager.createRoom(initState, (roomCode) => {
-      myRole = 'p1';
-      $('card-join').style.display   = 'none';
-      $('card-create').classList.remove('hidden');
-      $('room-code-display').textContent = roomCode;
-      $('btn-create').style.display  = 'none';
-      $('btn-join').style.display    = 'none';
-
-      const fakeOverlay = document.createElement('div');
-      GameUtils.RemoteManager.monitorStatus(
-        fakeOverlay, $('card-create'), $('card-create'), $('card-create'),
-        () => {
-          GameUtils.RemoteManager.updateField('../status', 'playing');
-          setTimeout(() => launchGame('p1'), 1000);
-        }
-      );
-    }, (err) => {
-      btn.disabled = false;
-      btn.textContent = oldText;
-      alert('방 생성 실패: ' + (err?.message || err));
-    });
-  }
-
-  function doJoin() {
-    const code = $('join-code-input').value.trim().toUpperCase();
-    if (code.length < 4) { alert('4자리 코드를 입력하세요.'); return; }
-
-    const btn = $('btn-join');
-    btn.disabled = true;
-    const oldText = btn.textContent;
-    btn.textContent = '참여 중...';
-
-    GameUtils.RemoteManager.joinRoom(code, () => {
-      myRole = 'p2';
-      const fakeOverlay = document.createElement('div');
-      GameUtils.RemoteManager.monitorStatus(
-        fakeOverlay, $('card-join'), $('card-join'), $('card-join'),
-        () => launchGame('p2')
-      );
-    }, (err) => {
-      btn.disabled = false;
-      btn.textContent = oldText;
-      alert('방을 찾을 수 없습니다: ' + (err?.message || err || '코드를 확인하세요.'));
-    });
-  }
+    // Host(p1) sets initial state properly on start
+    if (myRole === 'p1') {
+      // game object is not created yet, launchGame will do it and update FB
+    }
+    
+    launchGame(myRole);
+  });
 
   /* ════════════ GAME LAUNCH ════════════ */
   function launchGame(role) {
-    overlayLobby.classList.add('hidden');
     gameScreen.classList.remove('hidden');
 
     myRole = role;
@@ -423,17 +356,15 @@
       containerId: 'pieces-layer',
       svgId: 'board-svg',
       onTurnChange: (turn, inCheck) => {
-        if (turn === 'p1') {
-          $('turn-p1').classList.add('active');
-          $('turn-p2').classList.remove('active');
-        } else {
-          $('turn-p2').classList.add('active');
-          $('turn-p1').classList.remove('active');
-        }
+        const indicator = $('turn-indicator');
+        indicator.className = 'turn-indicator active ' + turn;
+        indicator.textContent = (turn === 'p1' ? '한(Han)' : '초(Cho)') + (inCheck ? ' 장군!' : ' 차례');
         
-        let txt = turn === 'p1' ? '한(Han) 님의 차례입니다.' : '초(Cho) 님의 차례입니다.';
-        if (inCheck) txt = '장군! ' + (turn === 'p1' ? '한(Han)' : '초(Cho)') + '님이 피해야 합니다.';
-        statusText.textContent = txt;
+        $('ms-p1').classList.toggle('ms-active', turn === 'p1');
+        $('ms-p2').classList.toggle('ms-active', turn === 'p2');
+
+        statusText.textContent = turn === 'p1' ? '한(Han) 님의 차례입니다.' : '초(Cho) 님의 차례입니다.';
+        if (inCheck) statusText.textContent = '장군! ' + (turn === 'p1' ? '한(Han)' : '초(Cho)') + '님이 피해야 합니다.';
         
         // 동기화 루프가 아닌 내가 직접 조작한 턴 변경이라면 Firebase 업데이트
         if (!preventNextSync) {
