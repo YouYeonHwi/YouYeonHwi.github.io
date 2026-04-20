@@ -3,8 +3,10 @@
 
   const GAME_ID = 'timing-hit';
   const TOTAL_ROUNDS = 3;
+  const ROUND_SPEEDS = [2.0, 2.5, 3.0];
   
   let myRole = null;
+  let myLocalStopPos = null; // 로컬에서 즉시 멈춤 표시를 위해 추가
   let currentState = {
     round: 1,
     status: 'lobby',
@@ -58,6 +60,7 @@
   }
 
   function startRound(r, s1, s2) {
+    myLocalStopPos = null; // 라운드 시작 시 초기화
     GameUtils.RemoteManager.updateState({
       ...currentState,
       round: r,
@@ -66,7 +69,7 @@
       p2Total: s2,
       p1StopPos: null,
       p2StopPos: null,
-      speed: 1.5 + (r * 0.5)
+      speed: ROUND_SPEEDS[r - 1] || 3.0
     });
   }
 
@@ -84,6 +87,7 @@
 
     if (state.status === 'moving') {
       if (oldStatus !== 'moving') {
+        myLocalStopPos = null; 
         startLocalMovement(state.speed);
       }
       
@@ -133,11 +137,13 @@
       if (!isMoving) return;
       
       const myStop = myRole === 'p1' ? currentState.p1StopPos : currentState.p2StopPos;
-      if (myStop === null) {
+      if (myStop === null && myLocalStopPos === null) {
         localPos += speed * localDir;
         if (localPos >= 100 || localPos <= 0) localDir *= -1;
         localPos = Math.max(0, Math.min(100, localPos));
         myNeedle.style.left = localPos + '%';
+      } else if (myLocalStopPos !== null) {
+        myNeedle.style.left = myLocalStopPos + '%';
       }
       
       // 상대방 바늘도 대략적으로 보여주기 (옵션)
@@ -164,6 +170,7 @@
     if (myStop !== null) return;
 
     GameUtils.vibrate(20);
+    myLocalStopPos = localPos; // 즉시 멈춤
     const score = calculateScore(localPos);
     
     const fieldPrefix = myRole === 'p1' ? 'p1' : 'p2';
