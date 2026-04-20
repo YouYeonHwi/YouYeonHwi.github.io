@@ -94,17 +94,7 @@
 
   function updateUI() {
     const status = currentState.status;
-    const p1Time = currentState.p1Time;
-    const p2Time = currentState.p2Time;
-    const p1Fail = currentState.p1Fail;
-    const p2Fail = currentState.p2Fail;
-
-    const myTime = myRole === 'p1' ? p1Time : p2Time;
-    const myFail = myRole === 'p1' ? p1Fail : p2Fail;
-    const oppTime = myRole === 'p1' ? p2Time : p1Time;
-    const oppFail = myRole === 'p1' ? p2Fail : p1Fail;
-
-    // 기본 상태 텍스트 및 레이아웃
+    
     if (status === 'countdown') {
       myMsg.textContent = '준비...';
       oppMsg.textContent = '준비...';
@@ -115,51 +105,27 @@
       gameStatus.textContent = '준비하세요';
       myArea.classList.remove('go', 'fail');
       oppArea.classList.remove('go', 'fail');
-      myCount.style.opacity = '0.2';
-      oppCount.style.opacity = '0.2';
-      myCount.textContent = 'READY';
-      oppCount.textContent = 'READY';
-    } else if (status === 'go' || status === 'ended') {
-      gameStatus.textContent = status === 'ended' ? '경기 종료' : '터치!!!';
-      
-      // 내 영역 상태 업데이트
-      if (myFail) {
-        myMsg.textContent = '너무 빨랐어요! (실격) 💀';
-        myCount.textContent = 'FAIL';
-        myCount.style.opacity = '1';
-        myArea.classList.add('fail');
-        myArea.classList.remove('go');
-      } else if (myTime > 0) {
-        myMsg.textContent = status === 'ended' ? '기록 확인 중...' : '터치 완료! 상대 대기 중...';
-        myCount.textContent = myTime.toFixed(3) + 's';
-        myCount.style.opacity = '1';
-        myArea.classList.add('go');
-      } else {
-        myMsg.textContent = '지금!!! 터치하세요!';
-        myCount.textContent = 'GO!';
-        myArea.classList.add('go');
-      }
+    } else if (status === 'go') {
+      myMsg.textContent = '지금!!!';
+      oppMsg.textContent = '지금!!!';
+      gameStatus.textContent = '터치!!!';
+      myArea.classList.add('go');
+      oppArea.classList.add('go');
+    }
 
-      // 상대 영역 상태 업데이트
-      if (oppFail) {
-        oppMsg.textContent = '상대방 부정출발! 😂';
-        oppCount.textContent = 'FAIL';
-        oppCount.style.opacity = '1';
-        oppArea.classList.add('fail');
-        oppArea.classList.remove('go');
-      } else if (oppTime > 0) {
-        oppMsg.textContent = '상대방 터치 완료!';
-        oppCount.textContent = oppTime.toFixed(3) + 's';
-        oppCount.style.opacity = '1';
-        oppArea.classList.add('go');
-      } else {
-        oppMsg.textContent = '상대방 대기 중...';
-        oppCount.textContent = 'GO!';
-        oppArea.classList.add('go');
-      }
+    // 실패 상태 표시
+    const myFail = myRole === 'p1' ? currentState.p1Fail : currentState.p2Fail;
+    const oppFail = myRole === 'p1' ? currentState.p2Fail : currentState.p1Fail;
+
+    if (myFail) {
+      myMsg.textContent = '너무 빨랐어요! 💀';
+      myArea.classList.add('fail');
+    }
+    if (oppFail) {
+      oppMsg.textContent = '상대방 실격! 😂';
+      oppArea.classList.add('fail');
     }
   }
-
 
   function handleTap() {
     if (currentState.status === 'ended' || currentState.status === 'lobby') return;
