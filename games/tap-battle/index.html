@@ -345,8 +345,18 @@
     <p>화면이 <strong style="color:#4ade80;">초록색</strong>으로 변하면<br>
        자기 쪽 화면을 먼저 터치하세요!<br>
        초록 전에 누르면 <strong style="color:#ef4444;">반칙패</strong>💀</p>
-    <button class="btn btn-primary" id="btn-start">START</button>
-    <a href="/games/" class="btn btn-ghost" style="margin-top:.75rem;">← 게임 목록</a>
+
+    <div style="display:flex; flex-direction:column; gap:1rem; width:100%; max-width:280px;">
+      <button class="btn btn-primary" id="btn-start-local" style="width:100%; justify-content:center;">
+        📱 로컬 대결 (한 화면에서)
+      </button>
+      <button class="btn btn-ghost" id="btn-start-remote" style="width:100%; justify-content:center; border-color:var(--primary);">
+        🌐 원격 대결 (따로 플레이)
+      </button>
+      <a href="/games/" class="btn btn-ghost" style="width:100%; justify-content:center;">← 게임 목록</a>
+    </div>
+
+    <p style="font-size:0.7rem; margin-top:2rem; cursor:pointer; text-decoration:underline;" id="btn-start-help">게임 방법 보기</p>
   </div>
 
   <!-- ═══ COUNTDOWN OVERLAY ═══ -->
@@ -434,31 +444,27 @@
       scoreP1.textContent = scores.p1;
       scoreP2.textContent = scores.p2;
 
-      window.onload = () => {
-        GameUtils.RemoteManager.showSelectionMenu('순발력 터치 대결',
-          () => { // Local
-            // 대기화면을 남겨둠 (유저가 START 버튼 직접 클릭하도록)
-          },
-          () => { // Online
-            window.location.href = 'online.html';
-          }
-        );
-      };
-
-      /* ── START FLOW ── */
-      btnStart.addEventListener('click', beginRound);
-      btnRetry.addEventListener('click', beginRound);
-
-      function beginRound() {
+      document.getElementById('btn-start-local').addEventListener('click', () => {
         hide(overlayStart);
         hide(overlayRes);
         penaltyCard.classList.add('hidden');
         resetAreas();
-
         GameUtils.showFastCountdown(() => {
           startWaiting();
         });
-      }
+      });
+      document.getElementById('btn-start-remote').addEventListener('click', () => {
+        window.location.href = 'online.html';
+      });
+      btnRetry.addEventListener('click', () => {
+        hide(overlayStart);
+        hide(overlayRes);
+        penaltyCard.classList.add('hidden');
+        resetAreas();
+        GameUtils.showFastCountdown(() => {
+          startWaiting();
+        });
+      });
 
       /* ── WAITING PHASE: 랜덤 시간 후 GO ── */
       function startWaiting() {

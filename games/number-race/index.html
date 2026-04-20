@@ -109,9 +109,18 @@
   <div class="overlay" id="overlay-start">
     <h1>🔢 숫자 레이스</h1>
     <p>1부터 9까지 순서대로 터치!<br>먼저 완료하면 승리 🏆<br>잘못 누르면 시간이 낭비돼요!</p>
-    <button class="btn btn-primary" onclick="startGame()">START</button>
-    <button class="btn btn-ghost" id="btn-start-help" style="margin-top:.75rem; width: 100%; max-width: 200px;">게임 방법</button>
-    <a href="/games/" class="btn btn-ghost" style="margin-top:.75rem;">← 게임 목록</a>
+
+    <div style="display:flex; flex-direction:column; gap:1rem; width:100%; max-width:280px;">
+      <button class="btn btn-primary" id="btn-start-local" style="width:100%; justify-content:center;">
+        📱 로컬 대결 (한 화면에서)
+      </button>
+      <button class="btn btn-ghost" id="btn-start-remote" style="width:100%; justify-content:center; border-color:var(--primary);">
+        🌐 원격 대결 (따로 플레이)
+      </button>
+      <a href="/games/" class="btn btn-ghost" style="width:100%; justify-content:center;">← 게임 목록</a>
+    </div>
+
+    <p style="font-size:0.7rem; margin-top:2rem; cursor:pointer; text-decoration:underline;" id="btn-start-help">게임 방법 보기</p>
   </div>
 
   <!-- HELP OVERLAY -->
@@ -204,16 +213,10 @@
       }
     }
 
-    window.onload = () => {
-      GameUtils.RemoteManager.showSelectionMenu('숫자 빨리 누르기',
-        () => { // Local
-          // 대기화면 유지
-        },
-        () => { // Online
-          window.location.href = 'online.html';
-        }
-      );
-    };
+    document.getElementById('btn-start-local').addEventListener('click', startGame);
+    document.getElementById('btn-start-remote').addEventListener('click', () => {
+      window.location.href = 'online.html';
+    });
 
     function startGame() {
       document.getElementById('overlay-start').classList.add('hidden');

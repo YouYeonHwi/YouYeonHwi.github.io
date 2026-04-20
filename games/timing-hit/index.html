@@ -214,9 +214,18 @@
     <p>바늘이 움직입니다!<br>
        <strong style="color:#4ade80;">초록 영역</strong> 정중앙에서 멈추면 만점!<br>
        3라운드 합산 점수로 승부 💪</p>
-    <button class="btn btn-primary" id="btn-start">START</button>
-    <button class="btn btn-ghost" id="btn-start-help" style="margin-top:.75rem; width: 100%; max-width: 200px;">게임 방법</button>
-    <a href="/games/" class="btn btn-ghost" style="margin-top:.75rem;">← 게임 목록</a>
+
+    <div style="display:flex; flex-direction:column; gap:1rem; width:100%; max-width:280px;">
+      <button class="btn btn-primary" id="btn-start-local" style="width:100%; justify-content:center;">
+        📱 로컬 대결 (한 화면에서)
+      </button>
+      <button class="btn btn-ghost" id="btn-start-remote" style="width:100%; justify-content:center; border-color:var(--primary);">
+        🌐 원격 대결 (따로 플레이)
+      </button>
+      <a href="/games/" class="btn btn-ghost" style="width:100%; justify-content:center;">← 게임 목록</a>
+    </div>
+
+    <p style="font-size:0.7rem; margin-top:2rem; cursor:pointer; text-decoration:underline;" id="btn-start-help">게임 방법 보기</p>
   </div>
 
   <!-- HELP OVERLAY -->
@@ -302,16 +311,13 @@
         });
       }
 
-      window.onload = () => {
-        GameUtils.RemoteManager.showSelectionMenu('타이밍 맞추기',
-          () => { // Local
-            // 대기화면을 남겨둠 (유저가 START 버튼 직접 클릭하도록)
-          },
-          () => { // Online
-            window.location.href = 'online.html';
-          }
-        );
-      };
+      document.getElementById('btn-start-local').addEventListener('click', () => {
+        document.getElementById('overlay-start').classList.add('hidden');
+        GameUtils.showFastCountdown(startGame);
+      });
+      document.getElementById('btn-start-remote').addEventListener('click', () => {
+        window.location.href = 'online.html';
+      });
 
       function startGame() {
         document.getElementById('overlay-result').classList.add('hidden');
@@ -465,10 +471,6 @@
         document.getElementById('overlay-result').classList.remove('hidden');
       }
 
-      document.getElementById('btn-start').addEventListener('click', () => {
-        document.getElementById('overlay-start').classList.add('hidden');
-        GameUtils.showFastCountdown(startGame);
-      });
       document.getElementById('btn-retry').addEventListener('click', startGame);
       document.getElementById('btn-penalty').addEventListener('click', () => {
         const p = GameUtils.spinPenalty();
