@@ -347,11 +347,11 @@
     const p1Label = $('ms-p1');
     const p2Label = $('ms-p2');
     if (role === 'p1') {
-      p1Label.textContent = '한 (나)';
-      p2Label.textContent = '초 (상대)';
+      p1Label.textContent = '초 (나)';
+      p2Label.textContent = '한 (상대)';
     } else {
-      p1Label.textContent = '한 (상대)';
-      p2Label.textContent = '초 (나)';
+      p1Label.textContent = '초 (상대)';
+      p2Label.textContent = '한 (나)';
     }
 
     gameActive = true;
@@ -365,7 +365,7 @@
       onTurnChange: (turn, inCheck) => {
         const indicator = $('turn-indicator');
         indicator.className = 'turn-indicator active ' + turn;
-        indicator.textContent = (turn === 'p1' ? '한(Han)' : '초(Cho)') + (inCheck ? ' 장군!' : ' 차례');
+        indicator.textContent = (turn === 'p1' ? '초(Cho)' : '한(Han)') + (inCheck ? ' 장군!' : ' 차례');
         
         $('ms-p1').classList.toggle('ms-active', turn === 'p1');
         $('ms-p2').classList.toggle('ms-active', turn === 'p2');

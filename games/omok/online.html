@@ -255,8 +255,6 @@
       onUpdate: handleLocalUpdate, // Sends to firebase
       readOnly: false     // Checked locally if it's my turn
     });
-
-    GameUtils.RemoteManager.init(GAME_ID, onRemoteSync);
     
     // Initial fetch to load state if join happened late
     const state = GameUtils.RemoteManager.getRoomState();
@@ -265,25 +263,24 @@
 
   /* ════════════ SYNC ════════════ */
   function handleLocalUpdate(localGame) {
-    if (!gameActive) return;
+    if (!gameActive || preventNextSync) return;
     
-    GameUtils.RemoteManager.updateField('board', localGame.board);
-    GameUtils.RemoteManager.updateField('currentTurn', localGame.currentTurn);
-    if (localGame.lastMove) {
-      GameUtils.RemoteManager.updateField('lastMove', localGame.lastMove);
-    }
-    
-    if (localGame.gameOver) {
-      GameUtils.RemoteManager.updateField('gameOver', true);
-      GameUtils.RemoteManager.updateField('winner', localGame.winner);
-    }
+    GameUtils.RemoteManager.updateState({
+      board: localGame.board,
+      currentTurn: localGame.currentTurn,
+      lastMove: localGame.lastMove,
+      gameOver: localGame.gameOver,
+      winner: localGame.winner
+    });
   }
 
   function onRemoteSync(state) {
     if (!state || !gameActive || !game) return;
 
     // Load state
+    preventNextSync = true;
     game.loadState(state);
+    preventNextSync = false;
 
     // Enforce readOnly: you can only place a stone if it is your turn
     const isMyTurn = (myRole === 'p1' && game.currentTurn === 1) || (myRole === 'p2' && game.currentTurn === 2);
@@ -299,12 +296,6 @@
       showResult(state.winner);
     }
   }
-
-  function updateTurnUI(currentNum) {
-    // currentNum: 1 or 2
-    const turnKey = currentNum === 1 ? 'p1' : 'p2';
-    turnIndicator.className = 'turn-indicator active ' + turnKey;
-    turnIndicator.textContent = currentNum === 1 ? 'P1(흑) 차례' : 'P2(백) 차례';
 
     $('ms-p1').classList.toggle('ms-active', currentNum === 1);
     $('ms-p2').classList.toggle('ms-active', currentNum === 2);

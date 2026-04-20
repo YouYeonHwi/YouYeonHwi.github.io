@@ -71,33 +71,33 @@ class JanggiGame {
       this.board[y][x] = { player, type, label, id: `${player}_${type}_${x}_${y}_${Math.random()}` };
     };
 
-    // P2 (Cho - Top)
+    // P2 (Han - Top) - Traditionally Red side starting second
     addP(0, 0, 'p2', 'cha', '車');
     addP(1, 0, 'p2', 'ma', '馬');
     addP(2, 0, 'p2', 'sang', '象');
     addP(3, 0, 'p2', 'sa', '士');
-    addP(4, 1, 'p2', 'king', '楚');
+    addP(4, 1, 'p2', 'king', '漢');
     addP(5, 0, 'p2', 'sa', '士');
     addP(6, 0, 'p2', 'sang', '象');
     addP(7, 0, 'p2', 'ma', '馬');
     addP(8, 0, 'p2', 'cha', '車');
     addP(1, 2, 'p2', 'po', '包');
     addP(7, 2, 'p2', 'po', '包');
-    for (let x of [0, 2, 4, 6, 8]) addP(x, 3, 'p2', 'jol', '卒');
+    for (let x of [0, 2, 4, 6, 8]) addP(x, 3, 'p2', 'jol', '兵');
 
-    // P1 (Han - Bottom)
+    // P1 (Cho - Bottom) - Traditionally Green/Blue side starting first
     addP(0, 9, 'p1', 'cha', '車');
     addP(1, 9, 'p1', 'ma', '馬');
     addP(2, 9, 'p1', 'sang', '象');
     addP(3, 9, 'p1', 'sa', '士');
-    addP(4, 8, 'p1', 'king', '漢');
+    addP(4, 8, 'p1', 'king', '楚');
     addP(5, 9, 'p1', 'sa', '士');
     addP(6, 9, 'p1', 'sang', '象');
     addP(7, 9, 'p1', 'ma', '馬');
     addP(8, 9, 'p1', 'cha', '車');
     addP(1, 7, 'p1', 'po', '包');
     addP(7, 7, 'p1', 'po', '包');
-    for (let x of [0, 2, 4, 6, 8]) addP(x, 6, 'p1', 'jol', '兵');
+    for (let x of [0, 2, 4, 6, 8]) addP(x, 6, 'p1', 'jol', '卒');
   }
 
   serializeBoard() {
@@ -394,16 +394,21 @@ class JanggiGame {
     this.container.innerHTML = '';
     
     const interactable = !this.readOnly && (!this.myRole || this.currentTurn === this.myRole);
+    const flipped = this.myRole === 'p2';
 
     for (let y = 0; y < 10; y++) {
       for (let x = 0; x < 9; x++) {
+        // Visual Coordinates (Flip for P2)
+        const vx = flipped ? (8 - x) : x;
+        const vy = flipped ? (9 - y) : y;
+
         // Render valid move targets
         const isMove = this.validMovesCache.find(m => m.x === x && m.y === y);
         if (isMove && interactable) {
           const dot = document.createElement('div');
           dot.className = `grid-intersection ${isMove.isCapture ? 'valid-capture' : 'valid-move'}`;
-          dot.style.left = `${(x / 8) * 100}%`;
-          dot.style.top = `${(y / 9) * 100}%`;
+          dot.style.left = `${(vx / 8) * 100}%`;
+          dot.style.top = `${(vy / 9) * 100}%`;
           dot.onclick = () => this.handleGridClick(x, y);
           this.container.appendChild(dot);
         }
@@ -414,8 +419,8 @@ class JanggiGame {
           pieceEl.className = `janggi-piece ${p.type}`;
           pieceEl.setAttribute('data-player', p.player);
           pieceEl.textContent = p.label;
-          pieceEl.style.left = `${(x / 8) * 100}%`;
-          pieceEl.style.top = `${(y / 9) * 100}%`;
+          pieceEl.style.left = `${(vx / 8) * 100}%`;
+          pieceEl.style.top = `${(vy / 9) * 100}%`;
           pieceEl.id = p.id;
           
           if (this.selectedPiece && this.selectedPiece.x === x && this.selectedPiece.y === y) {
@@ -436,8 +441,8 @@ class JanggiGame {
           if (interactable) {
             const hit = document.createElement('div');
             hit.style.position = 'absolute';
-            hit.style.left = `calc(${(x / 8) * 100}% - 4%)`;
-            hit.style.top = `calc(${(y / 9) * 100}% - 4%)`;
+            hit.style.left = `calc(${(vx / 8) * 100}% - 4%)`;
+            hit.style.top = `calc(${(vy / 9) * 100}% - 4%)`;
             hit.style.width = '8%'; hit.style.height = '8%';
             hit.onclick = () => this.handleGridClick(x, y);
             this.container.appendChild(hit);
