@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0a0a0f">
+  <title>사이버 장기 | 커플 게임 광장</title>
+  <meta name="description" content="전통의 지략 대결! 현대적인 네온 스타일로 재탄생한 장기를 즐겨보세요 (로컬/온라인 1:1 지원).">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary:      #a78bfa;
+      --primary-glow: rgba(167,139,250,.35);
+      --accent:       #f472b6;
+      --accent-glow:  rgba(244,114,182,.3);
+      --green:        #4ade80;
+      --red:          #ef4444;
+      --bg:           #0a0a0f;
+      --surface:      rgba(255,255,255,.04);
+      --surface2:     rgba(255,255,255,.07);
+      --border:       rgba(255,255,255,.08);
+      --text:         #e2e8f0;
+      --text-dim:     #64748b;
+      --p1:           #ef4444; /* Player 1 (Han): Red */
+      --p2:           #4ade80; /* Player 2 (Cho): Green */
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      height: 100%; font-family: 'Outfit', sans-serif;
+      background: var(--bg); color: var(--text);
+      overflow: hidden; touch-action: none;
+      -webkit-tap-highlight-color: transparent; user-select: none;
+    }
+
+    .hidden { display: none !important; }
+
+    /* ════════════ OVERLAY ════════════ */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(10,10,15,.96);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      z-index: 200; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 2rem 1.5rem; transition: opacity .3s ease;
+      overflow-y: auto; text-align: center;
+    }
+
+    .overlay-logo {
+      font-size: 2.8rem; font-weight: 900;
+      background: linear-gradient(135deg, var(--p1), var(--p2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: .25rem; letter-spacing: -.02em;
+    }
+    .overlay-sub { color: var(--text-dim); font-size: .85rem; margin-bottom: 2rem; }
+
+    .menu-group { display: flex; flex-direction: column; gap: .75rem; width: 100%; max-width: 300px; }
+    .btn {
+      display: flex; align-items: center; justify-content: center; gap: .6rem;
+      padding: .9rem 1.5rem; border-radius: 50px;
+      border: none; font-family: inherit; font-weight: 700; font-size: .95rem;
+      cursor: pointer; text-decoration: none;
+      transition: transform .15s, box-shadow .15s;
+    }
+    .btn:active:not(:disabled) { transform: scale(.94) !important; }
+    .btn:disabled { opacity: 0.5; filter: grayscale(1); cursor: not-allowed; }
+    .btn-primary { background: linear-gradient(135deg, var(--p1), var(--p2)); color: #fff; box-shadow: 0 4px 20px rgba(255,255,255,0.1); }
+    .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+
+    /* ════════════ GAME SCREEN ════════════ */
+    #game-screen {
+      height: 100dvh; display: flex; flex-direction: column;
+      padding-top: env(safe-area-inset-top, 0);
+      padding-bottom: env(safe-area-inset-bottom, 0);
+      position: relative;
+    }
+
+    .top-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .6rem 1rem; flex-shrink: 0;
+    }
+    .back-btn {
+      color: var(--text-dim); font-size: .8rem; font-weight: 600;
+      cursor: pointer; padding: .3rem .5rem; border-radius: 8px;
+      border: 1px solid var(--border); background: none; text-decoration: none;
+    }
+    .turn-indicator { 
+      font-size: .85rem; font-weight: 800; padding: .4rem 1.2rem; border-radius: 50px; 
+      transition: all 0.3s; border: 1px solid var(--border);
+      background: var(--surface); color: var(--text-dim);
+    }
+    .turn-indicator.active.p1 { 
+      background: rgba(239, 68, 68, 0.15); color: var(--p1); 
+      border-color: rgba(239, 68, 68, 0.4); box-shadow: 0 0 15px rgba(239, 68, 68, 0.3); 
+    }
+    .turn-indicator.active.p2 { 
+      background: rgba(74, 222, 128, 0.15); color: var(--p2); 
+      border-color: rgba(74, 222, 128, 0.4); box-shadow: 0 0 15px rgba(74, 222, 128, 0.3); 
+    }
+
+    /* Board Area */
+    .play-area {
+      flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 0.5rem; overflow: hidden; position: relative;
+    }
+
+    #board-container {
+      position: relative;
+      width: 100%;
+      max-width: 500px;
+      aspect-ratio: 9/10;
+      background: rgba(20, 20, 30, .9);
+      border-radius: 8px;
+    }
+
+    /* SVG for lines */
+    #board-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* Layer for pieces and highlights */
+    #pieces-layer {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 20;
+    }
+
+    .grid-intersection {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      width: 8%; height: 8%;
+      border-radius: 50%;
+      z-index: 15;
+    }
+    .grid-intersection.valid-move {
+      background: radial-gradient(circle, rgba(255,255,255,0.8) 20%, transparent 25%);
+      cursor: pointer;
+    }
+    .grid-intersection.valid-capture {
+      background: radial-gradient(circle, transparent 35%, rgba(2ef,68,68,0.8) 40%, rgba(2ef,68,68,0.8) 45%, transparent 50%);
+      cursor: pointer;
+    }
+
+    .janggi-piece {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      width: clamp(24px, calc(100% / 9 * 0.85), 60px);
+      height: clamp(24px, calc(100% / 10 * 0.85), 60px);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Noto Serif KR', serif; font-weight: 900;
+      font-size: clamp(1rem, 4vw, 2rem);
+      background: rgba(20,20,25,0.9);
+      border-radius: 12px;
+      clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+      cursor: pointer;
+      transition: top 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), left 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.1s;
+      z-index: 25;
+      user-select: none;
+    }
+    
+    .janggi-piece.selected {
+      transform: translate(-50%, -50%) scale(1.15) !important;
+      z-index: 30;
+    }
+
+    .janggi-piece[data-player="p1"] {
+      color: var(--p1);
+      border: 2px solid rgba(239, 68, 68, 0.6);
+      text-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+    }
+    .janggi-piece[data-player="p2"] {
+      color: var(--p2);
+      border: 2px solid rgba(74, 222, 128, 0.6);
+      text-shadow: 0 0 8px rgba(74, 222, 128, 0.6);
+    }
+    
+    .janggi-piece[data-player="p1"].selected { box-shadow: 0 0 20px rgba(239, 68, 68, 0.8); }
+    .janggi-piece[data-player="p2"].selected { box-shadow: 0 0 20px rgba(74, 222, 128, 0.8); }
+    
+    /* "King" sizes slightly larger */
+    .janggi-piece.king {
+      font-size: clamp(1.2rem, 5vw, 2.5rem);
+    }
+
+    /* Bottom Status */
+    .bottom-status {
+      text-align: center; color: var(--text-dim); font-size: .85rem; padding: 1rem; flex-shrink:0;
+    }
+    
+    /* Result Badge Extras */
+    .result-badge { font-size: 3rem; margin-bottom: .5rem; }
+    .result-title { font-size: 2.2rem; font-weight: 900; margin-bottom: .25rem; color: #fff; }
+
+    /* Check Effect Animation */
+    #check-effect {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%) scale(2);
+      font-size: 4rem; font-weight: 900;
+      color: #ef4444; text-shadow: 0 0 30px #ef4444, 0 0 10px #fff;
+      pointer-events: none; opacity: 0; z-index: 100;
+      font-family: 'Noto Serif KR', serif;
+    }
+    @keyframes checkAnim {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(2); }
+      20% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -50%) scale(1.5); }
+    }
+    @keyframes shakeScreen {
+      0% { transform: translate(1px, 1px) rotate(0deg); }
+      10% { transform: translate(-1px, -2px) rotate(-1deg); }
+      20% { transform: translate(-3px, 0px) rotate(1deg); }
+      30% { transform: translate(3px, 2px) rotate(0deg); }
+      40% { transform: translate(1px, -1px) rotate(1deg); }
+      50% { transform: translate(-1px, 2px) rotate(-1deg); }
+      60% { transform: translate(-3px, 1px) rotate(0deg); }
+      70% { transform: translate(3px, 1px) rotate(-1deg); }
+      80% { transform: translate(-1px, -1px) rotate(1deg); }
+      90% { transform: translate(1px, 2px) rotate(0deg); }
+      100% { transform: translate(0, 0) rotate(0deg); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══ START OVERLAY ═══ -->
+<div id="overlay-start" class="overlay">
+  <div class="overlay-logo">사이버 장기</div>
+  <div class="overlay-sub" style="margin-bottom:0.5rem">모바일에 맞게 커스텀된 정통 지락 액션 대결 ⚔️</div>
+
+  <div style="font-size:0.8rem; color:var(--text-dim); text-align:center; max-width:280px; margin-bottom:2rem; line-height:1.5;">
+    원하는 대결 방식을 선택하세요.<br>로컬과 실시간 온라인 대전을 모두 지원합니다.
+  </div>
+
+  <div class="menu-group">
+    <button id="btn-solo" class="btn btn-primary" style="width:100%; justify-content:center;">
+      📱 로컬 대결 (한 화면에서)
+    </button>
+    <button id="btn-online" class="btn btn-ghost" style="width:100%; justify-content:center; border-color:var(--primary);">
+      🌐 원격 대결 (따로 플레이)
+    </button>
+    <a href="/games/" class="btn btn-ghost" style="width:100%; justify-content:center;">← 게임 목록</a>
+  </div>
+
+  <p style="font-size:0.75rem; color:var(--text-dim); margin-top:1.5rem; cursor:pointer; text-decoration:underline; text-underline-offset:2px;" id="btn-show-help">
+    게임 방법 보기
+  </p>
+</div>
+
+<!-- ═══ HELP OVERLAY ═══ -->
+<div class="overlay hidden" id="overlay-help">
+  <div class="overlay-logo" style="font-size:1.8rem; margin-bottom:1rem;">🎲 게임 방법</div>
+  <div style="text-align: left; max-width: 90%; max-height: 60vh; overflow-y: auto; font-size: .85rem; line-height: 1.6; color: var(--text);">
+    <h2 style="color: var(--primary); margin-bottom: .6rem; font-size: 1.1rem; border-bottom:1px solid var(--border); padding-bottom:.3rem;">🎮 규칙 (정통 장기)</h2>
+    <ul style="list-style: none; margin-bottom: 1.2rem; margin-left:0; padding-left:0;">
+      <li style="margin-bottom: .4rem; line-height:1.4;">각 기물을 선택하여 하이라이트된 위치로 이동시킵니다.</li>
+      <li style="margin-bottom: .4rem; line-height:1.4;">기본 상차림은 전통적인 외상차림(차-마-상-사-궁-사-상-마-차)으로 고정되어 즉시 시작합니다.</li>
+      <li style="margin-bottom: .4rem; line-height:1.4;">자신의 왕이 공격받는 곳으로 기물을 옮길 수 없으며(Self-check 금지), "장군!"을 당하면 무조건 벗어나야 합니다.</li>
+      <li style="margin-bottom: .4rem; line-height:1.4;">벗어날 유효한 수가 존재하지 않으면(외통수) 상대의 승리로 즉시 종료됩니다.</li>
+    </ul>
+
+    <h2 style="color: var(--primary); margin-bottom: .6rem; font-size: 1.1rem; border-bottom:1px solid var(--border); padding-bottom:.3rem;">⚔️ 기물 이동법</h2>
+    <ul style="list-style: none; margin-bottom: 1rem; margin-left:0; padding-left:0;">
+      <li style="margin-bottom: .4rem; line-height:1.4;"><b>차(車)</b>: 전후좌우 직선으로 제약 없이 이동</li>
+      <li style="margin-bottom: .4rem; line-height:1.4;"><b>마(馬)</b>: 직선 1칸 후 대각선 1칸 (장애물에 막힐 수 있음)</li>
+      <li style="margin-bottom: .4rem; line-height:1.4;"><b>상(象)</b>: 직선 1칸 후 대각선 2칸 (장애물에 막힐 수 있음)</li>
+      <li style="margin-bottom: .4rem; line-height:1.4;"><b>포(包)</b>: 반드시 일반 기물 하나를 뛰어넘어서만 공격/이동 가능 (단, 다른 포를 넘거나 포를 잡을 수는 없음)</li>
+      <li style="margin-bottom: .4rem; line-height:1.4;"><b>궁(漢/楚), 사(士)</b>: 궁성(3x3) 내에서만 선을 따라 1칸 이동</li>
+      <li style="margin-bottom: .4rem; line-height:1.4;"><b>졸/병(卒/兵)</b>: 전진 및 좌우로 1칸 이동 (후퇴 불가, 적의 궁성 내에서는 대각선 전진 가능)</li>
+    </ul>
+  </div>
+  <button class="btn btn-primary" id="btn-close-help" style="margin-top:1.5rem; width:100%; max-width:200px;">닫기</button>
+</div>
+
+<!-- ═══ RESULT OVERLAY ═══ -->
+<div id="overlay-result" class="overlay hidden">
+  <div class="result-badge" id="res-emoji">🏆</div>
+  <div class="result-title" id="res-title">한(漢) 승리!</div>
+  <div class="result-sub" id="res-sub">외통수입니다.</div>
+  <div class="menu-group" style="margin-top:1.5rem;">
+    <button id="btn-retry" class="btn btn-primary">🔄 다시 하기</button>
+    <a href="/games/" class="btn btn-ghost">📋 게임 목록</a>
+  </div>
+</div>
+
+<!-- ═══ GAME SCREEN (hidden until started) ═══ -->
+<div id="game-screen" class="hidden">
+  <div class="top-bar">
+    <a href="/games/" class="back-btn">← 목록</a>
+    <div id="turn-p2" class="turn-indicator p2">초 (Cho)</div>
+    <div style="font-weight:900; font-size:.8rem; color:var(--surface2);">VS</div>
+    <div id="turn-p1" class="turn-indicator p1 active">한 (Han)</div>
+  </div>
+
+  <div class="play-area" id="play-area">
+    <div id="board-container">
+      <svg id="board-svg" viewBox="0 0 80 90" preserveAspectRatio="none">
+        <!-- Lines will be dynamically generated by JS -->
+      </svg>
+      <div id="pieces-layer"></div>
+    </div>
+    <div id="check-effect">장군!</div>
+  </div>
+
+  <div class="bottom-status" id="status-text">
+    한(Han) 님의 차례입니다.
+  </div>
+</div>
+
+<script src="janggi-core.js"></script>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const overlayStart = $('overlay-start');
+  const overlayHelp = $('overlay-help');
+  const overlayResult = $('overlay-result');
+  const gameScreen = $('game-screen');
+  
+  const turnP1 = $('turn-p1');
+  const turnP2 = $('turn-p2');
+  const statusText = $('status-text');
+
+  let game = null;
+
+  /* Menus */
+  $('btn-solo').addEventListener('click', startSolo);
+  $('btn-online').addEventListener('click', () => { location.href = 'online.html'; });
+  $('btn-retry').addEventListener('click', startSolo);
+  
+  $('btn-show-help').addEventListener('click', () => {
+    overlayStart.classList.add('hidden');
+    overlayHelp.classList.remove('hidden');
+  });
+  $('btn-close-help').addEventListener('click', () => {
+    overlayHelp.classList.add('hidden');
+    overlayStart.classList.remove('hidden');
+  });
+
+  function startSolo() {
+    overlayStart.classList.add('hidden');
+    overlayResult.classList.add('hidden');
+    gameScreen.classList.remove('hidden');
+
+    if (game) game.destroy();
+
+    game = new JanggiGame({
+      containerId: 'pieces-layer',
+      svgId: 'board-svg',
+      onTurnChange: (turn, inCheck) => {
+        if (turn === 'p1') {
+          turnP1.classList.add('active');
+          turnP2.classList.remove('active');
+          statusText.textContent = inCheck ? '장군! 한(Han)님이 피해야 합니다.' : '한(Han/Red) 님의 차례입니다.';
+        } else {
+          turnP2.classList.add('active');
+          turnP1.classList.remove('active');
+          statusText.textContent = inCheck ? '장군! 초(Cho)님이 피해야 합니다.' : '초(Cho/Green) 님의 차례입니다.';
+        }
+      },
+      onWin: (winnerRole, reason) => {
+        setTimeout(() => {
+          overlayResult.classList.remove('hidden');
+          const isP1 = winnerRole === 'p1';
+          $('res-emoji').textContent = isP1 ? '🔴' : '🟢';
+          $('res-title').textContent = isP1 ? '한(Han) 승리!' : '초(Cho) 승리!';
+          $('res-sub').textContent = reason || '외통수입니다.';
+        }, 800);
+      },
+      readOnly: false // 로컬플레이: 혼자 다 조작할 수 있음
+    });
+  }
+})();
+</script>
+</body>
+</html>
