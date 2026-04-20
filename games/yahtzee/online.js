@@ -20,6 +20,8 @@
   let myRole = null;
   let resultShown = false; // 결과 화면 중복 표시 방지
   let isRolling = false;   // 주사위 회전 중 클릭 가드
+  let lastYahtzeeTs = 0;   // 로컬에서 이미 실행한 야추 애니메이션 타임스탬프 기록
+
 
   // 주사위별 누적 회전값 — 매 굴리기마다 360° 추가해 같은 눈값에도 항상 애니메이션 발생
   const diceBaseRot = [
@@ -139,6 +141,10 @@
     // 게임 UI 전체 갱신
     updateUI();
 
+    // 야추 달성 애니메이션 체크
+    checkYahtzeeCelebration(state);
+
+
     // 게임 종료 처리 (중복 방지)
     if (state.winner && !resultShown) {
       resultShown = true;
@@ -159,7 +165,10 @@
     if (isRolling) return; // 이미 굴리는 중이면 무시
 
     isRolling = true;
-    updateUI(); // 버튼 즉시 비활성화
+    // ⚠️ 여기서 updateUI() 전체 호출 금지: currentState.rollsLeft가 아직 Firebase 업데이트
+    // 전이므로 score 셀들의 onclick이 null로 초기화됩니다. 버튼만 즉시 비활성화합니다.
+    btnRoll.disabled = true;
+    btnRoll.textContent = '🎲 주사위 굴리는 중...';
 
     // 화면 흔들림 효과
     if (diceRow) {
@@ -180,10 +189,15 @@
     });
     GameUtils.vibrate(30);
 
-    // 0.8s 후 굴리기 상태 해제 (상대방 턴 전환 시에도 안전하도록)
+    // 0.8s 후 굴리기 상태 해제 — updateUI() 전체 호출 대신 버튼만 업데이트
+    // (전체 UI 재렌더링 시 Firebase가 아직 응답하지 않았으면 onclick이 또 날아감)
     setTimeout(() => {
       isRolling = false;
-      updateUI();
+      const canRoll = isMyTurn() && currentState.rollsLeft > 0 && !currentState.winner && currentState.status === 'playing';
+      btnRoll.disabled = !canRoll;
+      btnRoll.textContent = isMyTurn()
+        ? (currentState.rollsLeft > 0 ? '🎲 주사위 굴리기' : '✅ 조합을 선택하세요')
+        : '⏳ 상대방 턴 대기 중...';
     }, 800);
   }
 
@@ -249,6 +263,7 @@
       held: [false, false, false, false, false],
       lastAction: 'score',
       lastScore: { p: myRole, cat: catId },
+      yahtzeeTrigger: (catId === 'yahtzee' && score === 50) ? { p: myRole, ts: Date.now() } : (currentState.yahtzeeTrigger || null),
       winner
     });
   }
@@ -483,7 +498,43 @@
     overlay.classList.remove('hidden');
   }
 
+  // ── 야추 애니메이션 ───────────────────────────────────────
+  function checkYahtzeeCelebration(state) {
+    if (state.yahtzeeTrigger && state.yahtzeeTrigger.ts > lastYahtzeeTs) {
+      lastYahtzeeTs = state.yahtzeeTrigger.ts;
+      triggerYahtzeeCelebration();
+    }
+  }
+
+  function triggerYahtzeeCelebration() {
+    const celeb = document.getElementById('yahtzee-celebration');
+    const container = document.getElementById('celeb-dice-container');
+    if (!celeb || !container) return;
+
+    container.innerHTML = '';
+    const diceIcons = ['🎲'];
+
+    for (let i = 0; i < 40; i++) {
+      const die = document.createElement('div');
+      die.className = 'celeb-die';
+      die.textContent = diceIcons[0];
+      die.style.left = Math.random() * 100 + 'vw';
+      die.style.fontSize = (1.5 + Math.random() * 2) + 'rem';
+      die.style.animationDelay = Math.random() * 2 + 's';
+      die.style.animationDuration = (2 + Math.random() * 2) + 's';
+      container.appendChild(die);
+    }
+
+    celeb.classList.add('active');
+    GameUtils.vibrate([100, 50, 100, 50, 200]);
+
+    setTimeout(() => {
+      celeb.classList.remove('active');
+    }, 5000);
+  }
+
   // ── 버튼 이벤트 ──────────────────────────────────────────
+
   btnRoll.onclick = rollDice;
 
   if (btnShowHelp)  btnShowHelp.onclick  = () => overlayHelp.classList.remove('hidden');
