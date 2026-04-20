@@ -178,7 +178,7 @@
   <div class="menu-group">
     <button id="btn-create" class="btn btn-primary">🏠 방 만들기</button>
     <button id="btn-join"   class="btn btn-primary">🔑 방 참여하기</button>
-    <a href="index.html" class="btn btn-ghost" id="btn-lobby-back">← 뒤로</a>
+    <a href="index.html" class="btn btn-ghost" id="btn-lobby-back">← 게임 목록</a>
   </div>
 </div>
 
@@ -242,6 +242,9 @@
   let game = null;
   let myRole = null; // 'p1' (Host, Pink) or 'p2' (Guest, Purple)
   let gameActive = false;
+
+  // 🔥 Firebase DB Initialize to allow createRoom
+  GameUtils.RemoteManager.init(GAME_ID, onRemoteSync);
 
   /* ════════════ OVERLAY & LOBBY ════════════ */
   $('btn-create').addEventListener('click', doCreate);

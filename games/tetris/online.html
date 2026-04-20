@@ -318,7 +318,7 @@
   <div class="menu-group">
     <button id="btn-create" class="btn btn-primary">🏠 방 만들기</button>
     <button id="btn-join"   class="btn btn-primary">🔑 방 참여하기</button>
-    <button id="btn-lobby-back" class="btn btn-ghost">← 뒤로</button>
+    <a href="index.html" class="btn btn-ghost" id="btn-lobby-back">← 게임 목록</a>
   </div>
 </div>
 
@@ -423,6 +423,9 @@ let game       = null;
 let myRole     = null;
 let prevAtkVal = 0;
 let gameActive = false;
+
+// 🔥 Firebase DB Initialize to allow createRoom
+GameUtils.RemoteManager.init(GAME_ID, onRemoteSync);
 
 /* ═════════════════════════════════
    OVERLAY & LOBBY EVENTS
