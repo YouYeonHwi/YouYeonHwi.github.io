@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0a0a0f">
+  <title>오목 온라인 배틀 | 커플 게임 광장</title>
+  <meta name="description" content="실시간 1:1 오목 배틀! 친구와 함께 5목을 먼저 달성하세요.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary:      #a78bfa;
+      --primary-glow: rgba(167,139,250,.35);
+      --accent:       #f472b6;
+      --accent-glow:  rgba(244,114,182,.3);
+      --green:        #4ade80;
+      --red:          #ef4444;
+      --bg:           #0a0a0f;
+      --surface:      rgba(255,255,255,.04);
+      --surface2:     rgba(255,255,255,.07);
+      --border:       rgba(255,255,255,.08);
+      --text:         #e2e8f0;
+      --text-dim:     #64748b;
+      --p1:           #f472b6; /* Player 1: Pink */
+      --p2:           #a78bfa; /* Player 2: Purple */
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      height: 100%; font-family: 'Outfit', sans-serif;
+      background: var(--bg); color: var(--text);
+      overflow: hidden; touch-action: none;
+      -webkit-tap-highlight-color: transparent; user-select: none;
+    }
+
+    .hidden { display: none !important; }
+
+    /* ════════════ OVERLAY ════════════ */
+    .overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(10,10,15,.97); backdrop-filter: blur(20px);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 2rem 1.5rem; text-align: center; overflow-y: auto;
+    }
+    .overlay-logo {
+      font-size: 2.2rem; font-weight: 900;
+      background: linear-gradient(135deg, var(--p1), var(--p2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: .25rem;
+    }
+    .overlay-sub { color: var(--text-dim); font-size: .85rem; margin-bottom: 1.5rem; }
+
+    .menu-group { display: flex; flex-direction: column; gap: .7rem; width: 100%; max-width: 280px; }
+    .btn {
+      display: flex; align-items: center; justify-content: center; gap: .5rem;
+      padding: .85rem 1.5rem; border-radius: 50px; border: none; 
+      font-family: inherit; font-weight: 700; font-size: .9rem;
+      cursor: pointer; text-decoration: none; transition: transform .15s, box-shadow .15s;
+    }
+    .btn:active { transform: scale(.93) !important; }
+    .btn-primary { background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff; box-shadow: 0 4px 20px var(--primary-glow); }
+    .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+
+    /* Lobby card elements */
+    .lobby-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 1.25rem 1.5rem;
+      width: 100%; max-width: 320px; margin-bottom: 1.5rem;
+    }
+    .lobby-card h3 {
+      font-size: .65rem; font-weight: 700; color: var(--text-dim);
+      text-transform: uppercase; letter-spacing: 2px; margin-bottom: .75rem;
+    }
+    .room-code-display {
+      font-size: 2.5rem; font-weight: 900; letter-spacing: .2em;
+      color: var(--primary); text-shadow: 0 0 20px var(--primary-glow); margin: .5rem 0;
+    }
+    .code-hint { font-size: .75rem; color: var(--text-dim); margin-bottom: .75rem; }
+    .input-field {
+      width: 100%; padding: .75rem 1rem; border-radius: 12px;
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); font-family: inherit; font-size: 1.2rem;
+      font-weight: 700; letter-spacing: .15em; text-align: center;
+      outline: none; text-transform: uppercase; margin-bottom: .75rem;
+    }
+    .input-field:focus { border-color: var(--primary); }
+
+    .status-dot {
+      display: inline-block; width: 8px; height: 8px;
+      border-radius: 50%; background: var(--text-dim); margin-right: .4rem; vertical-align: middle;
+    }
+    .status-dot.green { background: var(--green); box-shadow: 0 0 6px var(--green); animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
+
+    /* ════════════ GAME SCREEN ════════════ */
+    #game-screen {
+      height: 100dvh; display: flex; flex-direction: column;
+      padding-top: env(safe-area-inset-top, 0); padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+
+    .top-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .6rem 1rem; flex-shrink: 0; gap: .5rem;
+    }
+    .back-btn {
+      color: var(--text-dim); font-size: .75rem; font-weight: 600;
+      padding: .25rem .5rem; border-radius: 8px; border: 1px solid var(--border);
+      background: none; cursor: pointer; text-decoration: none;
+    }
+    
+    .player-header { display: flex; flex-direction: column; align-items: center; flex: 1; }
+    .player-name { font-size: .7rem; font-weight: 700; color: var(--text-dim); letter-spacing: 1px; }
+    .player-role { font-size: .55rem; color: var(--surface2); font-weight: 800; background:var(--text); padding:1px 4px; border-radius:4px; margin-top:2px;}
+    
+    .turn-indicator { 
+      font-size: .85rem; font-weight: 800; padding: .4rem 1.2rem; border-radius: 50px; 
+      transition: all 0.3s; border: 1px solid var(--border);
+      background: var(--surface); color: var(--text-dim); margin-top:.4rem;
+    }
+    .turn-indicator.active.p1 { 
+      background: rgba(244,114,182,.15); color: var(--p1); 
+      border-color: rgba(244,114,182,.4); box-shadow: 0 0 15px rgba(244,114,182,.3); 
+    }
+    .turn-indicator.active.p2 { 
+      background: rgba(167,139,250,.15); color: var(--p2); 
+      border-color: rgba(167,139,250,.4); box-shadow: 0 0 15px rgba(167,139,250,.3); 
+    }
+
+    .vs-badge { font-size: .65rem; font-weight: 900; color: var(--text-dim); padding: .15rem .4rem; border: 1px solid var(--border); border-radius: 4px; }
+
+    /* Play Area */
+    .play-area {
+      flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 1rem; overflow: hidden;
+    }
+    .board-wrap {
+      position: relative; width: 100%; max-width: 500px; aspect-ratio: 1;
+      background: rgba(20, 20, 30, .8); border: 2px solid var(--border);
+      border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.5), inset 0 0 30px rgba(0,0,0,0.5);
+      display: flex; align-items: center; justify-content: center;
+    }
+    #omok-canvas { display: block; width: 100%; height: 100%; border-radius: 10px; }
+
+    .bottom-status { text-align: center; color: var(--text-dim); font-size: .85rem; padding: 1rem; flex-shrink:0; }
+    
+    .result-badge { font-size: 3rem; margin-bottom: .5rem; }
+    .result-title { font-size: 2.2rem; font-weight: 900; margin-bottom: .25rem; color: #fff; }
+  </style>
+</head>
+<body>
+
+<!-- ═══ LOBBY OVERLAY ═══ -->
+<div id="overlay-lobby" class="overlay">
+  <div class="overlay-logo">온라인 배틀</div>
+  <div class="overlay-sub">방 코드로 친구와 1:1 대결!</div>
+
+  <div class="lobby-card" id="card-create" style="display:none;">
+    <h3>🏠 방 생성됨</h3>
+    <div class="room-code-display" id="room-code-display">—</div>
+    <div class="code-hint">이 코드를 친구에게 알려주세요<br>친구가 참여하면 자동으로 시작됩니다</div>
+    <div style="text-align:left; font-size:.75rem; color:var(--text-dim);">
+      <span class="status-dot" id="opp-status-dot"></span>
+      <span id="opp-status-text">상대방 기다리는 중...</span>
+    </div>
+  </div>
+
+  <div class="lobby-card" id="card-join">
+    <h3>🔑 방 참여</h3>
+    <input class="input-field" id="join-code-input" type="text" maxlength="4" placeholder="ABCD" autocomplete="off" spellcheck="false" autocorrect="off">
+  </div>
+
+  <div class="menu-group">
+    <button id="btn-create" class="btn btn-primary">🏠 방 만들기</button>
+    <button id="btn-join"   class="btn btn-primary">🔑 방 참여하기</button>
+    <a href="index.html" class="btn btn-ghost" id="btn-lobby-back">← 뒤로</a>
+  </div>
+</div>
+
+<!-- ═══ RESULT OVERLAY ═══ -->
+<div id="overlay-result" class="overlay hidden">
+  <div class="result-badge" id="res-emoji">🏆</div>
+  <div class="result-title" id="res-title">VICTORY!</div>
+  <div class="result-sub" id="res-sub">승리했습니다!</div>
+  <div class="menu-group" style="margin-top:1.5rem;">
+    <a href="online.html" class="btn btn-primary">🔄 다시 대결</a>
+    <a href="index.html" class="btn btn-ghost">← 메인으로</a>
+  </div>
+</div>
+
+<!-- ═══ GAME SCREEN ═══ -->
+<div id="game-screen" class="hidden">
+  <div class="top-bar">
+    <div class="player-header">
+      <div class="player-name" id="my-label">나 / P1(흑)</div>
+      <div id="turn-p1" class="turn-indicator p1 active">내 차례</div>
+    </div>
+    <div class="vs-badge">VS</div>
+    <div class="player-header opp">
+      <div class="player-name" id="opp-label">상대방 / P2(백)</div>
+      <div id="turn-p2" class="turn-indicator p2">상대 차례</div>
+    </div>
+  </div>
+
+  <div class="play-area">
+    <div class="board-wrap">
+      <canvas id="omok-canvas"></canvas>
+    </div>
+  </div>
+
+  <div class="bottom-status" id="status-text">
+    온라인 동기화 대기 중...
+  </div>
+</div>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script src="/games/firebase-config.js"></script>
+<script src="/games/common.js"></script>
+<script src="omok-core.js"></script>
+
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const GAME_ID = 'omok';
+
+  const overlayLobby  = $('overlay-lobby');
+  const overlayResult = $('overlay-result');
+  const gameScreen    = $('game-screen');
+  
+  const turnP1 = $('turn-p1');
+  const turnP2 = $('turn-p2');
+  const statusText = $('status-text');
+
+  let game = null;
+  let myRole = null; // 'p1' (Host, Pink) or 'p2' (Guest, Purple)
+  let gameActive = false;
+
+  /* ════════════ OVERLAY & LOBBY ════════════ */
+  $('btn-create').addEventListener('click', doCreate);
+  $('btn-join').addEventListener('click', doJoin);
+
+  function doCreate() {
+    // Initial state: empty board, p1 starts
+    const initState = {
+      board: Array.from({ length: 15 }, () => Array(15).fill(0)),
+      currentTurn: 1,
+      winner: 0,
+      gameOver: false,
+      lastMove: null
+    };
+
+    GameUtils.RemoteManager.createRoom(initState, (roomCode) => {
+      myRole = 'p1';
+      $('card-join').style.display = 'none';
+      $('card-create').style.display = '';
+      $('room-code-display').textContent = roomCode;
+      $('btn-create').style.display = 'none';
+      $('btn-join').style.display = 'none';
+
+      const fakeOverlay = document.createElement('div');
+      GameUtils.RemoteManager.monitorStatus(
+        fakeOverlay, $('card-create'), $('card-create'), $('card-create'),
+        () => {
+          GameUtils.RemoteManager.updateField('../status', 'playing');
+          setTimeout(() => launchGame('p1'), 1000);
+        }
+      );
+    }, (err) => { alert('방 생성 실패: ' + err); });
+  }
+
+  function doJoin() {
+    const code = $('join-code-input').value.trim().toUpperCase();
+    if (code.length < 4) { alert('4자리 코드를 입력하세요.'); return; }
+
+    GameUtils.RemoteManager.joinRoom(code, () => {
+      myRole = 'p2';
+      const fakeOverlay = document.createElement('div');
+      GameUtils.RemoteManager.monitorStatus(
+        fakeOverlay, $('card-join'), $('card-join'), $('card-join'),
+        () => launchGame('p2')
+      );
+    }, (err) => { alert('방을 찾을 수 없습니다: ' + err); });
+  }
+
+  /* ════════════ GAME LAUNCH ════════════ */
+  function launchGame(role) {
+    overlayLobby.classList.add('hidden');
+    gameScreen.classList.remove('hidden');
+
+    myRole = role;
+    $('my-label').textContent  = role === 'p1' ? '나 (Host, P1)' : '나 (Guest, P2)';
+    $('opp-label').textContent = role === 'p1' ? '상대 (Guest, P2)' : '상대 (Host, P1)';
+
+    const cvs = $('omok-canvas');
+    cvs.width = 600;
+    cvs.height = 600;
+
+    gameActive = true;
+
+    game = new OmokGame('omok-canvas', {
+      onTurnChange: null, // We sync directly
+      onWin: null,        // Handled via onUpdate sync
+      onUpdate: handleLocalUpdate, // Sends to firebase
+      readOnly: false     // Checked locally if it's my turn
+    });
+
+    GameUtils.RemoteManager.init(GAME_ID, onRemoteSync);
+    
+    // Initial fetch to load state if join happened late
+    const state = GameUtils.RemoteManager.getRoomState();
+    if (state) onRemoteSync(state);
+  }
+
+  /* ════════════ SYNC ════════════ */
+  function handleLocalUpdate(localGame) {
+    if (!gameActive) return;
+    
+    GameUtils.RemoteManager.updateField('board', localGame.board);
+    GameUtils.RemoteManager.updateField('currentTurn', localGame.currentTurn);
+    if (localGame.lastMove) {
+      GameUtils.RemoteManager.updateField('lastMove', localGame.lastMove);
+    }
+    
+    if (localGame.gameOver) {
+      GameUtils.RemoteManager.updateField('gameOver', true);
+      GameUtils.RemoteManager.updateField('winner', localGame.winner);
+    }
+  }
+
+  function onRemoteSync(state) {
+    if (!state || !gameActive || !game) return;
+
+    // Load state
+    game.loadState(state);
+
+    // Enforce readOnly: you can only place a stone if it is your turn
+    const isMyTurn = (myRole === 'p1' && game.currentTurn === 1) || (myRole === 'p2' && game.currentTurn === 2);
+    game.readOnly = !isMyTurn;
+
+    // Update UI headers
+    updateTurnUI(game.currentTurn);
+
+    // Check game over
+    if (state.gameOver && gameActive) {
+      gameActive = false;
+      game.readOnly = true;
+      showResult(state.winner);
+    }
+  }
+
+  function updateTurnUI(currentNum) {
+    // currentNum: 1 or 2
+    const p1IsActive = (currentNum === 1);
+    
+    const myTurnEl = myRole === 'p1' ? turnP1 : turnP2;
+    const oppTurnEl = myRole === 'p1' ? turnP2 : turnP1;
+    
+    // Colors and activity mapping
+    if (currentNum === 1) { // P1's turn
+      turnP1.classList.add('active'); turnP2.classList.remove('active');
+    } else { // P2's turn
+      turnP2.classList.add('active'); turnP1.classList.remove('active');
+    }
+
+    if ((myRole === 'p1' && currentNum === 1) || (myRole === 'p2' && currentNum === 2)) {
+      statusText.textContent = "내 차례입니다. 돌을 놓을 곳을 선택하세요.";
+    } else {
+      statusText.textContent = "상대방의 차례입니다. 기다려주세요...";
+    }
+  }
+
+  function showResult(winnerNum) {
+    setTimeout(() => {
+      overlayResult.classList.remove('hidden');
+      
+      const isMe = (myRole === 'p1' && winnerNum === 1) || (myRole === 'p2' && winnerNum === 2);
+      
+      if (isMe) {
+        $('res-title').textContent = "VICTORY!";
+        $('res-sub').textContent = "상대방을 꺾고 승리했습니다!";
+        $('res-title').style.background = "linear-gradient(135deg, #4ade80, #86efac)";
+        $('res-title').style.webkitBackgroundClip = "text";
+        $('res-title').style.webkitTextFillColor = "transparent";
+      } else {
+        $('res-title').textContent = "DEFEAT";
+        $('res-sub').textContent = "아쉽게 패배했습니다.";
+        $('res-emoji').textContent = "💀";
+        $('res-title').style.background = "linear-gradient(135deg, #ef4444, #fca5a5)";
+        $('res-title').style.webkitBackgroundClip = "text";
+        $('res-title').style.webkitTextFillColor = "transparent";
+      }
+    }, 600);
+  }
+
+})();
+</script>
+</body>
+</html>

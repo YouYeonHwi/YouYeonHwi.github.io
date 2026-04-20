@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0a0a0f">
+  <title>오목 배틀 | 커플 게임 광장</title>
+  <meta name="description" content="클래식한 두뇌 싸움! 오목판 위에서 5개를 먼저 이으세요.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary:      #a78bfa;
+      --primary-glow: rgba(167,139,250,.35);
+      --accent:       #f472b6;
+      --accent-glow:  rgba(244,114,182,.3);
+      --green:        #4ade80;
+      --red:          #ef4444;
+      --bg:           #0a0a0f;
+      --surface:      rgba(255,255,255,.04);
+      --surface2:     rgba(255,255,255,.07);
+      --border:       rgba(255,255,255,.08);
+      --text:         #e2e8f0;
+      --text-dim:     #64748b;
+      --p1:           #f472b6; /* Player 1: Pink */
+      --p2:           #a78bfa; /* Player 2: Purple */
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      height: 100%; font-family: 'Outfit', sans-serif;
+      background: var(--bg); color: var(--text);
+      overflow: hidden; touch-action: none;
+      -webkit-tap-highlight-color: transparent; user-select: none;
+    }
+
+    .hidden { display: none !important; }
+
+    /* ════════════ OVERLAY ════════════ */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(10,10,15,.96);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      z-index: 200; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 2rem 1.5rem; transition: opacity .3s ease;
+      overflow-y: auto; text-align: center;
+    }
+
+    .overlay-logo {
+      font-size: 2.8rem; font-weight: 900;
+      background: linear-gradient(135deg, var(--p1), var(--p2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: .25rem; letter-spacing: -.02em;
+    }
+    .overlay-sub { color: var(--text-dim); font-size: .85rem; margin-bottom: 2rem; }
+
+    .menu-group { display: flex; flex-direction: column; gap: .75rem; width: 100%; max-width: 300px; }
+    .btn {
+      display: flex; align-items: center; justify-content: center; gap: .6rem;
+      padding: .9rem 1.5rem; border-radius: 50px;
+      border: none; font-family: inherit; font-weight: 700; font-size: .95rem;
+      cursor: pointer; text-decoration: none;
+      transition: transform .15s, box-shadow .15s;
+    }
+    .btn:active { transform: scale(.94) !important; }
+    .btn-primary { background: linear-gradient(135deg, var(--p1), var(--p2)); color: #fff; box-shadow: 0 4px 20px var(--primary-glow); }
+    .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+
+    /* ════════════ GAME SCREEN ════════════ */
+    #game-screen {
+      height: 100dvh; display: flex; flex-direction: column;
+      padding-top: env(safe-area-inset-top, 0);
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+
+    /* Top Bar */
+    .top-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .6rem 1rem; flex-shrink: 0;
+    }
+    .back-btn {
+      color: var(--text-dim); font-size: .8rem; font-weight: 600;
+      cursor: pointer; padding: .3rem .5rem; border-radius: 8px;
+      border: 1px solid var(--border); background: none; text-decoration: none;
+    }
+    .turn-indicator { 
+      font-size: .85rem; font-weight: 800; padding: .4rem 1.2rem; border-radius: 50px; 
+      transition: all 0.3s; border: 1px solid var(--border);
+      background: var(--surface); color: var(--text-dim);
+    }
+    .turn-indicator.active.p1 { 
+      background: rgba(244,114,182,.15); color: var(--p1); 
+      border-color: rgba(244,114,182,.4); box-shadow: 0 0 15px rgba(244,114,182,.3); 
+    }
+    .turn-indicator.active.p2 { 
+      background: rgba(167,139,250,.15); color: var(--p2); 
+      border-color: rgba(167,139,250,.4); box-shadow: 0 0 15px rgba(167,139,250,.3); 
+    }
+
+    /* Play Area */
+    .play-area {
+      flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 1rem; overflow: hidden;
+    }
+
+    /* Board constraints */
+    .board-wrap {
+      position: relative; width: 100%; max-width: 500px; aspect-ratio: 1;
+      background: rgba(20, 20, 30, .8);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5), inset 0 0 30px rgba(0,0,0,0.5);
+      display: flex; align-items: center; justify-content: center;
+    }
+    #omok-canvas {
+      display: block;
+      width: 100%; height: 100%;
+      border-radius: 10px;
+    }
+
+    /* Bottom Status */
+    .bottom-status {
+      text-align: center; color: var(--text-dim); font-size: .85rem; padding: 1rem; flex-shrink:0;
+    }
+    
+    /* Result Badge Extras */
+    .result-badge { font-size: 3rem; margin-bottom: .5rem; }
+    .result-title { font-size: 2.2rem; font-weight: 900; margin-bottom: .25rem; color: #fff; }
+  </style>
+</head>
+<body>
+
+<!-- ═══ START OVERLAY ═══ -->
+<div id="overlay-start" class="overlay">
+  <div class="overlay-logo">사이버 오목</div>
+  <div class="overlay-sub" style="margin-bottom:0.5rem">클래식한 두뇌싸움, 5개를 먼저 이으세요 ⚔️</div>
+
+  <div style="font-size:0.8rem; color:var(--text-dim); text-align:center; max-width:280px; margin-bottom:2rem; line-height:1.5;">
+    원하는 플레이 방식을 선택하세요. 하나의 스마트폰에서 번갈아 두거나, 온라인으로 실시간 승부를 펼칠 수 있습니다.
+  </div>
+
+  <div class="menu-group">
+    <button id="btn-solo" class="btn btn-primary" style="width:100%; justify-content:center;">
+      👤 로컬 2인용 (같이 하기)
+    </button>
+    <button id="btn-online" class="btn btn-ghost" style="width:100%; justify-content:center; border-color:var(--primary);">
+      🌐 온라인 (실시간 대결)
+    </button>
+    <a href="/games/" class="btn btn-ghost" style="width:100%; justify-content:center;">← 게임 목록</a>
+  </div>
+
+  <p style="font-size:0.75rem; color:var(--text-dim); margin-top:1.5rem; cursor:pointer; text-decoration:underline; text-underline-offset:2px;" id="btn-show-help">
+    게임 규칙 보기
+  </p>
+</div>
+
+<!-- ═══ HELP OVERLAY ═══ -->
+<div class="overlay hidden" id="overlay-help">
+  <div class="overlay-logo" style="font-size:1.8rem; margin-bottom:1rem;">🎲 게임 방법</div>
+  <div style="text-align: left; max-width: 90%; max-height: 60vh; overflow-y: auto; font-size: .85rem; line-height: 1.6; color: var(--text);">
+    <h2 style="color: var(--primary); margin-bottom: .6rem; font-size: 1.1rem; border-bottom:1px solid var(--border); padding-bottom:.3rem;">🎮 기본 조작 (모바일)</h2>
+    <ul style="list-style: none; margin-bottom: 1.2rem; margin-left:0; padding-left:0;">
+      <li style="margin-bottom: .4rem; line-height:1.4;">보드상의 원하는 교차점을 터치하여 돌을 놓습니다.</li>
+      <li style="margin-bottom: .4rem; line-height:1.4;">터치 시 가장 가까운 빈 교차점에 자동으로 돌이 놓여집니다.</li>
+    </ul>
+
+    <h2 style="color: var(--primary); margin-bottom: .6rem; font-size: 1.1rem; border-bottom:1px solid var(--border); padding-bottom:.3rem;">⚔️ 승리 규칙 (프리 오목)</h2>
+    <ul style="list-style: none; margin-bottom: 1rem; margin-left:0; padding-left:0;">
+      <li style="margin-bottom: .4rem; line-height:1.4;">가로, 세로, 대각선 어느 방향이든 자신의 돌 <b>5개</b> 이상을 연속으로 먼저 놓으면 승리합니다.</li>
+      <li style="margin-bottom: .4rem; line-height:1.4;"><b style="color:var(--accent)">※ 자유 룰 적용</b>: 3-3, 4-4, 장목(6개 이상 연속) 금지 규칙이 없는 <b>자유 형태(Free)</b>로 가볍게 진행됩니다. 6개 이상을 이어도 승리합니다!</li>
+    </ul>
+  </div>
+  <button class="btn btn-primary" id="btn-close-help" style="margin-top:1.5rem; width:100%; max-width:200px;">닫기</button>
+</div>
+
+<!-- ═══ RESULT OVERLAY ═══ -->
+<div id="overlay-result" class="overlay hidden">
+  <div class="result-badge" id="res-emoji">🏆</div>
+  <div class="result-title" id="res-title">Player 1 승리!</div>
+  <div class="result-sub" id="res-sub">5목을 먼저 완성했습니다.</div>
+  <div class="menu-group" style="margin-top:1.5rem;">
+    <button id="btn-retry" class="btn btn-primary">🔄 다시 하기</button>
+    <a href="/games/" class="btn btn-ghost">📋 게임 목록</a>
+  </div>
+</div>
+
+<!-- ═══ GAME SCREEN (hidden until started) ═══ -->
+<div id="game-screen" class="hidden">
+  <div class="top-bar">
+    <a href="/games/" class="back-btn">← 목록</a>
+    <div id="turn-p1" class="turn-indicator active p1">PLAYER 1</div>
+    <div style="font-weight:900; font-size:.8rem; color:var(--surface2);">VS</div>
+    <div id="turn-p2" class="turn-indicator p2">PLAYER 2</div>
+  </div>
+
+  <div class="play-area">
+    <div class="board-wrap">
+      <canvas id="omok-canvas"></canvas>
+    </div>
+  </div>
+
+  <div class="bottom-status" id="status-text">
+    PLAYER 1 (Pink) 님의 차례입니다.
+  </div>
+</div>
+
+<script src="omok-core.js"></script>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const overlayStart = $('overlay-start');
+  const overlayHelp = $('overlay-help');
+  const overlayResult = $('overlay-result');
+  const gameScreen = $('game-screen');
+  
+  const turnP1 = $('turn-p1');
+  const turnP2 = $('turn-p2');
+  const statusText = $('status-text');
+
+  let game = null;
+
+  /* Menus */
+  $('btn-solo').addEventListener('click', startSolo);
+  $('btn-online').addEventListener('click', () => { location.href = 'online.html'; });
+  $('btn-retry').addEventListener('click', startSolo);
+  
+  $('btn-show-help').addEventListener('click', () => {
+    overlayStart.classList.add('hidden');
+    overlayHelp.classList.remove('hidden');
+  });
+  $('btn-close-help').addEventListener('click', () => {
+    overlayHelp.classList.add('hidden');
+    overlayStart.classList.remove('hidden');
+  });
+
+  function startSolo() {
+    overlayStart.classList.add('hidden');
+    overlayResult.classList.add('hidden');
+    gameScreen.classList.remove('hidden');
+
+    if (game) game.destroy();
+
+    // Adjust canvas internal resolution to be highly crisp on mobile
+    const cvs = $('omok-canvas');
+    // We make logic coordinate system reasonably sized for math, but let css handle scale.
+    // Given 15x15, standard 600x600 inside logic makes cell=40.
+    cvs.width = 600;
+    cvs.height = 600;
+
+    game = new OmokGame('omok-canvas', {
+      onTurnChange: updateTurnUI,
+      onWin: handleGameEnd
+    });
+    
+    // Initial draw & UI reset
+    updateTurnUI(1);
+  }
+
+  function updateTurnUI(turn) {
+    if (turn === 1) {
+      turnP1.classList.add('active');
+      turnP2.classList.remove('active');
+      statusText.textContent = "PLAYER 1 (Pink) 님의 차례입니다.";
+    } else {
+      turnP2.classList.add('active');
+      turnP1.classList.remove('active');
+      statusText.textContent = "PLAYER 2 (Purple) 님의 차례입니다.";
+    }
+  }
+
+  function handleGameEnd(winner) {
+    statusText.textContent = "게임 종료!";
+    setTimeout(() => {
+      overlayResult.classList.remove('hidden');
+      if (winner === 1) {
+        $('res-title').textContent = "PLAYER 1 승리!";
+        $('res-title').style.background = "linear-gradient(135deg, var(--p1), #fbcfe8)";
+        $('res-title').style.webkitBackgroundClip = "text";
+        $('res-title').style.webkitTextFillColor = "transparent";
+      } else {
+        $('res-title').textContent = "PLAYER 2 승리!";
+        $('res-title').style.background = "linear-gradient(135deg, var(--p2), #ddd6fe)";
+        $('res-title').style.webkitBackgroundClip = "text";
+        $('res-title').style.webkitTextFillColor = "transparent";
+      }
+    }, 600); // short delay to see the winning stone
+  }
+
+})();
+</script>
+</body>
+</html>
