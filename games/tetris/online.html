@@ -246,7 +246,7 @@
 <body>
 
 <!-- ═══ START OVERLAY (SOLO / ONLINE) ═══ -->
-<div id="overlay-start" class="overlay">
+<div id="overlay-start" class="overlay hidden">
   <div class="overlay-logo">테트리스 배틀</div>
   <div class="overlay-sub" style="margin-bottom:0.5rem">블록을 쌓고, 콤보를 만들어 상대를 공격하세요 ⚔️</div>
   
@@ -296,7 +296,7 @@
 </div>
 
 <!-- ═══ LOBBY OVERLAY ═══ -->
-<div id="overlay-lobby" class="overlay hidden">
+<div id="overlay-lobby" class="overlay">
   <div class="overlay-logo">온라인 배틀</div>
   <div class="overlay-sub">방 코드로 친구와 1:1 대결!</div>
 
@@ -433,8 +433,7 @@ $('btn-online-menu').addEventListener('click', () => {
   $('overlay-lobby').classList.remove('hidden');
 });
 $('btn-lobby-back').addEventListener('click', () => {
-  $('overlay-lobby').classList.add('hidden');
-  $('overlay-start').classList.remove('hidden');
+  location.href = 'index.html';
 });
 
 $('btn-show-help').addEventListener('click', () => {
