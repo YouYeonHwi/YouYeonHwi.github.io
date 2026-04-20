@@ -383,14 +383,26 @@ const GameUtils = (() => {
         return;
       }
       
-      const connectedRef = db.ref('.info/connected');
-      connectedRef.once('value').then(snap => {
-        if (snap.val() !== true) {
-          if (errorCallback) errorCallback(new Error('서버와 연결되지 않았습니다. (오프라인)'));
-          else alert('인터넷 연결을 확인해주세요.');
-          return;
-        }
-        
+    function waitForConnection(timeout = 3000) {
+      if (!ensureDB()) return Promise.reject(new Error('Firebase 초기화 실패'));
+      return new Promise((resolve, reject) => {
+        const connectedRef = db.ref(".info/connected");
+        const timer = setTimeout(() => {
+          connectedRef.off("value", listener);
+          reject(new Error("서버와의 연결 시간이 초과되었습니다. 인터넷 상태를 확인해 주세요."));
+        }, timeout);
+        const listener = connectedRef.on("value", (snap) => {
+          if (snap.val() === true) {
+            clearTimeout(timer);
+            connectedRef.off("value", listener);
+            resolve();
+          }
+        });
+      });
+    }
+
+    function createRoom(initialState, callback, errorCallback) {
+      waitForConnection(4000).then(() => {
         let isTimedOut = false;
         const timeout = setTimeout(() => {
           isTimedOut = true;
@@ -434,25 +446,13 @@ const GameUtils = (() => {
         };
         tryCreate();
       }).catch(err => {
-        if (errorCallback) errorCallback(new Error('오프라인 상태이거나 접속할 수 없습니다.'));
+        if (errorCallback) errorCallback(err);
+        else alert(err.message);
       });
     }
 
     function joinRoom(id, callback, errorCallback) {
-      if (!ensureDB()) {
-        if (errorCallback) errorCallback(new Error('Firebase 초기화 실패'));
-        else alert('Firebase를 초기화할 수 없습니다.');
-        return;
-      }
-
-      const connectedRef = db.ref('.info/connected');
-      connectedRef.once('value').then(snap => {
-        if (snap.val() !== true) {
-          if (errorCallback) errorCallback(new Error('서버와 연결되지 않았습니다. (오프라인)'));
-          else alert('인터넷 연결을 확인해주세요.');
-          return;
-        }
-
+      waitForConnection(4000).then(() => {
         const roomRef = db.ref('rooms/' + id);
         roomRef.once('value').then(snapshot => {
           const data = snapshot.val();
@@ -478,7 +478,8 @@ const GameUtils = (() => {
           else alert('방 정보 조회 실패: ' + err.message);
         });
       }).catch(err => {
-        if (errorCallback) errorCallback(new Error('오프라인 상태이거나 접속할 수 없습니다.'));
+        if (errorCallback) errorCallback(err);
+        else alert(err.message);
       });
     }
 

@@ -259,8 +259,8 @@
   <!-- Firebase 및 공통 모듈 -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-  <script src="/games/firebase-config.js"></script>
-  <script src="/games/common.js"></script>
+  <script src="../firebase-config.js"></script>
+  <script src="../common.js"></script>
 </head>
 <body>
 
@@ -279,7 +279,7 @@
 <!-- ═══ GAME SCREEN ═══ -->
 <div id="game-screen" class="hidden">
   <div class="top-bar">
-    <a href="/games/" class="back-link">← 목록</a>
+    <a href="../index.html" class="back-link">← 목록</a>
     <div class="mini-scores">
       <span id="ms-p1" class="ms-p1">한 0</span>
       <span style="color:var(--border)">:</span>
@@ -344,8 +344,8 @@
     gameScreen.classList.remove('hidden');
 
     myRole = role;
-    $('label-p1').textContent = role === 'p1' ? '나' : '상대';
-    $('label-p2').textContent = role === 'p2' ? '나' : '상대';
+    $('ms-p1').textContent = role === 'p1' ? '한 0 (나)' : '한 0 (상대)';
+    $('ms-p2').textContent = role === 'p2' ? '초 0 (나)' : '초 0 (상대)';
 
     gameActive = true;
 
@@ -441,13 +441,6 @@
       $('res-sub').textContent = reason || '외통수입니다.';
     }, 1000);
   }
-
-  $('btn-quit').addEventListener('click', () => {
-    if (confirm('방을 나가시겠습니까?')) {
-      GameUtils.RemoteManager.leaveRoom();
-      location.href = 'index.html';
-    }
-  });
 
   $('btn-lobby').addEventListener('click', () => {
     GameUtils.RemoteManager.leaveRoom();

@@ -1,12 +1,6 @@
 {
   "rules": {
-    "rooms": {
-      ".read": true,
-      ".write": true,
-      "$roomId": {
-        // 4자리 방 번호 검증 (선택 사항이나 기본적으로 열어둠)
-        ".validate": "newData.hasChildren(['gameId', 'status'])"
-      }
-    }
+    ".read": "auth != null",
+    ".write": "auth != null"
   }
 }
