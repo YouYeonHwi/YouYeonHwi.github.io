@@ -99,6 +99,18 @@
       position: absolute; right: 1rem; font-size: .65rem; color: var(--text-dim); font-weight: 600;
     }
 
+    /* Timer Bar */
+    .timer-container {
+      width: 100%; max-width: 250px; height: 4px; background: rgba(255,255,255,.05);
+      border-radius: 2px; overflow: hidden; margin-bottom: 5px; opacity: 0; transition: opacity .3s;
+    }
+    .timer-container.active { opacity: 1; }
+    .timer-bar {
+      width: 100%; height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent));
+      transform-origin: left;
+    }
+
+
     /* Overlays */
     .overlay {
       position: fixed; inset: 0; background: rgba(10,10,15,.94);
@@ -160,6 +172,7 @@
     <div class="ad-slot">AD · 상단 광고</div>
 
     <div class="player-area top" id="area-p1">
+      <div class="timer-container" id="p1-timer-cont"><div class="timer-bar" id="p1-timer-bar"></div></div>
       <div class="status-text" id="p1-status">대기 중...</div>
       <div class="number-display" id="p1-number"></div>
       <div class="input-display" id="p1-input"></div>
@@ -167,18 +180,21 @@
       <span class="player-label">PLAYER 1</span>
     </div>
 
+
     <div class="divider">
       <div class="vs-badge">VS</div>
       <span class="round-info" id="round-info">1 / 5</span>
     </div>
 
     <div class="player-area bottom" id="area-p2">
+      <div class="timer-container" id="p2-timer-cont"><div class="timer-bar" id="p2-timer-bar"></div></div>
       <div class="status-text" id="p2-status">대기 중...</div>
       <div class="number-display" id="p2-number"></div>
       <div class="input-display" id="p2-input"></div>
       <div class="numpad" id="p2-numpad"></div>
       <span class="player-label">PLAYER 2</span>
     </div>
+
 
     <div class="ad-slot">AD · 하단 광고</div>
   </div>
@@ -247,6 +263,9 @@
       let p1Done = false, p2Done = false;
       let p1Score = 0, p2Score = 0;
       let phase = 'idle'; // idle, showing, input
+      let inputTimer = null;
+      const INPUT_LIMIT_MS = 5000;
+
 
       // Build numpads
       function buildNumpad(containerId, player) {
@@ -322,8 +341,8 @@
         disableNumpad('p1-numpad');
         disableNumpad('p2-numpad');
 
-        // Hide after delay
-        const showTime = 1500 + round * 300;
+        // Hide after delay (Reduced to 80%)
+        const showTime = (1500 + round * 300) * 0.8;
         setTimeout(() => {
           p1Num.classList.add('hidden-num');
           p2Num.classList.add('hidden-num');
@@ -331,13 +350,47 @@
           p2Num.textContent = '?'.repeat(currentNumber.length);
           phase = 'input';
 
-          document.getElementById('p1-status').textContent = '입력하세요!';
-          document.getElementById('p2-status').textContent = '입력하세요!';
+          document.getElementById('p1-status').textContent = '입력하세요! (5초)';
+          document.getElementById('p2-status').textContent = '입력하세요! (5초)';
 
           enableNumpad('p1-numpad');
           enableNumpad('p2-numpad');
+          
+          startInputTimer();
         }, showTime);
       }
+
+      function startInputTimer() {
+        if (inputTimer) clearInterval(inputTimer);
+        const startTime = Date.now();
+        const p1Bar = document.getElementById('p1-timer-bar');
+        const p2Bar = document.getElementById('p2-timer-bar');
+        const p1Cont = document.getElementById('p1-timer-cont');
+        const p2Cont = document.getElementById('p2-timer-cont');
+        
+        p1Cont.classList.add('active');
+        p2Cont.classList.add('active');
+
+        inputTimer = setInterval(() => {
+          const elapsed = Date.now() - startTime;
+          const remaining = Math.max(0, INPUT_LIMIT_MS - elapsed);
+          const pct = (remaining / INPUT_LIMIT_MS) * 100;
+          
+          p1Bar.style.transform = `scaleX(${pct / 100})`;
+          p2Bar.style.transform = `scaleX(${pct / 100})`;
+
+          if (remaining <= 0) {
+            clearInterval(inputTimer);
+            // Time up! Force finish for those who haven't
+            p1Done = true;
+            p2Done = true;
+            disableNumpad('p1-numpad');
+            disableNumpad('p2-numpad');
+            checkResult();
+          }
+        }, 30);
+      }
+
 
       function handleInput(player, digit) {
         if (phase !== 'input') return;
@@ -381,11 +434,17 @@
 
         document.getElementById('p1-status').textContent = p1Correct ? '✅ 정답!' : '❌ 틀림';
         document.getElementById('p2-status').textContent = p2Correct ? '✅ 정답!' : '❌ 틀림';
+        
+        // Hide timers
+        document.getElementById('p1-timer-cont').classList.remove('active');
+        document.getElementById('p2-timer-cont').classList.remove('active');
+        if (inputTimer) clearInterval(inputTimer);
 
         GameUtils.vibrate(p1Correct || p2Correct ? 30 : 100);
 
         setTimeout(nextRound, 1800);
       }
+
 
       function endGame() {
         const winner = p1Score > p2Score ? 1 : p2Score > p1Score ? 2 : 0;
