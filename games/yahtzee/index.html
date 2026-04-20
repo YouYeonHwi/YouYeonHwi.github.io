@@ -353,6 +353,7 @@
       background: var(--surface); border: 1px solid var(--border);
       border-radius: var(--radius); padding: 1rem 1.5rem;
       margin-bottom: 1.5rem; width: 100%; max-width: 300px;
+    }
     .final-scores .fs-row {
       display: flex; justify-content: space-between;
       padding: .25rem 0; font-size: .85rem;
@@ -794,26 +795,16 @@
 
         updateCalcRows();
 
-        // Check game over
         if (roundsPlayed >= 26) {
           endGame();
+          return;
         }
 
-        // Yahtzee! Celebration
         if (catId === 'yahtzee' && value === 50) {
           triggerYahtzeeCelebration();
         }
 
-        if (roundsPlayed >= 26) return;
-
-
-        // Switch player or next turn
-        if (currentPlayer === 1) {
-          currentPlayer = 2;
-        } else {
-          currentPlayer = 1;
-        }
-
+        currentPlayer = (currentPlayer === 1) ? 2 : 1;
         resetTurn();
       }
 
@@ -823,17 +814,21 @@
         rollsLeft = 3;
         hasRolled = false;
 
-        for(let i=0; i<5; i++) {
+        for (let i = 0; i < 5; i++) {
           const scene = document.getElementById(`scene-${i}`);
           if (scene) {
             scene.classList.remove('held');
             scene.style.transform = 'translateY(0) scale(1)';
           }
-          // Reset visually to a random angle for readiness
           currentRotations[i].x += 45;
           currentRotations[i].y += 45;
           const cube = document.getElementById(`cube-${i}`);
           if (cube) cube.style.transform = `rotateX(${currentRotations[i].x}deg) rotateY(${currentRotations[i].y}deg)`;
+        }
+
+        updateRollButton();
+        updateTurnIndicator();
+        updateAvailableScores();
       }
 
       function triggerYahtzeeCelebration() {
@@ -861,12 +856,6 @@
         setTimeout(() => {
           celeb.classList.remove('active');
         }, 5000);
-      }
-        }
-
-        updateRollButton();
-        updateTurnIndicator();
-        updateAvailableScores();
       }
 
       function updateTurnIndicator() {
