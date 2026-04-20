@@ -377,78 +377,108 @@ const GameUtils = (() => {
     }
 
     function createRoom(initialState, callback, errorCallback) {
-      if (!ensureDB()) return alert('Firebase 초기화 실패: 설정 파일(firebase-config.js)을 확인하세요.');
+      if (!ensureDB()) {
+        if (errorCallback) errorCallback(new Error('Firebase 초기화 실패: 설정 파일을 확인하세요.'));
+        else alert('Firebase 초기화 실패');
+        return;
+      }
       
-      let isTimedOut = false;
-      const timeout = setTimeout(() => {
-        isTimedOut = true;
-        if (errorCallback) errorCallback(new Error('네트워크 연결 시간 초과. Firebase 설정을 확인하세요.'));
-      }, 5000);
-
-      const tryCreate = () => {
-        if (isTimedOut) return;
-        const newRoomId = Math.floor(1000 + Math.random() * 9000).toString();
-        const roomRef = db.ref('rooms/' + newRoomId);
+      const connectedRef = db.ref('.info/connected');
+      connectedRef.once('value').then(snap => {
+        if (snap.val() !== true) {
+          if (errorCallback) errorCallback(new Error('서버와 연결되지 않았습니다. (오프라인)'));
+          else alert('인터넷 연결을 확인해주세요.');
+          return;
+        }
         
-        roomRef.once('value').then(snapshot => {
+        let isTimedOut = false;
+        const timeout = setTimeout(() => {
+          isTimedOut = true;
+          if (errorCallback) errorCallback(new Error('네트워크 연결 시간 초과. Firebase 설정을 확인하세요.'));
+        }, 5000);
+
+        const tryCreate = () => {
           if (isTimedOut) return;
-          clearTimeout(timeout);
-          if (snapshot.exists()) {
-            tryCreate();
-          } else {
-            roomRef.set({
-              gameId: gameId,
-              gameState: initialState,
-              status: 'lobby',
-              p1Joined: true,
-              p2Joined: false,
-              lastActive: Date.now()
-            }).then(() => {
-              roomId = newRoomId;
-              playerRole = 'p1';
-              roomRef.onDisconnect().remove();
-              if (callback) callback(newRoomId);
-            }).catch(err => {
-              if (errorCallback) errorCallback(err);
-              else alert('방 생성 실패: ' + err.message);
-            });
-          }
-        }).catch(err => {
-          if (isTimedOut) return;
-          clearTimeout(timeout);
-          if (errorCallback) errorCallback(err);
-          else alert('데이터베이스 연결 실패: ' + err.message);
-        });
-      };
-      tryCreate();
+          const newRoomId = Math.floor(1000 + Math.random() * 9000).toString();
+          const roomRef = db.ref('rooms/' + newRoomId);
+          
+          roomRef.once('value').then(snapshot => {
+            if (isTimedOut) return;
+            clearTimeout(timeout);
+            if (snapshot.exists()) {
+              tryCreate();
+            } else {
+              roomRef.set({
+                gameId: gameId,
+                gameState: initialState,
+                status: 'lobby',
+                p1Joined: true,
+                p2Joined: false,
+                lastActive: Date.now()
+              }).then(() => {
+                roomId = newRoomId;
+                playerRole = 'p1';
+                roomRef.onDisconnect().remove();
+                if (callback) callback(newRoomId);
+              }).catch(err => {
+                if (errorCallback) errorCallback(err);
+                else alert('방 생성 실패: ' + err.message);
+              });
+            }
+          }).catch(err => {
+            if (isTimedOut) return;
+            clearTimeout(timeout);
+            if (errorCallback) errorCallback(err);
+            else alert('데이터베이스 연결 실패: ' + err.message);
+          });
+        };
+        tryCreate();
+      }).catch(err => {
+        if (errorCallback) errorCallback(new Error('오프라인 상태이거나 접속할 수 없습니다.'));
+      });
     }
 
     function joinRoom(id, callback, errorCallback) {
-      if (!ensureDB()) return alert('Firebase를 초기화할 수 없습니다.');
-      const roomRef = db.ref('rooms/' + id);
-      roomRef.once('value').then(snapshot => {
-        const data = snapshot.val();
-        if (data && !data.p2Joined) {
-          if (data.gameId !== gameId) return errorCallback?.('다른 게임의 방입니다.');
-          roomRef.update({
-            p2Joined: true,
-            status: 'ready'
-          }).then(() => {
-            roomId = id;
-            playerRole = 'p2';
-            // 참여자 종료 시 p2Joined 상태만 false로
-            roomRef.child('p2Joined').onDisconnect().set(false);
-            if (callback) callback();
-          }).catch(err => {
-            if (errorCallback) errorCallback(err);
-            else alert('참여 처리 실패: ' + err.message);
-          });
-        } else {
-          if (errorCallback) errorCallback('방이 없거나 이미 가득 찼습니다.');
+      if (!ensureDB()) {
+        if (errorCallback) errorCallback(new Error('Firebase 초기화 실패'));
+        else alert('Firebase를 초기화할 수 없습니다.');
+        return;
+      }
+
+      const connectedRef = db.ref('.info/connected');
+      connectedRef.once('value').then(snap => {
+        if (snap.val() !== true) {
+          if (errorCallback) errorCallback(new Error('서버와 연결되지 않았습니다. (오프라인)'));
+          else alert('인터넷 연결을 확인해주세요.');
+          return;
         }
+
+        const roomRef = db.ref('rooms/' + id);
+        roomRef.once('value').then(snapshot => {
+          const data = snapshot.val();
+          if (data && !data.p2Joined) {
+            if (data.gameId !== gameId) return errorCallback?.('다른 게임의 방입니다.');
+            roomRef.update({
+              p2Joined: true,
+              status: 'ready'
+            }).then(() => {
+              roomId = id;
+              playerRole = 'p2';
+              roomRef.child('p2Joined').onDisconnect().set(false);
+              if (callback) callback();
+            }).catch(err => {
+              if (errorCallback) errorCallback(err);
+              else alert('참여 처리 실패: ' + err.message);
+            });
+          } else {
+            if (errorCallback) errorCallback('방이 없거나 이미 가득 찼습니다.');
+          }
+        }).catch(err => {
+          if (errorCallback) errorCallback(err);
+          else alert('방 정보 조회 실패: ' + err.message);
+        });
       }).catch(err => {
-        if (errorCallback) errorCallback(err);
-        else alert('방 정보 조회 실패: ' + err.message);
+        if (errorCallback) errorCallback(new Error('오프라인 상태이거나 접속할 수 없습니다.'));
       });
     }
 
@@ -744,7 +774,7 @@ const GameUtils = (() => {
       document.head.appendChild(style);
     }
 
-    return { init, createRoom, joinRoom, updateState, updateField, leaveRoom, getRoomId: () => roomId, getRole: () => playerRole, showSelectionMenu, openLobby, getRoomState };
+    return { init, createRoom, joinRoom, updateState, updateField, leaveRoom, getRoomId: () => roomId, getRole: () => playerRole, showSelectionMenu, openLobby, getRoomState, monitorStatus };
   })();
 
   /* ───────────────────── 초기화 ───────────────────── */

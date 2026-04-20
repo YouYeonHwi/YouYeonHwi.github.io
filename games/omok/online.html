@@ -260,6 +260,11 @@
       lastMove: null
     };
 
+    const btn = $('btn-create');
+    btn.disabled = true;
+    const oldText = btn.textContent;
+    btn.textContent = '방 생성 중...';
+
     GameUtils.RemoteManager.createRoom(initState, (roomCode) => {
       myRole = 'p1';
       $('card-join').style.display = 'none';
@@ -276,12 +281,21 @@
           setTimeout(() => launchGame('p1'), 1000);
         }
       );
-    }, (err) => { alert('방 생성 실패: ' + err); });
+    }, (err) => { 
+      btn.disabled = false;
+      btn.textContent = oldText;
+      alert('방 생성 실패: ' + (err?.message || err)); 
+    });
   }
 
   function doJoin() {
     const code = $('join-code-input').value.trim().toUpperCase();
     if (code.length < 4) { alert('4자리 코드를 입력하세요.'); return; }
+
+    const btn = $('btn-join');
+    btn.disabled = true;
+    const oldText = btn.textContent;
+    btn.textContent = '참여 중...';
 
     GameUtils.RemoteManager.joinRoom(code, () => {
       myRole = 'p2';
@@ -290,7 +304,11 @@
         fakeOverlay, $('card-join'), $('card-join'), $('card-join'),
         () => launchGame('p2')
       );
-    }, (err) => { alert('방을 찾을 수 없습니다: ' + err); });
+    }, (err) => { 
+      btn.disabled = false;
+      btn.textContent = oldText;
+      alert('방을 찾을 수 없습니다: ' + (err?.message || err || '코드를 확인하세요.')); 
+    });
   }
 
   /* ════════════ GAME LAUNCH ════════════ */
