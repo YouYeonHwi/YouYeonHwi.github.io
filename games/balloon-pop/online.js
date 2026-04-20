@@ -4,6 +4,8 @@
   const GAME_ID = 'balloon-pop';
   const GAME_TIME = 15;
   const BALLOON_EMOJIS = ['🎈', '🎈', '🎈', '🟡', '🔴', '🟣', '🟢', '🔵'];
+  const BOMB_EMOJI = '💣';
+
   
   let myRole = null;
   let currentState = {
@@ -108,7 +110,15 @@
   function spawnBalloon() {
     const b = document.createElement('div');
     b.className = 'balloon';
-    b.textContent = BALLOON_EMOJIS[Math.floor(Math.random() * BALLOON_EMOJIS.length)];
+    
+    const isBomb = Math.random() < 0.15;
+    if (isBomb) {
+      b.textContent = BOMB_EMOJI;
+      b.classList.add('bomb');
+    } else {
+      b.textContent = BALLOON_EMOJIS[Math.floor(Math.random() * BALLOON_EMOJIS.length)];
+    }
+
     
     const x = Math.random() * (field.clientWidth - 50);
     const y = field.clientHeight + 50;
@@ -132,15 +142,23 @@
 
   function pop(el) {
     if (currentState.status !== 'playing') return;
+    const isBomb = el.classList.contains('bomb');
     el.remove();
-    localCount++;
-    GameUtils.vibrate(10);
-    
-    // Throttle sync: sync every 3 taps to save DB quota
-    if (localCount - lastSyncCount >= 3) {
-      syncCount();
+
+    if (isBomb) {
+      localCount = Math.max(0, localCount - 5);
+      GameUtils.vibrate([100, 50, 100]);
+      syncCount(); // 폭탄 클릭 시 점수 즉시 동기화
+    } else {
+      localCount++;
+      GameUtils.vibrate(10);
+      // Throttle sync: sync every 3 taps to save DB quota
+      if (localCount - lastSyncCount >= 3) {
+        syncCount();
+      }
     }
   }
+
 
   function syncCount() {
     lastSyncCount = localCount;

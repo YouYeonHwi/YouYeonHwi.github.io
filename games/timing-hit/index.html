@@ -367,22 +367,25 @@
       }
 
       function calculateScore(pos) {
-        // Center is 50%. Target zone is 40%-60%.
+        // 정중앙(50%)에서 얼마나 멀어졌는지 계산
         const dist = Math.abs(pos - 50);
-        if (dist <= 1) return 100;        // Perfect!
-        if (dist <= 5) return 90;         // Excellent
-        if (dist <= 10) return 70;        // Great
-        if (dist <= 20) return 40;        // Good
-        return Math.max(0, Math.round(30 - dist * 0.5));  // Ok
+        // 오차 1%당 약 3.5점 감점 (최대 100점)
+        const score = Math.max(0.1, 100 - (dist * 3.5));
+        return {
+          score: parseFloat(score.toFixed(1)),
+          dist: parseFloat(dist.toFixed(1))
+        };
       }
 
+
       function getGrade(score) {
-        if (score >= 100) return 'PERFECT! 🎯';
+        if (score >= 98) return 'PERFECT! 🎯';
         if (score >= 90) return 'EXCELLENT! 🌟';
-        if (score >= 70) return 'GREAT! ✨';
-        if (score >= 40) return 'GOOD 👍';
+        if (score >= 80) return 'GREAT! ✨';
+        if (score >= 60) return 'GOOD 👍';
         return 'MISS 😅';
       }
+
 
       function handleStop(player) {
         if (!running) return;
@@ -391,31 +394,54 @@
 
         GameUtils.vibrate(20);
 
-        const pos = player === 1 ? needlePos.p1 : needlePos.p2;
-        const s = calculateScore(pos);
+        const { score, dist } = calculateScore(pos);
 
         if (player === 1) {
           p1Stopped = true;
-          const roundScore = s;
-          p1Total += roundScore;
-          document.getElementById('p1-msg').textContent = getGrade(s);
-          document.getElementById('p1-result').textContent = `+${roundScore}점`;
-          document.getElementById('p1-total').textContent = `총점: ${p1Total}`;
+          animateScore(1, score, dist);
         } else {
           p2Stopped = true;
-          const roundScore = s;
-          p2Total += roundScore;
-          document.getElementById('p2-msg').textContent = getGrade(s);
-          document.getElementById('p2-result').textContent = `+${roundScore}점`;
-          document.getElementById('p2-total').textContent = `총점: ${p2Total}`;
+          animateScore(2, score, dist);
         }
 
         if (p1Stopped && p2Stopped) {
           running = false;
           cancelAnimationFrame(animId);
-          setTimeout(nextRound, 1500);
+          setTimeout(nextRound, 2000);
         }
       }
+
+      function animateScore(player, finalScore, dist) {
+        const msgEl = document.getElementById(`p${player}-msg`);
+        const resultEl = document.getElementById(`p${player}-result`);
+        const totalEl = document.getElementById(`p${player}-total`);
+        const currentTotal = player === 1 ? p1Total : p2Total;
+        
+        msgEl.textContent = getGrade(finalScore);
+        
+        let start = 0;
+        const duration = 1000;
+        const startTime = performance.now();
+
+        function count(now) {
+          const elapsed = now - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          const currentVal = (finalScore * progress).toFixed(1);
+          
+          resultEl.textContent = `+${currentVal} (오차: ${dist}%)`;
+          
+          if (progress < 1) {
+            requestAnimationFrame(count);
+          } else {
+            if (player === 1) p1Total = parseFloat((p1Total + finalScore).toFixed(1));
+            else p2Total = parseFloat((p2Total + finalScore).toFixed(1));
+            totalEl.textContent = `총점: ${player === 1 ? p1Total : p2Total}`;
+            GameUtils.vibrate(30);
+          }
+        }
+        requestAnimationFrame(count);
+      }
+
 
       // Event listeners
       areaP1.addEventListener('touchstart', e => { e.preventDefault(); handleStop(1); }, { passive: false });
@@ -435,6 +461,7 @@
           winner === 0 ? '🤝 무승부!' : `🎉 Player ${winner} 승리!`;
         document.getElementById('result-detail').textContent =
           `P1: ${p1Total}점 vs P2: ${p2Total}점`;
+
         document.getElementById('overlay-result').classList.remove('hidden');
       }
 
