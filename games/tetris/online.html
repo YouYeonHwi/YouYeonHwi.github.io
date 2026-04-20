@@ -245,8 +245,58 @@
 </head>
 <body>
 
+<!-- ═══ START OVERLAY (SOLO / ONLINE) ═══ -->
+<div id="overlay-start" class="overlay">
+  <div class="overlay-logo">테트리스 배틀</div>
+  <div class="overlay-sub" style="margin-bottom:0.5rem">블록을 쌓고, 콤보를 만들어 상대를 공격하세요 ⚔️</div>
+  
+  <div style="font-size:0.8rem; color:var(--text-dim); text-align:center; max-width:280px; margin-bottom:2rem; line-height:1.5;">
+    원하는 플레이 방식을 선택하세요. 혼자서 점수를 갱신하거나, 친구와 온라인으로 실시간 승부를 펼칠 수 있습니다.
+  </div>
+
+  <!-- Mode buttons -->
+  <div class="menu-group">
+    <button id="btn-solo" class="btn btn-primary" style="width:100%; justify-content:center;">
+      👤 1인용 (기록 도전)
+    </button>
+    <button id="btn-online-menu" class="btn btn-ghost" style="width:100%; justify-content:center; border-color:var(--primary);">
+      🌐 온라인 (실시간 대결)
+    </button>
+    <a href="/games/" class="btn btn-ghost" style="width:100%; justify-content:center;">← 게임 목록</a>
+  </div>
+
+  <p style="font-size:0.75rem; color:var(--text-dim); margin-top:1.5rem; cursor:pointer; text-decoration:underline; text-underline-offset:2px;" id="btn-show-help">
+    게임 조작 및 규칙 보기
+  </p>
+</div>
+
+<!-- ═══ HELP OVERLAY ═══ -->
+<div class="overlay hidden" id="overlay-help">
+  <div class="overlay-logo" style="font-size:1.8rem; margin-bottom:1rem;">🎲 게임 방법</div>
+  <div style="text-align: left; max-width: 90%; max-height: 60vh; overflow-y: auto; font-size: .85rem; line-height: 1.6; color: var(--text);">
+    
+    <h2 style="color: var(--primary); margin-bottom: .6rem; font-size: 1.1rem; border-bottom:1px solid var(--border); padding-bottom:.3rem;">🎮 기본 조작 (모바일)</h2>
+    <ul style="list-style: none; margin-bottom: 1.2rem; margin-left:0; padding-left:0;">
+      <li style="margin-bottom: .4rem; line-height:1.4;"><b style="color:var(--green)">하단 터치 패드</b>: 좌/우 이동 및 블록 회전.</li>
+      <li style="margin-bottom: .4rem; line-height:1.4;"><b style="color:var(--accent)">▼▼ (하드드롭)</b>: 블록을 바닥으로 즉시 떨어뜨립니다.</li>
+      <li style="margin-bottom: .4rem; line-height:1.4;"><b style="color:var(--primary)">HOLD</b>: 현재 블록을 보관하고 다음 블록을 씁니다.</li>
+      <li style="margin-bottom: .4rem; line-height:1.4;"><b>터치 스와이프 존</b> 지원: 보드 위를 문질러 이동 / 아래로 튕겨서 하드드롭 가능!</li>
+    </ul>
+
+    <h2 style="color: var(--primary); margin-bottom: .6rem; font-size: 1.1rem; border-bottom:1px solid var(--border); padding-bottom:.3rem;">⚔️ 공격 규칙 (배틀 모드)</h2>
+    <ul style="list-style: none; margin-bottom: 1rem; margin-left:0; padding-left:0;">
+      <li style="margin-bottom: .4rem; line-height:1.4;">한 번에 <b>2줄 이상</b>을 지우면 상대방에게 빈칸이 뚫린 쓰레기 줄을 보냅니다.</li>
+      <li style="margin-bottom: .4rem; line-height:1.4;"><b>2줄</b> = 1줄 공격, <b>3줄</b> = 2줄 공격</li>
+      <li style="margin-bottom: .4rem; line-height:1.4;"><b>4줄(테트리스!)</b> = 강력한 <b>4줄 공격 💥</b></li>
+      <li style="margin-bottom: .4rem; line-height:1.4;">지속적으로 줄을 지워 <b>COMBO</b>를 만들면 보너스가 있습니다!</li>
+    </ul>
+
+  </div>
+  <button class="btn btn-primary" id="btn-close-help" style="margin-top:1.5rem; width:100%; max-width:200px;">닫기</button>
+</div>
+
 <!-- ═══ LOBBY OVERLAY ═══ -->
-<div id="overlay-lobby" class="overlay">
+<div id="overlay-lobby" class="overlay hidden">
   <div class="overlay-logo">온라인 배틀</div>
   <div class="overlay-sub">방 코드로 친구와 1:1 대결!</div>
 
@@ -262,13 +312,13 @@
 
   <div class="lobby-card" id="card-join">
     <h3>🔑 방 참여</h3>
-    <input class="input-field" id="join-code-input" type="text" maxlength="4" placeholder="ABCD" autocomplete="off" spellcheck="false">
+    <input class="input-field" id="join-code-input" type="text" maxlength="4" placeholder="ABCD" autocomplete="off" spellcheck="false" autocorrect="off">
   </div>
 
   <div class="menu-group">
     <button id="btn-create" class="btn btn-primary">🏠 방 만들기</button>
     <button id="btn-join"   class="btn btn-primary">🔑 방 참여하기</button>
-    <a href="index.html"    class="btn btn-ghost">← 뒤로</a>
+    <button id="btn-lobby-back" class="btn btn-ghost">← 뒤로</button>
   </div>
 </div>
 
@@ -375,8 +425,27 @@ let prevAtkVal = 0;
 let gameActive = false;
 
 /* ═════════════════════════════════
-   LOBBY — createRoom / joinRoom
+   OVERLAY & LOBBY EVENTS
 ═════════════════════════════════ */
+$('btn-solo').addEventListener('click', () => { location.href = 'index.html'; });
+$('btn-online-menu').addEventListener('click', () => {
+  $('overlay-start').classList.add('hidden');
+  $('overlay-lobby').classList.remove('hidden');
+});
+$('btn-lobby-back').addEventListener('click', () => {
+  $('overlay-lobby').classList.add('hidden');
+  $('overlay-start').classList.remove('hidden');
+});
+
+$('btn-show-help').addEventListener('click', () => {
+  $('overlay-start').classList.add('hidden');
+  $('overlay-help').classList.remove('hidden');
+});
+$('btn-close-help').addEventListener('click', () => {
+  $('overlay-help').classList.add('hidden');
+  $('overlay-start').classList.remove('hidden');
+});
+
 $('btn-create').addEventListener('click', doCreate);
 $('btn-join')  .addEventListener('click', doJoin);
 
