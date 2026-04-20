@@ -353,6 +353,7 @@
       background: var(--surface); border: 1px solid var(--border);
       border-radius: var(--radius); padding: 1rem 1.5rem;
       margin-bottom: 1.5rem; width: 100%; max-width: 300px;
+    }
     .final-scores .fs-row {
       display: flex; justify-content: space-between;
       padding: .25rem 0; font-size: .85rem;
@@ -361,29 +362,6 @@
       border-top: 1px solid var(--border);
       padding-top: .5rem; margin-top: .25rem;
       font-weight: 900; font-size: 1rem;
-    }
-
-    /* ═══════════════ YAHTZEE CELEBRATION ═══════════════ */
-    .yahtzee-celebration {
-      position: fixed; inset: 0; z-index: 2000;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(4px);
-      pointer-events: none; opacity: 0; visibility: hidden; transition: opacity 0.5s;
-    }
-    .yahtzee-celebration.active { opacity: 1; visibility: visible; }
-    .celeb-title {
-      font-size: clamp(3rem, 15vw, 6rem); font-weight: 900; color: #fbbf24;
-      text-shadow: 0 0 30px rgba(251, 191, 36, 0.8), 0 0 60px rgba(251, 191, 36, 0.4);
-      transform: scale(0.5); transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      margin-bottom: 1rem;
-    }
-    .yahtzee-celebration.active .celeb-title { transform: scale(1); animation: celeb-bounce 2s infinite 0.6s; }
-    @keyframes celeb-bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
-    .celeb-dice-container { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
-    .celeb-die { position: absolute; font-size: 2.5rem; animation: fall-rotate 3s linear forwards; }
-    @keyframes fall-rotate {
-      0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
-      100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
     }
   </style>
 </head>
@@ -490,13 +468,6 @@
       <button class="btn btn-ghost" id="btn-retry">🔄 다시 하기</button>
       <a href="/games/" class="btn btn-ghost">📋 목록</a>
     </div>
-  </div>
-
-  <!-- YAHTZEE CELEBRATION -->
-  <div class="yahtzee-celebration" id="yahtzee-celebration">
-    <div class="celeb-dice-container" id="celeb-dice-container"></div>
-    <div class="celeb-title">YAHTZEE!!</div>
-    <div style="font-size: 1.5rem; font-weight: 700; color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.5);">🎲 야추 달성! 🎲</div>
   </div>
 
   <script src="/games/common.js"></script>
@@ -797,15 +768,8 @@
         // Check game over
         if (roundsPlayed >= 26) {
           endGame();
+          return;
         }
-
-        // Yahtzee! Celebration
-        if (catId === 'yahtzee' && value === 50) {
-          triggerYahtzeeCelebration();
-        }
-
-        if (roundsPlayed >= 26) return;
-
 
         // Switch player or next turn
         if (currentPlayer === 1) {
@@ -834,34 +798,6 @@
           currentRotations[i].y += 45;
           const cube = document.getElementById(`cube-${i}`);
           if (cube) cube.style.transform = `rotateX(${currentRotations[i].x}deg) rotateY(${currentRotations[i].y}deg)`;
-      }
-
-      function triggerYahtzeeCelebration() {
-        const celeb = document.getElementById('yahtzee-celebration');
-        const container = document.getElementById('celeb-dice-container');
-        if (!celeb || !container) return;
-
-        container.innerHTML = '';
-        const diceIcons = ['🎲'];
-
-        for (let i = 0; i < 40; i++) {
-          const die = document.createElement('div');
-          die.className = 'celeb-die';
-          die.textContent = diceIcons[0];
-          die.style.left = Math.random() * 100 + 'vw';
-          die.style.fontSize = (1.5 + Math.random() * 2) + 'rem';
-          die.style.animationDelay = Math.random() * 2 + 's';
-          die.style.animationDuration = (2 + Math.random() * 2) + 's';
-          container.appendChild(die);
-        }
-
-        celeb.classList.add('active');
-        GameUtils.vibrate([100, 50, 100, 50, 200]);
-
-        setTimeout(() => {
-          celeb.classList.remove('active');
-        }, 5000);
-      }
         }
 
         updateRollButton();

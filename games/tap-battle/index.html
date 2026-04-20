@@ -428,8 +428,6 @@
       let state  = 'IDLE';        // IDLE | COUNTDOWN | WAITING | GO | ENDED
       let goTimestamp = 0;
       let waitTimer  = null;
-      let p1Res = null; // { time: ms, fail: bool }
-      let p2Res = null;
 
       scoreP1.textContent = scores.p1;
       scoreP2.textContent = scores.p2;
@@ -481,68 +479,52 @@
       /* ── TOUCH HANDLERS ── */
       function handleTap(player) {
         if (state === 'COUNTDOWN' || state === 'IDLE' || state === 'ENDED') return;
-        
-        // 이미 결과가 있으면 무시
-        if (player === 1 && p1Res) return;
-        if (player === 2 && p2Res) return;
 
         if (state === 'WAITING') {
-          // 성급하게 누름 → 부정출발
-          const res = { time: 0, fail: true };
-          if (player === 1) p1Res = res; else p2Res = res;
-          
-          const area = player === 1 ? areaP1 : areaP2;
-          const msg = player === 1 ? msgP1 : msgP2;
-          area.classList.add('flash-early');
-          msg.textContent = '부정출발! 💀';
-          GameUtils.vibrate(100);
-        } else if (state === 'GO') {
-          // 정상 터치
-          const reaction = Math.round(performance.now() - goTimestamp);
-          const res = { time: reaction, fail: false };
-          if (player === 1) p1Res = res; else p2Res = res;
+          // 성급하게 누름 → 반칙패
+          clearTimeout(waitTimer);
+          state = 'ENDED';
+          const loser = player;
+          const winner = player === 1 ? 2 : 1;
 
-          const area = player === 1 ? areaP1 : areaP2;
-          const msg = player === 1 ? msgP1 : msgP2;
-          area.classList.add('flash-win');
-          msg.textContent = `${reaction}ms`;
-          GameUtils.vibrate(20);
+          if (winner === 1) scores.p1++; else scores.p2++;
+          GameUtils.saveScores(GAME_ID, scores);
+          GameUtils.vibrate(200);
+
+          const loserArea = player === 1 ? areaP1 : areaP2;
+          const winnerArea = player === 1 ? areaP2 : areaP1;
+          loserArea.classList.add('flash-early');
+          winnerArea.classList.add('flash-win');
+          const loserMsg = player === 1 ? msgP1 : msgP2;
+          loserMsg.textContent = '반칙! 💀';
+
+          setTimeout(() => showResult(winner, '반칙패! 너무 빨랐어요 😂'), 800);
+          return;
         }
 
-        // 상대방에게 대기 상태 안내
-        if (p1Res && !p2Res) msgP1.textContent = '상대 대기 중...';
-        if (p2Res && !p1Res) msgP2.textContent = '상대 대기 중...';
-
-        // 두 명 모두 완료되었는지 확인
-        if (p1Res && p2Res) {
+        if (state === 'GO') {
           state = 'ENDED';
-          clearTimeout(waitTimer);
-          
-          // 결과 판정
-          let winner = 0;
-          let detail = "";
+          const reaction = Math.round(performance.now() - goTimestamp);
+          const winner = player;
+          const loser = player === 1 ? 2 : 1;
 
-          if (p1Res.fail && p2Res.fail) {
-            detail = "둘 다 부정출발! (무승부)";
-          } else if (p1Res.fail) {
-            winner = 2; detail = "P1 부정출발! P2 승리";
-          } else if (p2Res.fail) {
-            winner = 1; detail = "P2 부정출발! P1 승리";
-          } else if (p1Res.time < p2Res.time) {
-            winner = 1; detail = `P1: ${p1Res.time}ms vs P2: ${p2Res.time}ms`;
-          } else if (p1Res.time > p2Res.time) {
-            winner = 2; detail = `P1: ${p1Res.time}ms vs P2: ${p2Res.time}ms`;
-          } else {
-            detail = "무승부! (기록 동일)";
-          }
-
-          if (winner === 1) scores.p1++; else if (winner === 2) scores.p2++;
+          if (winner === 1) scores.p1++; else scores.p2++;
           GameUtils.saveScores(GAME_ID, scores);
+          GameUtils.vibrate(30);
 
-          setTimeout(() => showResult(winner, detail), 1000);
+          const winnerArea = player === 1 ? areaP1 : areaP2;
+          const loserArea = player === 1 ? areaP2 : areaP1;
+          winnerArea.classList.add('flash-win');
+          loserArea.classList.add('flash-lose');
+
+          const winnerMsg = player === 1 ? msgP1 : msgP2;
+          winnerMsg.textContent = '승리! 🎉';
+          const loserMsg = player === 1 ? msgP2 : msgP1;
+          loserMsg.textContent = '아쉽...';
+
+          setTimeout(() => showResult(winner, `반응속도: ${reaction}ms`), 1000);
         }
       }
-
 
       // Touch & Click for both areas
       areaP1.addEventListener('touchstart', e => { e.preventDefault(); handleTap(1); });
@@ -554,11 +536,10 @@
       function showResult(winner, detail) {
         scoreP1.textContent = scores.p1;
         scoreP2.textContent = scores.p2;
-        winnerText.textContent = winner === 0 ? "🤝 무승부!" : `🎉 Player ${winner} 승리!`;
+        winnerText.textContent = `🎉 Player ${winner} 승리!`;
         reactionText.textContent = detail;
         show(overlayRes);
       }
-
 
       /* ── PENALTY ROULETTE ── */
       btnPenalty.addEventListener('click', () => {
@@ -579,10 +560,7 @@
         });
         msgP1.textContent = '준비!';
         msgP2.textContent = '준비!';
-        p1Res = null;
-        p2Res = null;
       }
-
 
       function show(el) { el.classList.remove('hidden'); }
       function hide(el) { el.classList.add('hidden'); }

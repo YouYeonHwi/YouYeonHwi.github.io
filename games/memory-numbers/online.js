@@ -12,10 +12,8 @@
     p1Answer: '',
     p2Answer: '',
     p1Score: 0,
-    p2Score: 0,
-    inputStartTime: 0
+    p2Score: 0
   };
-
 
   const mainNumber = document.getElementById('main-number');
   const myInputEl = document.getElementById('my-input');
@@ -26,12 +24,6 @@
   const oppScoreEl = document.getElementById('opp-score');
   const oppProgress = document.getElementById('opp-progress');
   const numBtns = document.querySelectorAll('.num-btn');
-  const myTimerBar = document.getElementById('my-timer-bar');
-  const myTimerCont = document.getElementById('my-timer-cont');
-
-  const INPUT_LIMIT_MS = 5000;
-  let localInputTimer = null;
-
 
   function init() {
     GameUtils.RemoteManager.openLobby(GAME_ID, currentState, () => {
@@ -63,17 +55,14 @@
       p2Score: s2
     });
 
-    // 입력 단계로 전환 (노출 시간 80%로 단축)
+    // 2초 후 입력 단계로 전환
     setTimeout(() => {
-      const latest = GameUtils.RemoteManager.getRoomState();
       GameUtils.RemoteManager.updateState({
-        ...latest,
-        status: 'input',
-        inputStartTime: Date.now()
+        ...GameUtils.RemoteManager.getRoomState(), // 최신 상태 가져오기
+        status: 'input'
       });
-    }, (1500 + (round * 500)) * 0.8);
+    }, 1500 + (round * 500));
   }
-
 
   function onSync(state, role) {
     if (!state) return;
@@ -106,20 +95,12 @@
       updateOppProgress(oppAnswer.length, state.currentNumber.length);
       oppStatus.textContent = oppAnswer.length >= state.currentNumber.length ? '상대방 입력 완료!' : '상대방 입력 중...';
 
-      // 타이머 시각화
-      if (!localInputTimer) startLocalInputTimer(state.inputStartTime);
-
-      // 둘 다 입력 완료 시 또는 시간 종료 시 Host가 다음 단계 진행
-      const timeOut = Date.now() - state.inputStartTime >= INPUT_LIMIT_MS;
-      const bothDone = state.p1Answer.length >= state.currentNumber.length && state.p2Answer.length >= state.currentNumber.length;
-
-      if (myRole === 'p1' && (bothDone || timeOut)) {
+      // 둘 다 입력 완료 시 Host가 다음 단계 진행
+      if (myRole === 'p1' && state.p1Answer.length >= state.currentNumber.length && state.p2Answer.length >= state.currentNumber.length) {
         resolveRound(state);
       }
     }
     else if (state.status === 'resolving') {
-      stopLocalInputTimer();
-
       mainNumber.textContent = state.currentNumber;
       mainNumber.classList.remove('blur');
       const p1Win = state.p1Answer === state.currentNumber;
@@ -183,30 +164,6 @@
   function disableNumpad(disabled) {
     numBtns.forEach(btn => btn.classList.toggle('disabled', disabled));
   }
-
-  function startLocalInputTimer(startTime) {
-    if (localInputTimer) clearInterval(localInputTimer);
-    myTimerCont.classList.add('active');
-    
-    localInputTimer = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const remaining = Math.max(0, INPUT_LIMIT_MS - elapsed);
-      const pct = (remaining / INPUT_LIMIT_MS) * 100;
-      myTimerBar.style.transform = `scaleX(${pct / 100})`;
-      
-      if (remaining <= 0) {
-        clearInterval(localInputTimer);
-        disableNumpad(true);
-      }
-    }, 30);
-  }
-
-  function stopLocalInputTimer() {
-    if (localInputTimer) clearInterval(localInputTimer);
-    localInputTimer = null;
-    myTimerCont.classList.remove('active');
-  }
-
 
   function showFinalResult(state) {
     const overlay = document.getElementById('result-overlay');

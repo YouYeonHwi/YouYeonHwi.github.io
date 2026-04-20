@@ -112,14 +112,8 @@
       stopLocalMovement();
       myNeedle.style.left = (myRole === 'p1' ? state.p1StopPos : state.p2StopPos) + '%';
       oppNeedle.style.left = (myRole === 'p1' ? state.p2StopPos : state.p1StopPos) + '%';
-      
-      const myScore = calculateScore(myRole === 'p1' ? state.p1StopPos : state.p2StopPos);
-      const oppScore = calculateScore(myRole === 'p1' ? state.p2StopPos : state.p1StopPos);
-      
-      myMsg.textContent = `${getGrade(myScore)} (+${myScore}점)`;
-      oppMsg.textContent = `상대방: ${getGrade(oppScore)} (+${oppScore}점)`;
+      myMsg.textContent = '결과 확인 중...';
     }
-
     else if (state.status === 'ended') {
       showFinalResult(state);
     }
@@ -170,24 +164,17 @@
     const oldTotal = myRole === 'p1' ? currentState.p1Total : currentState.p2Total;
 
     GameUtils.RemoteManager.updateField(`${fieldPrefix}StopPos`, localPos);
-    GameUtils.RemoteManager.updateField(`${fieldPrefix}Total`, parseFloat((oldTotal + score).toFixed(1)));
+    GameUtils.RemoteManager.updateField(`${fieldPrefix}Total`, oldTotal + score);
   }
-
 
   function calculateScore(pos) {
     const dist = Math.abs(pos - 50);
-    const score = Math.max(0.1, 100 - (dist * 3.5));
-    return parseFloat(score.toFixed(1));
+    if (dist <= 1) return 100;
+    if (dist <= 5) return 90;
+    if (dist <= 10) return 70;
+    if (dist <= 20) return 40;
+    return Math.max(0, Math.round(30 - dist * 0.5));
   }
-
-  function getGrade(score) {
-    if (score >= 98) return 'PERFECT! 🎯';
-    if (score >= 90) return 'EXCELLENT! 🌟';
-    if (score >= 80) return 'GREAT! ✨';
-    if (score >= 60) return 'GOOD 👍';
-    return 'MISS 😅';
-  }
-
 
   function resolveRound(state) {
     GameUtils.RemoteManager.updateState({ ...state, status: 'resolving' });

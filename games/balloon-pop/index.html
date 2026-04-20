@@ -73,16 +73,6 @@
       100% { opacity: 0; transform: translateY(-30px); }
     }
 
-    .balloon.bomb {
-      animation: bombShake 0.5s infinite alternate;
-      z-index: 2;
-    }
-    @keyframes bombShake {
-      from { transform: rotate(-10deg); }
-      to { transform: rotate(10deg); }
-    }
-
-
     .pop-effect {
       position: absolute; font-size: 1.5rem; pointer-events: none;
       animation: popAnim .4s ease-out forwards;
@@ -276,8 +266,6 @@
       const GAME_ID = 'balloon-pop';
       const GAME_TIME = 15;
       const BALLOON_EMOJIS = ['🎈', '🎈', '🎈', '🟡', '🔴', '🟣', '🟢', '🔵'];
-      const BOMB_EMOJI = '💣';
-
       let scores = GameUtils.getScores(GAME_ID);
       let p1Count = 0, p2Count = 0;
       let gameTimer = null;
@@ -335,18 +323,9 @@
         const rect = container.getBoundingClientRect();
         const balloon = document.createElement('div');
         balloon.className = 'balloon';
-        
-        const isBomb = Math.random() < 0.15; // 15% 확률로 폭탄
-        if (isBomb) {
-          balloon.textContent = BOMB_EMOJI;
-          balloon.classList.add('bomb');
-        } else {
-          balloon.textContent = BALLOON_EMOJIS[Math.floor(Math.random() * BALLOON_EMOJIS.length)];
-        }
-
+        balloon.textContent = BALLOON_EMOJIS[Math.floor(Math.random() * BALLOON_EMOJIS.length)];
         balloon.style.left = (Math.random() * (rect.width - 40) ) + 'px';
         balloon.style.top = (Math.random() * (rect.height - 50)) + 'px';
-
 
         balloon.addEventListener('touchstart', e => {
           e.preventDefault();
@@ -365,41 +344,28 @@
       }
 
       function popBalloon(balloon, player) {
+        if (!running) return;
+        GameUtils.vibrate(15);
+
         // Pop effect
         const pop = document.createElement('div');
-        const isBomb = balloon.classList.contains('bomb');
-        
         pop.className = 'pop-effect';
-        pop.textContent = isBomb ? '❌' : '💥';
+        pop.textContent = '💥';
         pop.style.left = balloon.style.left;
         pop.style.top = balloon.style.top;
-        if (isBomb) pop.style.fontSize = '2rem';
-        
         balloon.parentNode.appendChild(pop);
         setTimeout(() => pop.remove(), 400);
 
         balloon.remove();
 
-        if (isBomb) {
-          GameUtils.vibrate([100, 50, 100]);
-          if (player === 1) {
-            p1Count = Math.max(0, p1Count - 5);
-          } else {
-            p2Count = Math.max(0, p2Count - 5);
-          }
+        if (player === 1) {
+          p1Count++;
+          document.getElementById('p1-count').textContent = `💥 ${p1Count}`;
         } else {
-          GameUtils.vibrate(15);
-          if (player === 1) {
-            p1Count++;
-          } else {
-            p2Count++;
-          }
+          p2Count++;
+          document.getElementById('p2-count').textContent = `💥 ${p2Count}`;
         }
-        
-        document.getElementById('p1-count').textContent = `💥 ${p1Count}`;
-        document.getElementById('p2-count').textContent = `💥 ${p2Count}`;
       }
-
 
       function endGame() {
         running = false;
