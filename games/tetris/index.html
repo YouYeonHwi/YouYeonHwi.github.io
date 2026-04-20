@@ -4,271 +4,745 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#0a0a0f">
   <link rel="manifest" href="/games/manifest.json">
 
   <title>테트리스 배틀 | 커플 게임 광장</title>
-  <meta name="description" content="클래식 테트리스와 박진감 넘치는 실시간 공격 배틀! 솔플부터 커플 대결까지 💕">
+  <meta name="description" content="클래식 테트리스의 진화! 블록을 쌓고, 줄을 지워 상대방을 공격하세요. 원격 1:1 배틀 지원 💎">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;900&display=swap" rel="stylesheet">
 
   <style>
+    /* ══════════════════════════════════════
+       DESIGN TOKENS
+    ══════════════════════════════════════ */
     :root {
-      --primary: #a78bfa; --primary-glow: rgba(167,139,250,.35);
-      --accent: #f472b6; --accent-glow: rgba(244,114,182,.3);
-      --bg: #0a0a0f; --surface: rgba(255,255,255,.04);
-      --border: rgba(255,255,255,.08); --text: #e2e8f0; --text-dim: #64748b;
-      --radius: 20px;
+      --primary:      #a78bfa;
+      --primary-glow: rgba(167,139,250,.35);
+      --accent:       #f472b6;
+      --accent-glow:  rgba(244,114,182,.3);
+      --green:        #4ade80;
+      --red:          #ef4444;
+      --yellow:       #facc15;
+      --bg:           #0a0a0f;
+      --surface:      rgba(255,255,255,.04);
+      --surface2:     rgba(255,255,255,.07);
+      --border:       rgba(255,255,255,.08);
+      --text:         #e2e8f0;
+      --text-dim:     #64748b;
     }
 
+    /* ══════════════════════════════════════
+       BASE RESET
+    ══════════════════════════════════════ */
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
-      height: 100%; font-family: 'Outfit', sans-serif; background: var(--bg);
-      color: var(--text); overflow: hidden; touch-action: none;
-      -webkit-tap-highlight-color: transparent; user-select: none;
+      height: 100%;
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+      touch-action: none;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
     }
 
-    .game-wrapper {
-      display: flex; flex-direction: column; height: 100dvh;
+    .hidden { display: none !important; }
+
+    /* ══════════════════════════════════════
+       OVERLAY SYSTEM (Start / Help / Result)
+    ══════════════════════════════════════ */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(10,10,15,.96);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      z-index: 200;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 2rem 1.5rem;
+      transition: opacity .3s ease;
+      overflow-y: auto;
+    }
+    .overlay.fading { opacity: 0; pointer-events: none; }
+
+    /* ── Header / Logo ── */
+    .overlay-logo {
+      font-size: 2.8rem; font-weight: 900; text-align: center;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: .25rem; letter-spacing: -.02em;
+    }
+    .overlay-sub {
+      color: var(--text-dim); font-size: .85rem; margin-bottom: 2rem; text-align: center;
+    }
+
+    /* ── Menu buttons ── */
+    .menu-group {
+      display: flex; flex-direction: column; gap: .75rem;
+      width: 100%; max-width: 300px;
+    }
+    .btn {
+      display: flex; align-items: center; justify-content: center; gap: .6rem;
+      padding: .9rem 1.5rem; border-radius: 50px;
+      border: none; font-family: inherit; font-weight: 700; font-size: .95rem;
+      cursor: pointer; text-decoration: none;
+      transition: transform .15s cubic-bezier(.34,1.56,.64,1), box-shadow .15s;
+    }
+    .btn:active { transform: scale(.94) !important; }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: #fff; box-shadow: 0 4px 20px var(--primary-glow);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 28px var(--primary-glow); }
+    .btn-ghost {
+      background: var(--surface2); color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,.1); }
+
+    /* ══════════════════════════════════════
+       HOW TO PLAY CARD
+    ══════════════════════════════════════ */
+    .how-to-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 1.25rem 1.5rem;
+      width: 100%; max-width: 340px; margin-bottom: 1.5rem;
+    }
+    .how-to-card h3 {
+      font-size: .7rem; font-weight: 700; color: var(--text-dim);
+      text-transform: uppercase; letter-spacing: 2px; margin-bottom: .85rem;
+    }
+    .how-to-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: .5rem .75rem;
+    }
+    .how-to-item {
+      display: flex; align-items: center; gap: .45rem; font-size: .78rem;
+    }
+    .how-to-item .key {
+      min-width: 32px; text-align: center;
+      background: rgba(167,139,250,.15); border: 1px solid rgba(167,139,250,.3);
+      border-radius: 6px; padding: .15rem .35rem;
+      font-size: .65rem; font-weight: 800; color: var(--primary);
+      letter-spacing: .5px;
+    }
+    .how-to-item .desc { color: var(--text-dim); }
+
+    /* Attack rules */
+    .attack-table {
+      width: 100%; margin-top: 1rem;
+    }
+    .attack-table h3 {
+      margin-bottom: .6rem;
+    }
+    .attack-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .35rem 0; border-bottom: 1px solid rgba(255,255,255,.04);
+      font-size: .78rem;
+    }
+    .attack-row:last-child { border-bottom: none; }
+    .attack-row .lines-label { color: var(--text-dim); }
+    .attack-row .atk-badge {
+      font-weight: 800; font-size: .7rem; padding: .15rem .5rem;
+      border-radius: 50px; background: rgba(239,68,68,.15); color: var(--red);
+    }
+    .attack-row .atk-badge.big { background: rgba(250,204,21,.15); color: var(--yellow); }
+
+    /* ══════════════════════════════════════
+       GAME SCREEN LAYOUT
+    ══════════════════════════════════════ */
+    #game-screen {
+      height: 100dvh;
+      display: flex; flex-direction: column;
       padding-top: env(safe-area-inset-top, 0);
       padding-bottom: env(safe-area-inset-bottom, 0);
     }
 
-    /* ─── 레이아웃 모드 ─── */
-    .view-solo { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; position: relative; }
-    .view-local { display: flex; flex-direction: column; height: 100%; }
-    
-    .hidden { display: none !important; }
-
-    /* ─── 플레이어 영역 ─── */
-    .player-area {
-      flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-      position: relative; overflow: hidden;
+    /* ── Top Bar ── */
+    .top-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .5rem .75rem; flex-shrink: 0;
     }
-    .player-area.top { transform: rotate(180deg); border-bottom: 2px solid var(--border); }
-    .player-area.bottom { border-top: 2px solid var(--border); }
-
-    /* ─── 테트리스 보드 ─── */
-    .board-container {
-      position: relative; background: rgba(0,0,0,0.4);
-      border: 3px solid var(--border); border-radius: 8px;
-      box-shadow: 0 0 30px rgba(0,0,0,0.5);
-      touch-action: none;
+    .back-btn {
+      color: var(--text-dim); font-size: .8rem; font-weight: 600;
+      cursor: pointer; padding: .3rem .5rem; border-radius: 8px;
+      border: 1px solid var(--border); background: none;
+      text-decoration: none;
     }
-    canvas { display: block; image-rendering: pixelated; }
-
-    .score-badge {
-      position: absolute; top: -30px; right: 0; font-weight: 900; color: var(--primary);
-      text-shadow: 0 0 10px var(--primary-glow); font-size: 1rem;
-    }
-
-    /* ─── 오버레이 ─── */
-    .overlay {
-      position: fixed; inset: 0; background: rgba(10,10,15,0.96);
-      backdrop-filter: blur(15px); z-index: 1000; display: flex;
-      flex-direction: column; align-items: center; justify-content: center;
-      padding: 2rem; text-align: center;
-    }
-    .overlay h1 {
-      font-size: 2.5rem; font-weight: 900; margin-bottom: 0.5rem;
+    .back-btn:hover { color: var(--text); }
+    .top-title {
+      font-weight: 900; font-size: .9rem;
       background: linear-gradient(135deg, var(--primary), var(--accent));
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
-    .overlay p { color: var(--text-dim); font-size: 0.9rem; margin-bottom: 2rem; max-width: 280px; }
-
-    .menu-group { display: flex; flex-direction: column; gap: 0.8rem; width: 100%; max-width: 280px; }
-    .btn {
-      padding: 1rem; border-radius: 50px; border: none; font-weight: 800; font-size: 1rem;
-      cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
-      display: flex; align-items: center; justify-content: center; gap: 0.5rem; color: white;
-      text-decoration: none;
-    }
-    .btn:active { transform: scale(0.96); }
-    .btn-primary { background: linear-gradient(135deg, var(--primary), var(--accent)); box-shadow: 0 4px 15px var(--primary-glow); }
-    .btn-ghost { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
-
-    /* ─── 공격 알림 ─── */
-    .attack-notif {
-      position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%);
-      font-weight: 900; font-size: 1.5rem; color: #ef4444; pointer-events: none;
-      opacity: 0; z-index: 50; white-space: nowrap;
-      text-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+    .top-help-btn {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text-dim); font-size: .8rem; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
     }
 
-    /* ─── 조작 안내 가이드 ─── */
-    .guide-box {
-      margin-top: 2rem; font-size: 0.75rem; color: var(--text-dim);
-      display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; text-align: left;
+    /* ── Main play area ── */
+    .play-area {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      gap: .5rem; padding: 0 .5rem .5rem;
+      overflow: hidden;
     }
-    .guide-item span { color: var(--primary); font-weight: 700; margin-right: 4px; }
+
+    /* ── Left Panel (Hold + Score + Level) ── */
+    .side-panel {
+      display: flex; flex-direction: column; gap: .5rem;
+      width: 72px; flex-shrink: 0;
+    }
+    .panel-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: .5rem; text-align: center;
+    }
+    .panel-card .label {
+      font-size: .5rem; font-weight: 800; color: var(--text-dim);
+      text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: .3rem;
+    }
+    .panel-card .value {
+      font-size: .9rem; font-weight: 900; color: var(--primary);
+    }
+    .panel-card .value.big { font-size: 1rem; }
+    canvas.mini-canvas {
+      display: block; width: 100%; margin: 0 auto;
+      image-rendering: pixelated;
+    }
+
+    /* ── Board ── */
+    .board-wrap {
+      position: relative; flex-shrink: 0;
+      background: rgba(0,0,0,.5);
+      border: 2px solid rgba(255,255,255,.1);
+      border-radius: 6px;
+      box-shadow:
+        0 0 0 1px rgba(167,139,250,.15),
+        0 0 40px rgba(0,0,0,.8),
+        inset 0 0 30px rgba(0,0,0,.3);
+      overflow: hidden;
+    }
+    #board-canvas {
+      display: block; image-rendering: pixelated;
+    }
+
+    /* Floating notification above board */
+    .board-notif {
+      position: absolute; top: 30%; left: 50%;
+      transform: translateX(-50%);
+      font-weight: 900; font-size: 1.2rem;
+      color: var(--red); text-shadow: 0 0 20px rgba(239,68,68,.6);
+      pointer-events: none; opacity: 0; white-space: nowrap;
+      z-index: 10;
+    }
+    @keyframes notif-rise {
+      0%   { opacity: 0; transform: translateX(-50%) translateY(0) scale(.6); }
+      15%  { opacity: 1; transform: translateX(-50%) translateY(-10px) scale(1.1); }
+      70%  { opacity: 1; transform: translateX(-50%) translateY(-30px) scale(1); }
+      100% { opacity: 0; transform: translateX(-50%) translateY(-60px) scale(.9); }
+    }
+
+    /* Level-up flash */
+    .levelup-flash {
+      position: absolute; inset: 0; pointer-events: none; z-index: 5;
+      background: rgba(167,139,250,.25); opacity: 0;
+    }
+    @keyframes level-flash {
+      0%,100% { opacity: 0; } 20%,70% { opacity: 1; }
+    }
+
+    /* ── Right Panel (Next Queue) ── */
+    .next-panel {
+      display: flex; flex-direction: column; gap: .4rem;
+      width: 60px; flex-shrink: 0;
+    }
+    .next-slot {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; overflow: hidden; aspect-ratio: 1;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .next-slot canvas { width: 100%; height: 100%; image-rendering: pixelated; }
+
+    /* ── Score bar ── */
+    .score-bar {
+      display: flex; padding: .3rem .75rem;
+      gap: 1rem; justify-content: center; flex-shrink: 0;
+    }
+    .score-item {
+      text-align: center;
+    }
+    .score-item .s-label { font-size: .55rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+    .score-item .s-value { font-size: 1rem; font-weight: 900; color: var(--primary); line-height: 1.1; }
+
+    /* ── Touch controls ── */
+    .touch-controls {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: .4rem .75rem; gap: .4rem; flex-shrink: 0;
+    }
+    .ctrl-btn {
+      flex: 1; padding: .5rem 0; border-radius: 10px;
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); font-size: 1rem; font-weight: 700;
+      cursor: pointer; text-align: center;
+      transition: background .1s;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    .ctrl-btn:active { background: rgba(167,139,250,.2); }
+    .ctrl-btn.hold-btn { font-size: .7rem; font-weight: 800; color: var(--primary); }
+    .ctrl-btn.hard-drop { background: rgba(244,114,182,.08); border-color: rgba(244,114,182,.2); color: var(--accent); }
+
+    /* Swipe zone overlay */
+    #swipe-zone {
+      position: absolute; inset: 0; z-index: 20;
+      touch-action: none;
+    }
+
+    /* ══════════════════════════════════════
+       RESULT OVERLAY
+    ══════════════════════════════════════ */
+    .result-badge {
+      font-size: 3rem; margin-bottom: .5rem;
+    }
+    .result-title {
+      font-size: 2rem; font-weight: 900; margin-bottom: .25rem;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .result-sub { color: var(--text-dim); font-size: .9rem; margin-bottom: 1.5rem; }
+    .result-stats {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 1rem 1.5rem;
+      width: 100%; max-width: 280px; margin-bottom: 1.5rem;
+    }
+    .stat-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: .35rem 0; border-bottom: 1px solid rgba(255,255,255,.04);
+      font-size: .85rem;
+    }
+    .stat-row:last-child { border-bottom: none; }
+    .stat-row .stat-label { color: var(--text-dim); }
+    .stat-row .stat-val { font-weight: 800; color: var(--text); }
+
+    /* ══════════════════════════════════════
+       ANIMATIONS & EFFECTS
+    ══════════════════════════════════════ */
+    @keyframes board-shake {
+      0%,100% { transform: translateX(0); }
+      20%     { transform: translateX(-6px); }
+      40%     { transform: translateX(6px); }
+      60%     { transform: translateX(-3px); }
+      80%     { transform: translateX(3px); }
+    }
+    .board-shake { animation: board-shake .35s ease; }
+
+    @keyframes combo-pop {
+      0%   { opacity: 0; transform: translateX(-50%) scale(.5); }
+      25%  { opacity: 1; transform: translateX(-50%) scale(1.3); }
+      70%  { opacity: 1; transform: translateX(-50%) scale(1); }
+      100% { opacity: 0; transform: translateX(-50%) scale(.8); }
+    }
   </style>
 </head>
 <body>
 
-  <div class="game-wrapper">
-    <!-- Solo View -->
-    <div id="view-solo" class="view-solo hidden">
-      <div class="board-container" id="solo-container">
-        <canvas id="solo-canvas"></canvas>
-        <div class="score-badge" id="solo-score">SCORE: 0</div>
-        <div id="solo-attack-notif" class="attack-notif">ATTACK!</div>
-      </div>
+<!-- ═══════════════════════════════════════════════
+     START OVERLAY
+═══════════════════════════════════════════════ -->
+<div id="overlay-start" class="overlay">
+  <div class="overlay-logo">테트리스 배틀</div>
+  <div class="overlay-sub">블록을 쌓고, 상대를 공격하세요 ⚔️</div>
+
+  <!-- How to play -->
+  <div class="how-to-card">
+    <h3>🎮 게임 조작</h3>
+    <div class="how-to-grid">
+      <div class="how-to-item"><span class="key">←→</span><span class="desc">이동</span></div>
+      <div class="how-to-item"><span class="key">TAP</span><span class="desc">회전</span></div>
+      <div class="how-to-item"><span class="key">↓</span><span class="desc">소프트 드롭</span></div>
+      <div class="how-to-item"><span class="key">↑↑</span><span class="desc">하드 드롭</span></div>
+      <div class="how-to-item"><span class="key">HOLD</span><span class="desc">홀드 (보관)</span></div>
+      <div class="how-to-item"><span class="key">SRS</span><span class="desc">벽 킥 회전</span></div>
     </div>
 
-    <!-- Local 2P View -->
-    <div id="view-local" class="view-local hidden">
-      <div class="player-area top" id="area-p1">
-        <div class="board-container">
-           <canvas id="p1-canvas"></canvas>
-           <div id="p1-score" class="score-badge">0</div>
-           <div id="p1-attack-notif" class="attack-notif">BOOM!</div>
-        </div>
+    <div class="attack-table">
+      <h3>⚔️ 공격 규칙</h3>
+      <div class="attack-row">
+        <span class="lines-label">2줄 동시 제거</span>
+        <span class="atk-badge">+1줄 공격</span>
       </div>
-      <div class="player-area bottom" id="area-p2">
-        <div class="board-container">
-           <canvas id="p2-canvas"></canvas>
-           <div id="p2-score" class="score-badge">0</div>
-           <div id="p2-attack-notif" class="attack-notif">BOOM!</div>
-        </div>
+      <div class="attack-row">
+        <span class="lines-label">3줄 동시 제거</span>
+        <span class="atk-badge">+2줄 공격</span>
+      </div>
+      <div class="attack-row">
+        <span class="lines-label">4줄 (테트리스!)</span>
+        <span class="atk-badge big">+4줄 공격 💥</span>
+      </div>
+      <div class="attack-row">
+        <span class="lines-label">콤보 보너스</span>
+        <span class="atk-badge">추가 점수</span>
       </div>
     </div>
   </div>
 
-  <!-- Start Overlay -->
-  <div class="overlay" id="overlay-start">
-    <img src="/games/assets/shiba_mascot.png" style="width:100px; margin-bottom:1rem;" alt="Shiba">
-    <h1>테트리스 배틀</h1>
-    <p>블록을 쌓고 줄을 지워 상대를 공격하세요!<br>원하는 모드를 선택하세요.</p>
-    
-    <div class="menu-group">
-      <button class="btn btn-primary" onclick="initGame('solo')">👤 1인용 (기록 도전)</button>
-      <button class="btn btn-primary" onclick="initGame('local')">📱 2인용 (한 화면)</button>
-      <button class="btn btn-ghost" onclick="initGame('remote')">🌐 원격 대결 (따로 플레이)</button>
-      <a href="/games/" class="btn btn-ghost">← 목록으로</a>
-    </div>
+  <!-- Mode buttons -->
+  <div class="menu-group">
+    <button id="btn-solo"   class="btn btn-primary">👤 1인용 — 스코어 도전</button>
+    <button id="btn-online" class="btn btn-primary">🌐 온라인 — 실시간 대결</button>
+    <a href="/games/" class="btn btn-ghost">← 게임 목록</a>
+  </div>
+</div>
 
-    <div class="guide-box">
-      <div class="guide-item"><span>↔</span> 좌우 스와이프: 이동</div>
-      <div class="guide-item"><span>Tap</span> 상단 터치: 회전</div>
-      <div class="guide-item"><span>↓</span> 하단 스와이프: 빠른 하강</div>
-      <div class="guide-item"><span>Space</span> 키보드 지원 (PC용)</div>
+<!-- ═══════════════════════════════════════════════
+     RESULT OVERLAY
+═══════════════════════════════════════════════ -->
+<div id="overlay-result" class="overlay hidden">
+  <div class="result-badge" id="result-emoji">💀</div>
+  <div class="result-title" id="result-title">GAME OVER</div>
+  <div class="result-sub"  id="result-sub">더 이상 블록을 놓을 공간이 없습니다.</div>
+
+  <div class="result-stats">
+    <div class="stat-row"><span class="stat-label">최종 점수</span><span class="stat-val" id="res-score">0</span></div>
+    <div class="stat-row"><span class="stat-label">지운 줄</span><span class="stat-val" id="res-lines">0</span></div>
+    <div class="stat-row"><span class="stat-label">도달 레벨</span><span class="stat-val" id="res-level">1</span></div>
+  </div>
+
+  <div class="menu-group">
+    <button id="btn-retry" class="btn btn-primary">🔄 다시 하기</button>
+    <a href="/games/" class="btn btn-ghost">📋 게임 목록</a>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     GAME SCREEN (hidden until started)
+═══════════════════════════════════════════════ -->
+<div id="game-screen" class="hidden">
+
+  <!-- Top bar -->
+  <div class="top-bar">
+    <a href="/games/" class="back-btn">← 목록</a>
+    <span class="top-title">테트리스 배틀</span>
+    <button class="top-help-btn" id="btn-help">?</button>
+  </div>
+
+  <!-- Score bar -->
+  <div class="score-bar">
+    <div class="score-item">
+      <div class="s-label">SCORE</div>
+      <div class="s-value" id="score-display">0</div>
+    </div>
+    <div class="score-item">
+      <div class="s-label">LINES</div>
+      <div class="s-value" id="lines-display">0</div>
+    </div>
+    <div class="score-item">
+      <div class="s-label">LEVEL</div>
+      <div class="s-value" id="level-display">1</div>
     </div>
   </div>
 
-  <!-- Game Over Overlay -->
-  <div class="overlay hidden" id="overlay-end">
-    <h1 id="winner-text">GAME OVER</h1>
-    <p id="final-stats">SCORE: 0</p>
-    <div class="menu-group">
-      <button class="btn btn-primary" onclick="location.reload()">🔄 다시 하기</button>
-      <a href="/games/" class="btn btn-ghost">📋 목록으로</a>
+  <!-- Play area -->
+  <div class="play-area">
+
+    <!-- Left panel: HOLD + info -->
+    <div class="side-panel">
+      <div class="panel-card">
+        <div class="label">HOLD</div>
+        <canvas id="hold-canvas" class="mini-canvas" width="60" height="60"></canvas>
+      </div>
     </div>
+
+    <!-- Main board -->
+    <div class="board-wrap" id="board-wrap">
+      <canvas id="board-canvas"></canvas>
+      <div class="board-notif" id="board-notif"></div>
+      <div class="levelup-flash" id="levelup-flash"></div>
+      <div id="swipe-zone"></div>
+    </div>
+
+    <!-- Right panel: NEXT queue -->
+    <div class="next-panel">
+      <div class="panel-card" style="margin-bottom:.2rem;">
+        <div class="label" style="font-size:.45rem;">NEXT</div>
+      </div>
+      <div class="next-slot"><canvas id="next1-canvas" width="60" height="60"></canvas></div>
+      <div class="next-slot"><canvas id="next2-canvas" width="60" height="60"></canvas></div>
+      <div class="next-slot"><canvas id="next3-canvas" width="60" height="60"></canvas></div>
+    </div>
+
   </div>
 
-  <script src="/games/common.js"></script>
-  <script src="tetris-core.js"></script>
-  <script>
-    (() => {
-      'use strict';
-      const GAME_ID = 'tetris';
-      let g1, g2;
-      let activeMode = '';
+  <!-- Touch controls -->
+  <div class="touch-controls">
+    <button class="ctrl-btn hold-btn" id="ctrl-hold">HOLD</button>
+    <button class="ctrl-btn" id="ctrl-left">◀</button>
+    <button class="ctrl-btn" id="ctrl-rotate">↺</button>
+    <button class="ctrl-btn" id="ctrl-right">▶</button>
+    <button class="ctrl-btn hard-drop" id="ctrl-hard">▼▼</button>
+  </div>
 
-      window.initGame = function(mode) {
-        activeMode = mode;
-        if (mode === 'remote') {
-          location.href = 'online.html';
-          return;
-        }
+</div><!-- /#game-screen -->
 
-        document.getElementById('overlay-start').classList.add('hidden');
-        if (mode === 'solo') {
-          document.getElementById('view-solo').classList.remove('hidden');
-          g1 = new TetrisGame('solo-canvas', 'solo-attack-notif', null, () => finish('P1 GAME OVER'));
-          g1.update();
-          bindControls(g1, document.body);
-        } else {
-          document.getElementById('view-local').classList.remove('hidden');
-          g1 = new TetrisGame('p1-canvas', 'p1-attack-notif', (a) => g2.addGarbage(a), () => finish('PLAYER 2 WIN!'));
-          g2 = new TetrisGame('p2-canvas', 'p2-attack-notif', (a) => g1.addGarbage(a), () => finish('PLAYER 1 WIN!'));
-          g1.update();
-          g2.update();
-          bindControls(g1, document.getElementById('area-p1'));
-          bindControls(g2, document.getElementById('area-p2'));
-        }
-      }
 
-      function bindControls(game, area) {
-        let touchX, touchY, lastX;
-        const moveLimit = 25;
+<!-- ═══════════════════════════════════════════════
+     SCRIPTS
+═══════════════════════════════════════════════ -->
+<script src="/games/common.js"></script>
+<script src="tetris-core.js"></script>
+<script>
+(() => {
+'use strict';
 
-        area.addEventListener('touchstart', e => {
-          touchX = e.touches[0].clientX;
-          touchY = e.touches[0].clientY;
-          lastX = 0;
-        });
+/* ──────────────────────────────────
+   DOM refs
+────────────────────────────────── */
+const $ = id => document.getElementById(id);
+const overlayStart  = $('overlay-start');
+const overlayResult = $('overlay-result');
+const gameScreen    = $('game-screen');
+const boardWrap     = $('board-wrap');
+const boardNotif    = $('board-notif');
+const levelFlash    = $('levelup-flash');
+const swipeZone     = $('swipe-zone');
+const holdCtx       = $('hold-canvas').getContext('2d');
+const nextCtxs      = [
+  $('next1-canvas').getContext('2d'),
+  $('next2-canvas').getContext('2d'),
+  $('next3-canvas').getContext('2d'),
+];
 
-        area.addEventListener('touchmove', e => {
-          e.preventDefault();
-          const dx = e.touches[0].clientX - touchX;
-          const dy = e.touches[0].clientY - touchY;
+/* Score displays */
+const scoreEl = $('score-display');
+const linesEl = $('lines-display');
+const levelEl = $('level-display');
 
-          const step = Math.floor(dx / moveLimit);
-          if (step !== lastX) {
-            const dir = step > lastX ? 1 : -1;
-            game.piece.pos.x += dir;
-            if (game.collide()) game.piece.pos.x -= dir;
-            lastX = step;
-          }
+let game       = null;
+let lastLevel  = 1;
 
-          if (dy > moveLimit * 1.5) {
-            game.drop();
-            touchY = e.touches[0].clientY;
-          }
-        }, { passive: false });
+/* ──────────────────────────────────
+   Boot
+────────────────────────────────── */
+$('btn-solo').addEventListener  ('click', () => startSolo());
+$('btn-online').addEventListener('click', () => { location.href = 'online.html'; });
+$('btn-retry').addEventListener ('click', () => startSolo());
+$('btn-help').addEventListener  ('click', () => showHelp());
 
-        area.addEventListener('touchend', e => {
-          const dy = e.changedTouches[0].clientY - touchY;
-          const dx = e.changedTouches[0].clientX - touchX;
-          if (Math.abs(dx) < 15 && Math.abs(dy) < 15) {
-            game.rotate(1);
-            if (typeof GameUtils !== 'undefined') GameUtils.vibrate(10);
-          }
-        });
+function showHelp() {
+  overlayStart.classList.remove('hidden');
+  overlayResult.classList.add('hidden');
+  if (game) { game.stop(); }
+}
 
-        document.addEventListener('keydown', e => {
-          if (game.gameOver) return;
-          if (e.key === 'ArrowLeft') { game.piece.pos.x--; if(game.collide()) game.piece.pos.x++; }
-          if (e.key === 'ArrowRight') { game.piece.pos.x++; if(game.collide()) game.piece.pos.x--; }
-          if (e.key === 'ArrowDown') { game.drop(); }
-          if (e.key === 'ArrowUp') { game.rotate(1); }
-          if (e.code === 'Space') { 
-            while(!game.collide()) game.piece.pos.y++;
-            game.piece.pos.y--;
-            game.merge(); game.spawnPiece(); game.sweep();
-          }
-        });
-      }
+/* ──────────────────────────────────
+   Start Solo game
+────────────────────────────────── */
+function startSolo() {
+  overlayStart.classList.add('hidden');
+  overlayResult.classList.add('hidden');
+  gameScreen.classList.remove('hidden');
 
-      function finish(text) {
-        document.getElementById('overlay-end').classList.remove('hidden');
-        document.getElementById('winner-text').textContent = text;
-        document.getElementById('final-stats').textContent = activeMode === 'solo' ? `SCORE: ${g1.score}` : 'BATTLE FINISHED';
-      }
+  if (game) game.destroy();
 
-    })();
-  </script>
-  
-  <style>
-    @keyframes attack-float {
-      0% { opacity: 0; transform: translate(-50%, 0) scale(0.5); }
-      20% { opacity: 1; transform: translate(-50%, -20px) scale(1.2); }
-      80% { opacity: 1; transform: translate(-50%, -60px) scale(1); }
-      100% { opacity: 0; transform: translate(-50%, -80px) scale(0.8); }
+  // Size the board: use available space
+  const wrap  = boardWrap;
+  const avH   = window.innerHeight * 0.72;
+  const avW   = Math.min(window.innerWidth * 0.52, 280);
+  const scale = Math.floor(Math.min(avW / COLS, avH / ROWS));
+  $('board-canvas').width  = COLS * scale;
+  $('board-canvas').height = ROWS * scale;
+
+  game = new TetrisGame('board-canvas', {
+    onAttack:    null,
+    onGameOver:  handleGameOver,
+    onUpdate:    updateUI,
+    onLineClear: handleLineClear,
+  });
+  game.scale = scale;
+
+  lastLevel = 1;
+  updateUI(game);
+  game.start();
+  bindControls();
+}
+
+/* ──────────────────────────────────
+   UI update
+────────────────────────────────── */
+function updateUI(g) {
+  g = g || game;
+  if (!g) return;
+  scoreEl.textContent = g.score.toLocaleString();
+  linesEl.textContent = g.lines;
+  levelEl.textContent = g.level;
+
+  renderHold(g.held);
+  renderQueue(g.queue);
+
+  // Level-up effect
+  if (g.level > lastLevel) {
+    lastLevel = g.level;
+    levelFlash.style.animation = 'none';
+    void levelFlash.offsetWidth;
+    levelFlash.style.animation = 'level-flash .6s ease forwards';
+    showNotif('LEVEL UP!', '#a78bfa');
+  }
+}
+
+function renderHold(type) {
+  const c = holdCtx;
+  const w = $('hold-canvas').width, h = $('hold-canvas').height;
+  c.clearRect(0,0,w,h);
+  if (!type) {
+    c.strokeStyle = 'rgba(255,255,255,.06)';
+    c.strokeRect(.5,.5,w-1,h-1);
+    return;
+  }
+  TetrisGame.drawMiniPiece(c, type, w/2, h/2, 10);
+}
+
+function renderQueue(queue) {
+  nextCtxs.forEach((ctx, i) => {
+    const w = 60, h = 60;
+    ctx.clearRect(0,0,w,h);
+    const type = queue[i];
+    if (type) TetrisGame.drawMiniPiece(ctx, type, w/2, h/2, 10);
+  });
+}
+
+/* ──────────────────────────────────
+   Line clear events
+────────────────────────────────── */
+function handleLineClear(n, combo) {
+  const texts = ['', 'SINGLE', 'DOUBLE!', 'TRIPLE!!', '★ TETRIS ★'];
+  const colors = ['', '#4ade80', '#facc15', '#f97316', '#f472b6'];
+  showNotif(texts[n] || '', colors[n] || '#fff');
+  if (combo > 1) {
+    setTimeout(() => showNotif(`${combo} COMBO!`, '#a78bfa'), 400);
+  }
+  if (n >= 4) {
+    boardWrap.classList.add('board-shake');
+    setTimeout(() => boardWrap.classList.remove('board-shake'), 400);
+  }
+}
+
+function showNotif(text, color = '#ef4444') {
+  boardNotif.textContent = text;
+  boardNotif.style.color = color;
+  boardNotif.style.textShadow = `0 0 20px ${color}88`;
+  boardNotif.style.animation = 'none';
+  void boardNotif.offsetWidth;
+  boardNotif.style.animation = 'notif-rise 1.2s ease forwards';
+}
+
+/* ──────────────────────────────────
+   Game over
+────────────────────────────────── */
+function handleGameOver() {
+  setTimeout(() => {
+    gameScreen.classList.add('hidden');
+    overlayResult.classList.remove('hidden');
+    $('result-emoji').textContent = '💀';
+    $('result-title').textContent = 'GAME OVER';
+    $('result-sub').textContent   = '더 이상 블록을 놓을 공간이 없습니다.';
+    $('res-score').textContent    = (game.score || 0).toLocaleString();
+    $('res-lines').textContent    = game.lines || 0;
+    $('res-level').textContent    = game.level || 1;
+  }, 600);
+}
+
+/* ──────────────────────────────────
+   Controls — Keyboard + Touch/Swipe
+────────────────────────────────── */
+function bindControls() {
+  // ── Keyboard
+  document.addEventListener('keydown', onKey);
+
+  // ── On-screen buttons (repeat on hold for move)
+  const makeRepeat = (fn, delay=500, rate=80) => {
+    let timer;
+    return {
+      down() { fn(); timer = setTimeout(() => { timer = setInterval(fn, rate); }, delay); },
+      up()   { clearTimeout(timer); clearInterval(timer); }
+    };
+  };
+
+  const repLeft  = makeRepeat(() => game?.moveX(-1));
+  const repRight = makeRepeat(() => game?.moveX(1));
+
+  $('ctrl-left')  .addEventListener('pointerdown', () => repLeft.down());
+  $('ctrl-left')  .addEventListener('pointerup',   () => repLeft.up());
+  $('ctrl-right') .addEventListener('pointerdown', () => repRight.down());
+  $('ctrl-right') .addEventListener('pointerup',   () => repRight.up());
+  $('ctrl-rotate').addEventListener('click',        () => game?.rotate(1));
+  $('ctrl-hard')  .addEventListener('click',        () => game?.hardDrop());
+  $('ctrl-hold')  .addEventListener('click',        () => game?.holdPiece());
+
+  // ── Swipe zone
+  let sx, sy, lx, moved;
+  const MOVE_THRESH = 20, DROP_THRESH = 30;
+
+  swipeZone.addEventListener('pointerdown', e => {
+    sx = lx = e.clientX; sy = e.clientY; moved = false;
+  });
+
+  swipeZone.addEventListener('pointermove', e => {
+    if (!game || game.gameOver || game.stopped) return;
+    const dx = e.clientX - lx;
+    const dy = e.clientY - sy;
+
+    if (Math.abs(dx) >= MOVE_THRESH) {
+      game.moveX(dx > 0 ? 1 : -1);
+      lx = e.clientX;
+      moved = true;
     }
-  </style>
+    if (dy >= DROP_THRESH) {
+      game.drop();
+      sy = e.clientY;
+      moved = true;
+    }
+  });
 
+  swipeZone.addEventListener('pointerup', e => {
+    if (!moved) {
+      const dx = Math.abs(e.clientX - sx);
+      const dy = Math.abs(e.clientY - sy);
+      if (dx < 12 && dy < 12) {
+        // Determine tap zone: upper half = rotate, lower half = hard drop
+        const rect = swipeZone.getBoundingClientRect();
+        const relY = e.clientY - rect.top;
+        if (relY < rect.height * 0.55) {
+          game?.rotate(1);
+          if (typeof GameUtils !== 'undefined') GameUtils.vibrate(8);
+        } else {
+          game?.hardDrop();
+        }
+      }
+    }
+    moved = false;
+  });
+
+  // Prevent scroll
+  swipeZone.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+}
+
+function onKey(e) {
+  if (!game || game.gameOver || game.stopped) return;
+  switch (e.key) {
+    case 'ArrowLeft':  e.preventDefault(); game.moveX(-1);    break;
+    case 'ArrowRight': e.preventDefault(); game.moveX(1);     break;
+    case 'ArrowDown':  e.preventDefault(); game.drop();       break;
+    case 'ArrowUp':    e.preventDefault(); game.rotate(1);    break;
+    case ' ':          e.preventDefault(); game.hardDrop();   break;
+    case 'c': case 'C': case 'Shift':      game.holdPiece(); break;
+  }
+}
+
+})();
+</script>
 </body>
 </html>

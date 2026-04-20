@@ -1,229 +1,463 @@
 /**
- * TetrisCore - Shared game logic for Solo, Local 2P, and Online modes.
+ * TetrisCore v2.0 — Polished game engine shared by Solo and Online modes.
+ *
+ * Enhancements:
+ * - Larger block scale + gradient/glow rendering
+ * - Next-piece queue (3 pieces preview)
+ * - Hold piece system
+ * - Line-clear flash animation
+ * - Level-up speed system
+ * - SRS-like wall kick for rotation
+ * - Proper piece bag randomizer (7-bag)
  */
 
 const COLS = 10;
 const ROWS = 20;
-const COLORS = [
+
+/* ─── Vibrant with gradient rendering ─── */
+const PIECE_COLORS = [
   null,
-  '#FF3D3D', // Z
-  '#3DFF3D', // S
-  '#3D3DFF', // J
-  '#FF9F3D', // L
-  '#3DFFFF', // I
-  '#FFFF3D', // O
-  '#A73DFF'  // T
+  { fill: '#FF4757', glow: '#ff0019' }, // Z — Red
+  { fill: '#2ed573', glow: '#0acc56' }, // S — Green
+  { fill: '#1e90ff', glow: '#006de0' }, // J — Blue
+  { fill: '#ffa502', glow: '#e08700' }, // L — Orange
+  { fill: '#00d2d3', glow: '#00aaab' }, // I — Cyan
+  { fill: '#eccc68', glow: '#d4a900' }, // O — Yellow
+  { fill: '#a29bfe', glow: '#7c6fe4' }, // T — Purple
+  { fill: '#444', glow: '#222' }        // Garbage — Grey
 ];
 
+/* ─── All shapes in spawn orientation ─── */
 const SHAPES = [
-  [],
-  [[1, 1, 0], [0, 1, 1]],
-  [[0, 2, 2], [2, 2, 0]],
-  [[3, 0, 0], [3, 3, 3]],
-  [[0, 0, 4], [4, 4, 4]],
-  [[0, 0, 0, 0], [5, 5, 5, 5], [0, 0, 0, 0]],
-  [[6, 6], [6, 6]],
-  [[0, 7, 0], [7, 7, 7], [0, 0, 0]]
+  null,
+  [[1,1,0],[0,1,1],[0,0,0]], // Z
+  [[0,2,2],[2,2,0],[0,0,0]], // S
+  [[3,0,0],[3,3,3],[0,0,0]], // J
+  [[0,0,4],[4,4,4],[0,0,0]], // L
+  [[0,0,0,0],[5,5,5,5],[0,0,0,0],[0,0,0,0]], // I
+  [[6,6],[6,6]],             // O
+  [[0,7,0],[7,7,7],[0,0,0]]  // T
 ];
 
+/* ─── SRS Wall-kick data (J,L,S,T,Z) ─── */
+const KICKS = {
+  normal: [
+    [0,0],[-1,0],[2,0],[-1,-2],[2,1]
+  ],
+  I: [
+    [0,0],[-2,0],[1,0],[-2,1],[1,-2]
+  ]
+};
+
+/* ─── 7-bag random bag generator ─── */
+class PieceBag {
+  constructor() { this.bag = []; }
+  next() {
+    if (!this.bag.length) {
+      this.bag = [1,2,3,4,5,6,7];
+      for (let i = this.bag.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [this.bag[i], this.bag[j]] = [this.bag[j], this.bag[i]];
+      }
+    }
+    return this.bag.pop();
+  }
+}
+
+/* ─────────────────────────────────────────
+   TetrisGame class (core engine)
+   ───────────────────────────────────────── */
 class TetrisGame {
-  constructor(canvasId, notifId, onAttack, onGameOver, onUpdate) {
-    this.canvas = document.getElementById(canvasId);
-    if (this.canvas) this.ctx = this.canvas.getContext('2d');
-    this.notifEl = document.getElementById(notifId);
-    this.onAttack = onAttack;
-    this.onGameOver = onGameOver;
-    this.onUpdate = onUpdate; // Callback for online sync
-    
-    this.grid = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
-    this.piece = null;
-    this.score = 0;
-    this.gameOver = false;
-    this.dropCounter = 0;
-    this.dropInterval = 1000;
-    this.lastTime = 0;
+  constructor(canvasId, opts = {}) {
+    this.canvas  = document.getElementById(canvasId);
+    this.ctx     = this.canvas?.getContext('2d');
+    this.opts    = {
+      onAttack:  opts.onAttack  || null,
+      onGameOver:opts.onGameOver|| null,
+      onUpdate:  opts.onUpdate  || null,  // for online sync
+      onLineClear: opts.onLineClear || null,
+    };
+
+    // State
+    this.grid        = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+    this.bag         = new PieceBag();
+    this.queue       = [this.bag.next(), this.bag.next(), this.bag.next()];
+    this.held        = null;
+    this.holdUsed    = false;
+    this.piece       = null;
+    this.score       = 0;
+    this.lines       = 0;
+    this.level       = 1;
+    this.combo       = 0;
+    this.gameOver    = false;
+    this.stopped     = false;
+
+    // Timing
+    this.dropCounter  = 0;
+    this.lastTime     = 0;
+    this.rafId        = null;
+
+    // Visual
+    this.flashRows    = [];
+    this.flashTimer   = 0;
 
     if (this.canvas) this.resize();
     this.spawnPiece();
   }
 
+  /* ─── Sizing ─── */
   resize() {
     const parent = this.canvas.parentElement;
-    const w = parent.clientWidth || 300;
-    const h = parent.clientHeight || 600;
-    this.scale = Math.floor(Math.min(w / COLS, h / ROWS) * 0.95);
-    this.canvas.width = COLS * this.scale;
+    const maxW   = parent.clientWidth  || 280;
+    const maxH   = parent.clientHeight || 560;
+    this.scale   = Math.floor(Math.min(maxW / COLS, maxH / ROWS));
+    this.canvas.width  = COLS * this.scale;
     this.canvas.height = ROWS * this.scale;
   }
 
+  get dropInterval() {
+    // Level-based gravity: halves every 5 levels, min 80ms
+    return Math.max(80, 1000 - (this.level - 1) * 100);
+  }
+
+  /* ─── Piece Management ─── */
   spawnPiece() {
-    const type = 1 + Math.floor(Math.random() * (SHAPES.length - 1));
+    const type = this.queue.shift();
+    this.queue.push(this.bag.next());
     this.piece = {
       type,
       shape: JSON.parse(JSON.stringify(SHAPES[type])),
-      pos: { x: Math.floor(COLS / 2) - 2, y: 0 }
+      rotation: 0,
+      pos: { x: type === 5 ? 3 : 4 - Math.floor(SHAPES[type][0].length / 2), y: 0 }
     };
+    this.holdUsed = false;
+
     if (this.collide()) {
       this.gameOver = true;
     }
-    if (this.onUpdate) this.onUpdate();
+    if (this.opts.onUpdate) this.opts.onUpdate(this);
   }
 
-  collide(tempPos, tempShape) {
-    const s = tempShape || this.piece.shape;
-    const p = tempPos || this.piece.pos;
+  holdPiece() {
+    if (this.holdUsed) return;
+    const currentType = this.piece.type;
+    if (this.held !== null) {
+      this.piece = {
+        type: this.held,
+        shape: JSON.parse(JSON.stringify(SHAPES[this.held])),
+        rotation: 0,
+        pos: { x: this.held === 5 ? 3 : 4 - Math.floor(SHAPES[this.held][0].length / 2), y: 0 }
+      };
+    } else {
+      this.spawnPiece();
+    }
+    this.held    = currentType;
+    this.holdUsed = true;
+    if (this.opts.onUpdate) this.opts.onUpdate(this);
+  }
 
-    for (let y = 0; y < s.length; ++y) {
-      for (let x = 0; x < s[y].length; ++x) {
+  /* ─── Collision ─── */
+  collide(pos, shp) {
+    const s = shp || this.piece.shape;
+    const p = pos  || this.piece.pos;
+    for (let y = 0; y < s.length; y++) {
+      for (let x = 0; x < s[y].length; x++) {
         if (s[y][x] !== 0) {
-          const nx = x + p.x;
-          const ny = y + p.y;
-          if (nx < 0 || nx >= COLS || ny >= ROWS || (ny >= 0 && this.grid[ny][nx] !== 0)) {
-            return true;
-          }
+          const nx = x + p.x, ny = y + p.y;
+          if (nx < 0 || nx >= COLS || ny >= ROWS) return true;
+          if (ny >= 0 && this.grid[ny][nx] !== 0) return true;
         }
       }
     }
     return false;
   }
 
+  /* ─── Merge ─── */
   merge() {
     this.piece.shape.forEach((row, y) => {
-      row.forEach((value, x) => {
-        if (value !== 0) {
+      row.forEach((v, x) => {
+        if (v !== 0) {
           const ny = y + this.piece.pos.y;
-          if (ny >= 0) this.grid[ny][x + this.piece.pos.x] = value;
+          if (ny >= 0) this.grid[ny][x + this.piece.pos.x] = v;
         }
       });
     });
   }
 
+  /* ─── Rotation (SRS) ─── */
   rotate(dir) {
-    const originalShape = JSON.parse(JSON.stringify(this.piece.shape));
-    const matrix = this.piece.shape;
-    for (let y = 0; y < matrix.length; ++y) {
-      for (let x = 0; x < y; ++x) {
-        [matrix[x][y], matrix[y][x]] = [matrix[y][x], matrix[x][y]];
+    const original = JSON.parse(JSON.stringify(this.piece.shape));
+    const m = this.piece.shape;
+    // Transpose
+    for (let y = 0; y < m.length; y++) for (let x = 0; x < y; x++) [m[x][y], m[y][x]] = [m[y][x], m[x][y]];
+    if (dir > 0) m.forEach(r => r.reverse());
+    else         m.reverse();
+
+    // Wall kicks
+    const kickSet = this.piece.type === 5 ? KICKS.I : KICKS.normal;
+    for (const [kx, ky] of kickSet) {
+      const testPos = { x: this.piece.pos.x + kx, y: this.piece.pos.y + ky };
+      if (!this.collide(testPos)) {
+        this.piece.pos = testPos;
+        if (this.opts.onUpdate) this.opts.onUpdate(this);
+        return;
       }
     }
-    if (dir > 0) matrix.forEach(row => row.reverse());
-    else matrix.reverse();
-
-    if (this.collide()) {
-      this.piece.shape = originalShape;
-    } else if (this.onUpdate) {
-      this.onUpdate();
-    }
+    // Revert if no kick worked
+    this.piece.shape = original;
   }
 
-  drop() {
+  /* ─── Drop ─── */
+  drop(soft = false) {
     this.piece.pos.y++;
     if (this.collide()) {
       this.piece.pos.y--;
       this.merge();
+      this.clearLines();
       this.spawnPiece();
-      this.sweep();
-    } else if (this.onUpdate) {
-      this.onUpdate();
+      if (this.gameOver && this.opts.onGameOver) this.opts.onGameOver();
+    } else {
+      if (this.opts.onUpdate && !soft) this.opts.onUpdate(this);
     }
     this.dropCounter = 0;
   }
 
-  sweep() {
-    let rowCount = 0;
-    outer: for (let y = ROWS - 1; y >= 0; --y) {
-      for (let x = 0; x < COLS; ++x) {
-        if (this.grid[y][x] === 0) continue outer;
-      }
-      const row = this.grid.splice(y, 1)[0].fill(0);
-      this.grid.unshift(row);
-      ++y;
-      rowCount++;
-    }
-
-    if (rowCount > 0) {
-      this.score += [0, 10, 30, 60, 100][rowCount];
-      if (rowCount >= 2 && this.onAttack) {
-        const attack = rowCount === 4 ? 4 : rowCount - 1;
-        this.onAttack(attack);
-        this.showNotif(`+${attack} ATTACK!`);
-      }
-      if (typeof GameUtils !== 'undefined') GameUtils.vibrate(30);
-      if (this.onUpdate) this.onUpdate();
-    }
+  hardDrop() {
+    let dropped = 0;
+    while (!this.collide()) { this.piece.pos.y++; dropped++; }
+    this.piece.pos.y--;
+    this.score += dropped * 2; // Hard drop bonus
+    this.merge();
+    this.clearLines();
+    this.spawnPiece();
+    if (typeof GameUtils !== 'undefined') GameUtils.vibrate(15);
+    if (this.gameOver && this.opts.onGameOver) this.opts.onGameOver();
   }
 
-  addGarbage(lines) {
-    for (let i = 0; i < lines; i++) {
-      const row = Array(COLS).fill(8); // Gray
+  moveX(dir) {
+    this.piece.pos.x += dir;
+    if (this.collide()) { this.piece.pos.x -= dir; return; }
+    if (this.opts.onUpdate) this.opts.onUpdate(this);
+  }
+
+  /* ─── Line clear ─── */
+  clearLines() {
+    const cleared = [];
+    for (let y = ROWS - 1; y >= 0; y--) {
+      if (this.grid[y].every(v => v !== 0)) cleared.push(y);
+    }
+    if (!cleared.length) { this.combo = 0; return; }
+
+    // Flash effect data
+    this.flashRows  = cleared;
+    this.flashTimer = 200;
+
+    // Remove rows
+    cleared.forEach(y => {
+      this.grid.splice(y, 1);
+      this.grid.unshift(Array(COLS).fill(0));
+    });
+
+    const n = cleared.length;
+    this.lines += n;
+    this.level  = Math.floor(this.lines / 10) + 1;
+    this.combo++;
+
+    const base   = [0, 100, 300, 500, 800][n] || 800;
+    const comboBonus = Math.max(0, (this.combo - 1) * 50);
+    this.score  += (base + comboBonus) * this.level;
+
+    // Attack
+    if (this.opts.onAttack) {
+      const atk = n === 1 ? 0 : n === 2 ? 1 : n === 3 ? 2 : 4;
+      if (atk > 0) this.opts.onAttack(atk);
+    }
+    if (this.opts.onLineClear) this.opts.onLineClear(n, this.combo);
+    if (typeof GameUtils !== 'undefined') GameUtils.vibrate(n >= 4 ? 60 : 30);
+    if (this.opts.onUpdate) this.opts.onUpdate(this);
+  }
+
+  /* ─── Garbage ─── */
+  addGarbage(count) {
+    for (let i = 0; i < count; i++) {
       const hole = Math.floor(Math.random() * COLS);
-      row[hole] = 0;
       this.grid.shift();
+      const row = Array(COLS).fill(8); row[hole] = 0;
       this.grid.push(row);
     }
-    this.showNotif("RECEIVED!");
-    if (typeof GameUtils !== 'undefined') GameUtils.vibrate([20, 20, 20]);
-    if (this.collide()) this.gameOver = true;
-    if (this.onUpdate) this.onUpdate();
+    if (this.collide()) {
+      // Push piece up if possible
+      this.piece.pos.y = Math.max(0, this.piece.pos.y - count);
+    }
+    if (typeof GameUtils !== 'undefined') GameUtils.vibrate([20, 10, 20]);
+    if (this.opts.onUpdate) this.opts.onUpdate(this);
   }
 
-  showNotif(text) {
-    if (!this.notifEl) return;
-    this.notifEl.textContent = text;
-    this.notifEl.style.animation = 'none';
-    void this.notifEl.offsetWidth;
-    this.notifEl.style.opacity = '1';
-    this.notifEl.style.animation = 'attack-float 1s forwards';
+  /* ─── Ghost position ─── */
+  ghostPos() {
+    const gp = { x: this.piece.pos.x, y: this.piece.pos.y };
+    while (!this.collide(gp)) gp.y++;
+    gp.y--;
+    return gp;
   }
 
-  update(time = 0) {
-    const deltaTime = time - this.lastTime;
+  /* ─── Grid snapshot (for sync) ─── */
+  gridSnapshot() {
+    // Compact: join each row to a single string of hex digits
+    return this.grid.map(r => r.join('')).join('|');
+  }
+
+  /* ─── Main loop ─── */
+  start() {
+    this.rafId = requestAnimationFrame(t => this._loop(t));
+  }
+
+  _loop(time) {
+    const delta = time - this.lastTime;
     this.lastTime = time;
-    this.dropCounter += deltaTime;
-    if (this.dropCounter > this.dropInterval) {
-      this.drop();
+
+    if (!this.stopped && !this.gameOver) {
+      this.dropCounter += delta;
+      if (this.dropCounter >= this.dropInterval) {
+        this.drop(true);
+      }
     }
-    this.draw();
+
+    this.draw(delta);
     if (!this.gameOver) {
-      requestAnimationFrame((t) => this.update(t));
+      this.rafId = requestAnimationFrame(t => this._loop(t));
     } else {
-      if (this.onGameOver) this.onGameOver();
+      if (this.opts.onGameOver) this.opts.onGameOver();
     }
   }
 
-  draw() {
+  stop()   { this.stopped = true; }
+  resume() { this.stopped = false; }
+  destroy(){ if (this.rafId) cancelAnimationFrame(this.rafId); }
+
+  /* ═══════════ RENDERING ═══════════ */
+  draw(delta = 0) {
     if (!this.ctx) return;
-    this.ctx.fillStyle = '#000';
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    
-    // Ghost
-    const ghostPos = { x: this.piece.pos.x, y: this.piece.pos.y };
-    while (!this.collide(ghostPos)) {
-      ghostPos.y++;
-    }
-    ghostPos.y--;
-    this.drawMatrix(this.piece.shape, ghostPos, true);
+    const { ctx, canvas, scale } = this;
 
-    this.drawMatrix(this.grid, { x: 0, y: 0 });
-    this.drawMatrix(this.piece.shape, this.piece.pos);
+    // Background
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Grid lines
+    ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+    ctx.lineWidth = 1;
+    for (let c = 0; c <= COLS; c++) { ctx.beginPath(); ctx.moveTo(c*scale,0); ctx.lineTo(c*scale,canvas.height); ctx.stroke(); }
+    for (let r = 0; r <= ROWS; r++) { ctx.beginPath(); ctx.moveTo(0,r*scale); ctx.lineTo(canvas.width,r*scale); ctx.stroke(); }
+
+    // Flash animation tick
+    if (this.flashTimer > 0) this.flashTimer -= delta;
+
+    // Draw grid
+    this.grid.forEach((row, y) => {
+      // Flash: brighten cleared rows
+      const flashing = this.flashTimer > 0 && this.flashRows.includes(y);
+      row.forEach((v, x) => {
+        if (v !== 0) {
+          this._drawBlock(ctx, x, y, scale, v, flashing ? 1.5 : 1);
+        }
+      });
+    });
+
+    // Ghost
+    if (this.piece) {
+      const gp = this.ghostPos();
+      if (gp.y !== this.piece.pos.y) {
+        this.piece.shape.forEach((row, y) => {
+          row.forEach((v, x) => {
+            if (v !== 0) this._drawGhostBlock(ctx, x + gp.x, y + gp.y, scale, v);
+          });
+        });
+      }
+
+      // Current piece
+      this.piece.shape.forEach((row, y) => {
+        row.forEach((v, x) => {
+          if (v !== 0) this._drawBlock(ctx, x + this.piece.pos.x, y + this.piece.pos.y, scale, v);
+        });
+      });
+    }
   }
 
-  drawMatrix(matrix, offset, ghost = false) {
-    matrix.forEach((row, y) => {
-      row.forEach((value, x) => {
-        if (value !== 0) {
-          const rx = (x + offset.x) * this.scale;
-          const ry = (y + offset.y) * this.scale;
-          if (ghost) {
-             this.ctx.strokeStyle = COLORS[this.piece.type];
-             this.ctx.strokeRect(rx+1, ry+1, this.scale-2, this.scale-2);
-          } else {
-            this.ctx.fillStyle = value === 8 ? '#444' : COLORS[value];
-            this.ctx.fillRect(rx, ry, this.scale, this.scale);
-            this.ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-            this.ctx.strokeRect(rx, ry, this.scale, this.scale);
-          }
+  _drawBlock(ctx, gx, gy, scale, colorIdx, brightness = 1) {
+    const c = PIECE_COLORS[colorIdx] || PIECE_COLORS[1];
+    const rx = gx * scale, ry = gy * scale;
+    const pad = 1;
+
+    // Main fill
+    const grad = ctx.createLinearGradient(rx+pad, ry+pad, rx+scale-pad, ry+scale-pad);
+    grad.addColorStop(0, c.fill);
+    grad.addColorStop(1, c.glow);
+    ctx.fillStyle = grad;
+    ctx.fillRect(rx+pad, ry+pad, scale-pad*2, scale-pad*2);
+
+    // Brightness overlay
+    if (brightness > 1) {
+      ctx.fillStyle = `rgba(255,255,255,${(brightness-1)*0.6})`;
+      ctx.fillRect(rx+pad, ry+pad, scale-pad*2, scale-pad*2);
+    }
+
+    // Top highlight
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    ctx.fillRect(rx+pad, ry+pad, scale-pad*2, Math.max(2, Math.floor(scale/5)));
+
+    // Inner glow border
+    ctx.strokeStyle = `rgba(255,255,255,0.15)`;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(rx+pad+0.5, ry+pad+0.5, scale-pad*2-1, scale-pad*2-1);
+  }
+
+  _drawGhostBlock(ctx, gx, gy, scale, colorIdx) {
+    const c = PIECE_COLORS[colorIdx] || PIECE_COLORS[1];
+    const rx = gx * scale, ry = gy * scale;
+    const pad = 1;
+    ctx.strokeStyle = c.fill + '55';
+    ctx.lineWidth   = 1.5;
+    ctx.strokeRect(rx+pad+0.5, ry+pad+0.5, scale-pad*2-1, scale-pad*2-1);
+  }
+
+  /* ─── Mini board render (for opponent preview or hold/next panes) ─── */
+  static drawMiniPiece(ctx, type, x, y, cellSize) {
+    if (!type || !SHAPES[type]) return;
+    const shape = SHAPES[type];
+    const c = PIECE_COLORS[type];
+    const rows = shape.length, cols = shape[0].length;
+    const ox = x - (cols * cellSize) / 2;
+    const oy = y - (rows * cellSize) / 2;
+    shape.forEach((row, ry) => {
+      row.forEach((v, rx) => {
+        if (v !== 0) {
+          const px = ox + rx * cellSize, py = oy + ry * cellSize;
+          const grad = ctx.createLinearGradient(px, py, px+cellSize, py+cellSize);
+          grad.addColorStop(0, c.fill);
+          grad.addColorStop(1, c.glow);
+          ctx.fillStyle = grad;
+          ctx.fillRect(px+0.5, py+0.5, cellSize-1, cellSize-1);
+          ctx.fillStyle = 'rgba(255,255,255,0.2)';
+          ctx.fillRect(px+0.5, py+0.5, cellSize-1, Math.max(1, Math.floor(cellSize/5)));
         }
+      });
+    });
+  }
+
+  static renderGridSnapshot(ctx, gridStr, canvasWidth, canvasHeight) {
+    if (!gridStr || !ctx) return;
+    const rows = gridStr.split('|').map(r => r.split('').map(Number));
+    const scale = Math.floor(canvasWidth / COLS);
+    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+    rows.forEach((row, y) => {
+      row.forEach((v, x) => {
+        if (v === 0) return;
+        const c = PIECE_COLORS[v] || PIECE_COLORS[8];
+        ctx.fillStyle = c.fill;
+        ctx.fillRect(x*scale+0.5, y*scale+0.5, scale-1, scale-1);
       });
     });
   }
