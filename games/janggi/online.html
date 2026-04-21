@@ -28,8 +28,8 @@
       --border:       rgba(255,255,255,.08);
       --text:         #e2e8f0;
       --text-dim:     #64748b;
-      --p1:           #ef4444; /* Player 1 (Han): Red */
-      --p2:           #4ade80; /* Player 2 (Cho): Green */
+      --p1:           #4ade80; /* Player 1 (Cho): Green */
+      --p2:           #ef4444; /* Player 2 (Han): Red */
     }
 
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -165,7 +165,7 @@
       transform: translate(-50%, -50%);
       width: 8%; height: 8%;
       border-radius: 50%;
-      z-index: 15;
+      z-index: 40;
     }
     .grid-intersection.valid-move {
       background: radial-gradient(circle, rgba(255,255,255,0.8) 20%, transparent 25%);
@@ -199,19 +199,26 @@
       z-index: 30;
     }
 
+    .janggi-piece.upside-down {
+      transform: translate(-50%, -50%) rotate(180deg);
+    }
+    .janggi-piece.upside-down.selected {
+      transform: translate(-50%, -50%) rotate(180deg) scale(1.15) !important;
+    }
+
     .janggi-piece[data-player="p1"] {
       color: var(--p1);
-      border: 2px solid rgba(239, 68, 68, 0.6);
-      text-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+      border: 2px solid rgba(74, 222, 128, 0.6);   /* Green */
+      text-shadow: 0 0 8px rgba(74, 222, 128, 0.6);
     }
     .janggi-piece[data-player="p2"] {
       color: var(--p2);
-      border: 2px solid rgba(74, 222, 128, 0.6);
-      text-shadow: 0 0 8px rgba(74, 222, 128, 0.6);
+      border: 2px solid rgba(239, 68, 68, 0.6);   /* Red */
+      text-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
     }
     
-    .janggi-piece[data-player="p1"].selected { box-shadow: 0 0 20px rgba(239, 68, 68, 0.8); }
-    .janggi-piece[data-player="p2"].selected { box-shadow: 0 0 20px rgba(74, 222, 128, 0.8); }
+    .janggi-piece[data-player="p1"].selected { box-shadow: 0 0 20px rgba(74, 222, 128, 0.8); }
+    .janggi-piece[data-player="p2"].selected { box-shadow: 0 0 20px rgba(239, 68, 68, 0.8); }
     
     .janggi-piece.king {
       font-size: clamp(1.2rem, 5vw, 2.5rem);
@@ -370,8 +377,8 @@
         $('ms-p1').classList.toggle('ms-active', turn === 'p1');
         $('ms-p2').classList.toggle('ms-active', turn === 'p2');
 
-        statusText.textContent = turn === 'p1' ? '한(Han) 님의 차례입니다.' : '초(Cho) 님의 차례입니다.';
-        if (inCheck) statusText.textContent = '장군! ' + (turn === 'p1' ? '한(Han)' : '초(Cho)') + '님이 피해야 합니다.';
+        statusText.textContent = turn === 'p1' ? '초(Cho/Green) 님의 차례입니다.' : '한(Han/Red) 님의 차례입니다.';
+        if (inCheck) statusText.textContent = '장군! ' + (turn === 'p1' ? '초(Cho)' : '한(Han)') + '님이 피해야 합니다.';
         
         // 동기화 루프가 아닌 내가 직접 조작한 턴 변경이라면 Firebase 업데이트
         if (!preventNextSync) {

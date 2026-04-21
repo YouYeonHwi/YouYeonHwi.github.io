@@ -250,13 +250,17 @@ class TetrisGame {
     if (!cleared.length) { this.combo = 0; return; }
 
     // Flash effect data
-    this.flashRows  = cleared;
+    this.flashRows = [...cleared]; // Copy for rendering
     this.flashTimer = 200;
 
-    // Remove rows simultaneously using filter to avoid index shifting bugs
-    this.grid = this.grid.filter((_, i) => !cleared.includes(i));
-    while (this.grid.length < ROWS) {
-      this.grid.unshift(Array(COLS).fill(0));
+    // Remove rows simultaneously from top to bottom (in-place)
+    // We iterate exactly like classic Tetris to prevent skipping shifted rows.
+    for (let y = ROWS - 1; y >= 0; y--) {
+      if (this.grid[y].every(v => v !== 0)) {
+        this.grid.splice(y, 1);
+        this.grid.unshift(Array(COLS).fill(0));
+        y++; // Check this same index again since the rows above shifted down into it
+      }
     }
 
     const n = cleared.length;
@@ -356,14 +360,20 @@ class TetrisGame {
 
     // Draw grid
     this.grid.forEach((row, y) => {
-      // Flash: brighten cleared rows
-      const flashing = this.flashTimer > 0 && this.flashRows.includes(y);
       row.forEach((v, x) => {
         if (v !== 0) {
-          this._drawBlock(ctx, x, y, scale, v, flashing ? 1.5 : 1);
+          this._drawBlock(ctx, x, y, scale, v, 1);
         }
       });
     });
+
+    // Draw flash overlay independently at the original cleared positions
+    if (this.flashTimer > 0) {
+      ctx.fillStyle = `rgba(255, 255, 255, ${(this.flashTimer / 200) * 0.8})`;
+      this.flashRows.forEach(y => {
+        ctx.fillRect(0, y * scale, canvas.width, scale);
+      });
+    }
 
     // Ghost
     if (this.piece) {

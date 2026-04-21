@@ -101,10 +101,10 @@ class JanggiGame {
   }
 
   serializeBoard() {
-    return this.board.map(row => row.map(cell => cell ? { ...cell } : null));
+    return this.board.map(row => Array.from({length: 9}, (_, x) => row[x] ? { ...row[x] } : 0));
   }
   deserializeBoard(state) {
-    this.board = state.map(row => row.map(cell => cell ? { ...cell } : null));
+    this.board = state.map(row => Array.from({length: 9}, (_, x) => row && row[x] ? { ...row[x] } : null));
     this.selectedPiece = null;
     this.validMovesCache = [];
     this.render();
@@ -422,6 +422,9 @@ class JanggiGame {
           pieceEl.style.left = `${(vx / 8) * 100}%`;
           pieceEl.style.top = `${(vy / 9) * 100}%`;
           pieceEl.id = p.id;
+          
+          // 오프라인/온라인 모두 상대방 진영(화면 상단)의 기물은 180도 뒤집어서 출력
+          if (vy < 5) pieceEl.classList.add('upside-down');
           
           if (this.selectedPiece && this.selectedPiece.x === x && this.selectedPiece.y === y) {
             pieceEl.classList.add('selected');

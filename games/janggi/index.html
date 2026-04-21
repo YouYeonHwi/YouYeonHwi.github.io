@@ -28,8 +28,8 @@
       --border:       rgba(255,255,255,.08);
       --text:         #e2e8f0;
       --text-dim:     #64748b;
-      --p1:           #ef4444; /* Player 1 (Han): Red */
-      --p2:           #4ade80; /* Player 2 (Cho): Green */
+      --p1:           #4ade80; /* Player 1 (Cho): Green */
+      --p2:           #ef4444; /* Player 2 (Han): Red */
     }
 
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -144,7 +144,7 @@
       transform: translate(-50%, -50%);
       width: 8%; height: 8%;
       border-radius: 50%;
-      z-index: 15;
+      z-index: 40;
     }
     .grid-intersection.valid-move {
       background: radial-gradient(circle, rgba(255,255,255,0.8) 20%, transparent 25%);
@@ -178,19 +178,26 @@
       z-index: 30;
     }
 
+    .janggi-piece.upside-down {
+      transform: translate(-50%, -50%) rotate(180deg);
+    }
+    .janggi-piece.upside-down.selected {
+      transform: translate(-50%, -50%) rotate(180deg) scale(1.15) !important;
+    }
+
     .janggi-piece[data-player="p1"] {
       color: var(--p1);
-      border: 2px solid rgba(239, 68, 68, 0.6);
-      text-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+      border: 2px solid rgba(74, 222, 128, 0.6);   /* Green */
+      text-shadow: 0 0 8px rgba(74, 222, 128, 0.6);
     }
     .janggi-piece[data-player="p2"] {
       color: var(--p2);
-      border: 2px solid rgba(74, 222, 128, 0.6);
-      text-shadow: 0 0 8px rgba(74, 222, 128, 0.6);
+      border: 2px solid rgba(239, 68, 68, 0.6);   /* Red */
+      text-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
     }
     
-    .janggi-piece[data-player="p1"].selected { box-shadow: 0 0 20px rgba(239, 68, 68, 0.8); }
-    .janggi-piece[data-player="p2"].selected { box-shadow: 0 0 20px rgba(74, 222, 128, 0.8); }
+    .janggi-piece[data-player="p1"].selected { box-shadow: 0 0 20px rgba(74, 222, 128, 0.8); }
+    .janggi-piece[data-player="p2"].selected { box-shadow: 0 0 20px rgba(239, 68, 68, 0.8); }
     
     /* "King" sizes slightly larger */
     .janggi-piece.king {
@@ -302,9 +309,9 @@
 <div id="game-screen" class="hidden">
   <div class="top-bar">
     <a href="/games/" class="back-btn">← 목록</a>
-    <div id="turn-p2" class="turn-indicator p2">초 (Cho)</div>
+    <div id="turn-p2" class="turn-indicator p2">한 (Han)</div>
     <div style="font-weight:900; font-size:.8rem; color:var(--surface2);">VS</div>
-    <div id="turn-p1" class="turn-indicator p1 active">한 (Han)</div>
+    <div id="turn-p1" class="turn-indicator p1 active">초 (Cho)</div>
   </div>
 
   <div class="play-area" id="play-area">
@@ -318,7 +325,7 @@
   </div>
 
   <div class="bottom-status" id="status-text">
-    한(Han) 님의 차례입니다.
+    초(Cho) 님의 차례입니다.
   </div>
 </div>
 
@@ -364,11 +371,11 @@
         if (turn === 'p1') {
           turnP1.classList.add('active');
           turnP2.classList.remove('active');
-          statusText.textContent = inCheck ? '장군! 한(Han)님이 피해야 합니다.' : '한(Han/Red) 님의 차례입니다.';
+          statusText.textContent = inCheck ? '장군! 초(Cho)님이 피해야 합니다.' : '초(Cho/Green) 님의 차례입니다.';
         } else {
           turnP2.classList.add('active');
           turnP1.classList.remove('active');
-          statusText.textContent = inCheck ? '장군! 초(Cho)님이 피해야 합니다.' : '초(Cho/Green) 님의 차례입니다.';
+          statusText.textContent = inCheck ? '장군! 한(Han)님이 피해야 합니다.' : '한(Han/Red) 님의 차례입니다.';
         }
       },
       onWin: (winnerRole, reason) => {
