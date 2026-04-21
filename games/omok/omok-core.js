@@ -44,8 +44,16 @@ class OmokGame {
       this.canvas.addEventListener('touchstart', (e) => {
         const touch = e.touches[0];
         const rect = this.canvas.getBoundingClientRect();
-        this.processInput(touch.clientX - rect.left, touch.clientY - rect.top);
-        e.preventDefault();
+        
+        // Calculate scale factors
+        const scaleX = this.canvas.width / rect.width;
+        const scaleY = this.canvas.height / rect.height;
+        
+        const px = (touch.clientX - rect.left) * scaleX;
+        const py = (touch.clientY - rect.top) * scaleY;
+        
+        this.processInput(px, py);
+        if (e.cancelable) e.preventDefault();
       }, { passive: false });
     }
 

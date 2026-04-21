@@ -151,7 +151,7 @@
       cursor: pointer;
     }
     .grid-intersection.valid-capture {
-      background: radial-gradient(circle, transparent 35%, rgba(2ef,68,68,0.8) 40%, rgba(2ef,68,68,0.8) 45%, transparent 50%);
+      background: radial-gradient(circle, transparent 35%, var(--p1) 40%, var(--p1) 45%, transparent 50%);
       cursor: pointer;
     }
 
@@ -251,9 +251,9 @@
     <button id="btn-solo" class="btn btn-primary" style="width:100%; justify-content:center;">
       📱 로컬 대결 (한 화면에서)
     </button>
-    <button id="btn-online" class="btn btn-ghost" style="width:100%; justify-content:center; border-color:var(--primary);">
+    <a href="online.html" id="btn-online" class="btn btn-ghost" style="width:100%; justify-content:center; border-color:var(--primary);">
       🌐 원격 대결 (따로 플레이)
-    </button>
+    </a>
     <a href="/games/" class="btn btn-ghost" style="width:100%; justify-content:center;">← 게임 목록</a>
   </div>
 
@@ -339,7 +339,6 @@
 
   /* Menus */
   $('btn-solo').addEventListener('click', startSolo);
-  $('btn-online').addEventListener('click', () => { location.href = 'online.html'; });
   $('btn-retry').addEventListener('click', startSolo);
   
   $('btn-show-help').addEventListener('click', () => {

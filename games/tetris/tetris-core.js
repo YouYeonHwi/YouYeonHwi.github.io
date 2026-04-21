@@ -116,8 +116,9 @@ class TetrisGame {
   }
 
   get dropInterval() {
-    // Level-based gravity: halves every 5 levels, min 80ms
-    return Math.max(80, 1000 - (this.level - 1) * 100);
+    // Level-based gravity: Speed boosted by 1.3x as requested
+    const baseInterval = 1000 - (this.level - 1) * 100;
+    return Math.max(60, Math.floor(baseInterval / 1.3));
   }
 
   /* ─── Piece Management ─── */
@@ -252,11 +253,11 @@ class TetrisGame {
     this.flashRows  = cleared;
     this.flashTimer = 200;
 
-    // Remove rows
-    cleared.forEach(y => {
-      this.grid.splice(y, 1);
+    // Remove rows simultaneously using filter to avoid index shifting bugs
+    this.grid = this.grid.filter((_, i) => !cleared.includes(i));
+    while (this.grid.length < ROWS) {
       this.grid.unshift(Array(COLS).fill(0));
-    });
+    }
 
     const n = cleared.length;
     this.lines += n;
