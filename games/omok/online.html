@@ -492,41 +492,48 @@
           showResult(state.winner);
         }
       }
-
-      $('ms-p1').classList.toggle('ms-active', currentNum === 1);
-      $('ms-p2').classList.toggle('ms-active', currentNum === 2);
-
-      if ((myRole === 'p1' && currentNum === 1) || (myRole === 'p2' && currentNum === 2)) {
-        statusText.textContent = "내 차례입니다. 돌을 놓을 곳을 선택하세요.";
-      } else {
-        statusText.textContent = "상대방의 차례입니다. 기다려주세요...";
-      }
-    }
-
-  function showResult(winnerNum) {
-      setTimeout(() => {
-        overlayResult.classList.remove('hidden');
-
-        const isMe = (myRole === 'p1' && winnerNum === 1) || (myRole === 'p2' && winnerNum === 2);
-
-        if (isMe) {
-          $('res-title').textContent = "VICTORY!";
-          $('res-sub').textContent = "상대방을 꺾고 승리했습니다!";
-          $('res-title').style.background = "linear-gradient(135deg, #4ade80, #86efac)";
-          $('res-title').style.webkitBackgroundClip = "text";
-          $('res-title').style.webkitTextFillColor = "transparent";
+      function updateTurnUI(currentNum) {
+        if (currentNum === 1) {
+          turnIndicator.className = 'turn-indicator active p1';
+          turnIndicator.textContent = "P1 차례";
         } else {
-          $('res-title').textContent = "DEFEAT";
-          $('res-sub').textContent = "아쉽게 패배했습니다.";
-          $('res-emoji').textContent = "💀";
-          $('res-title').style.background = "linear-gradient(135deg, #ef4444, #fca5a5)";
-          $('res-title').style.webkitBackgroundClip = "text";
-          $('res-title').style.webkitTextFillColor = "transparent";
+          turnIndicator.className = 'turn-indicator active p2';
+          turnIndicator.textContent = "P2 차례";
         }
-      }, 600);
-    }
 
-}) ();
+        $('ms-p1').classList.toggle('ms-active', currentNum === 1);
+        $('ms-p2').classList.toggle('ms-active', currentNum === 2);
+
+        if ((myRole === 'p1' && currentNum === 1) || (myRole === 'p2' && currentNum === 2)) {
+          statusText.textContent = "내 차례입니다. 돌을 놓을 곳을 선택하세요.";
+        } else {
+          statusText.textContent = "상대방의 차례입니다. 기다려주세요...";
+        }
+      }
+
+      function showResult(winnerNum) {
+        setTimeout(() => {
+          overlayResult.classList.remove('hidden');
+
+          const isMe = (myRole === 'p1' && winnerNum === 1) || (myRole === 'p2' && winnerNum === 2);
+
+          if (isMe) {
+            $('res-title').textContent = "VICTORY!";
+            $('res-sub').textContent = "상대방을 꺾고 승리했습니다!";
+            $('res-title').style.background = "linear-gradient(135deg, #4ade80, #86efac)";
+            $('res-title').style.webkitBackgroundClip = "text";
+            $('res-title').style.webkitTextFillColor = "transparent";
+          } else {
+            $('res-title').textContent = "DEFEAT";
+            $('res-sub').textContent = "아쉽게 패배했습니다.";
+            $('res-emoji').textContent = "💀";
+            $('res-title').style.background = "linear-gradient(135deg, #ef4444, #fca5a5)";
+            $('res-title').style.webkitBackgroundClip = "text";
+            $('res-title').style.webkitTextFillColor = "transparent";
+          }
+        }, 600);
+      }
+    })();
   </script>
 </body>
 
