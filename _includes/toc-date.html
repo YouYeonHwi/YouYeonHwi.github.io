@@ -39,7 +39,7 @@
         </div>
         <ul class="summary">
             <li class="divider"></li>
-            <li class="chapter" data-level="1.2">
+            <li class="chapter" data-level="games">
                 <span>커플 게임 광장</span>
                 <ul class="articles">
                     <li class="chapter"><a href="{{site.baseurl}}/games/yahtzee/" target="_blank" rel="noopener noreferrer">🎲 커플 야추</a></li>
@@ -75,15 +75,15 @@
             {% assign categories = reversed_posts | map: "category" | uniq | compact %}
 
             {% for cat in categories %}
-            <li class="chapter" data-level="1.2">
+            <li class="chapter" data-level="cat-{{ forloop.index }}">
                 <span>{{ cat }}</span>
                 <ul class="articles">
                     {% assign cat_posts = reversed_posts | where: "category", cat %}
                     {% for post in cat_posts %}
                     {% if page.url == post.url %}
-                    <li class="chapter active" data-level="1.2" data-path="{{site.baseurl}}{{post.url}}">
+                    <li class="chapter active" data-level="cat-{{ forloop.parentloop.index }}-{{ forloop.index }}" data-path="{{site.baseurl}}{{post.url}}">
                         {% else %}
-                    <li class="chapter" data-level="1.1" data-path="{{site.baseurl}}{{post.url}}">
+                    <li class="chapter" data-level="cat-{{ forloop.parentloop.index }}-{{ forloop.index }}" data-path="{{site.baseurl}}{{post.url}}">
                         {% endif %}
                         <a href="{{site.baseurl}}{{post.url}}" onclick="pageScrollToTop(this)">
                             {{ post.title | escape }}
@@ -102,9 +102,9 @@
             {% assign uncategorized_posts = reversed_posts | where_exp: "item", "item.category == nil" %}
             {% for post in uncategorized_posts %}
             {% if page.url == post.url %}
-            <li class="chapter active" data-level="1.2" data-path="{{site.baseurl}}{{post.url}}">
+            <li class="chapter active" data-level="uncat-{{ forloop.index }}" data-path="{{site.baseurl}}{{post.url}}">
                 {% else %}
-            <li class="chapter" data-level="1.1" data-path="{{site.baseurl}}{{post.url}}">
+            <li class="chapter" data-level="uncat-{{ forloop.index }}" data-path="{{site.baseurl}}{{post.url}}">
                 {% endif %}
                 <a href="{{site.baseurl}}{{post.url}}" onclick="pageScrollToTop(this)">
                     {{ post.title | escape }}
@@ -134,9 +134,9 @@
 
             {% for post in reversed_posts %}
             {% if page.url == post.url %}
-            <li class="chapter active" data-level="1.2" data-path="{{site.baseurl}}{{post.url}}">
+            <li class="chapter active" data-level="post-{{ forloop.index }}" data-path="{{site.baseurl}}{{post.url}}">
                 {% else %}
-            <li class="chapter" data-level="1.1" data-path="{{site.baseurl}}{{post.url}}">
+            <li class="chapter" data-level="post-{{ forloop.index }}" data-path="{{site.baseurl}}{{post.url}}">
                 {% endif %}
                 <a href="{{site.baseurl}}{{post.url}}" onclick="pageScrollToTop(this)">
                     {{ post.title | escape }}
@@ -157,7 +157,7 @@
             {% endif %}
             <li class="divider"></li>
 
-            <li class="chapter">
+            <li class="chapter" data-level="info">
                 <span>Information</span>
                 <ul class="articles">
                     <li class="chapter {% if page.url == '/about.html' %}active{% endif %}"><a href="{{site.baseurl}}/about.html">정보 (About)</a></li>
