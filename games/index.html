@@ -578,30 +578,49 @@
   <div class="section-title">🔥 지금 플레이 가능 · <span id="game-count">11</span>개</div>
   <div class="game-grid" id="game-grid">
 
-    <!-- CARD 12 — Janggi (Korean Chess) -->
-    <a href="/games/janggi/" class="game-card" id="card-janggi" data-difficulty="hard" data-game-id="janggi">
-      <div class="card-visual gradient-1" style="background: linear-gradient(135deg, #ef4444, #4ade80);">
-        <div style="font-size:3rem; font-family:'Noto Serif KR', serif; font-weight:900; color:white; text-shadow:0 0 15px rgba(255,255,255,0.8);">漢楚</div>
-      </div>
+    <!-- CARD 1 — Yahtzee -->
+    <a href="/games/yahtzee/" class="game-card" id="card-yahtzee" data-difficulty="hard" data-game-id="yahtzee">
+      <div class="card-visual gradient-1" style="background: linear-gradient(135deg, #1e3a8a, #3b82f6)">🎲</div>
       <div class="card-body">
         <div class="card-header">
           <div class="card-title">
-            사이버 장기 (Janggi)
-            <span class="badge badge-live" style="background:#ef4444;">NEW</span>
+            커플 야추
+            <span class="badge badge-live">LIVE</span>
           </div>
           <div class="difficulty-badge diff-hard">⭐⭐⭐ 상급</div>
         </div>
-        <div class="card-score" id="card-score-janggi"></div>
-        <p class="card-desc">전통의 지략 대결! 현대적인 네온 스타일로 재탄생한 장기를 즐겨보세요.</p>
+        <div class="card-score" id="card-score-yahtzee"></div>
+        <p class="card-desc">주사위 5개로 최고의 조합을 만들어라! 운소기대 커플 야추 대결.</p>
         <div class="card-tags">
           <span class="tag">2인용</span>
-          <span class="tag">두뇌</span>
-          <span class="tag">멀티플레이</span>
+          <span class="tag">턴제</span>
+          <span class="tag">전략</span>
         </div>
       </div>
     </a>
 
-    <!-- CARD 11 — Omok -->
+    <!-- CARD 2 — Tetris Battle -->
+    <a href="/games/tetris/" class="game-card" id="card-tetris" data-difficulty="medium" data-game-id="tetris">
+      <div class="card-visual gradient-5" style="background: linear-gradient(135deg, #a78bfa, #f472b6)">🧱</div>
+      <div class="card-body">
+        <div class="card-header">
+          <div class="card-title">
+            테트리스 배틀
+            <span class="badge badge-live">LIVE</span>
+          </div>
+          <div class="difficulty-badge diff-medium">⭐⭐ 중급</div>
+        </div>
+        <div class="card-score" id="card-score-tetris"></div>
+        <p class="card-desc">줄을 지워 상대방을 공격! 1인용 도전부터 실시간 원격 대결까지 가능합니다.</p>
+        <div class="card-tags">
+          <span class="tag">1~2인용</span>
+          <span class="tag">액션</span>
+          <span class="tag">실시간 공격</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- CARD 3 — Omok -->
     <a href="/games/omok/" class="game-card" id="card-omok" data-difficulty="hard" data-game-id="omok">
       <div class="card-visual gradient-1" style="background: linear-gradient(135deg, #10b981, #06b6d4);">
         <div style="font-size:3rem; filter:hue-rotate(280deg);">⚫⚪</div>
@@ -624,7 +643,30 @@
       </div>
     </a>
 
-    <!-- CARD 1 — Tap Battle -->
+    <!-- CARD 4 — Janggi (Korean Chess) -->
+    <a href="/games/janggi/" class="game-card" id="card-janggi" data-difficulty="hard" data-game-id="janggi">
+      <div class="card-visual gradient-1" style="background: linear-gradient(135deg, #ef4444, #4ade80);">
+        <div style="font-size:3rem; font-family:'Noto Serif KR', serif; font-weight:900; color:white; text-shadow:0 0 15px rgba(255,255,255,0.8);">漢楚</div>
+      </div>
+      <div class="card-body">
+        <div class="card-header">
+          <div class="card-title">
+            사이버 장기 (Janggi)
+            <span class="badge badge-live" style="background:#ef4444;">NEW</span>
+          </div>
+          <div class="difficulty-badge diff-hard">⭐⭐⭐ 상급</div>
+        </div>
+        <div class="card-score" id="card-score-janggi"></div>
+        <p class="card-desc">전통의 지략 대결! 현대적인 네온 스타일로 재탄생한 장기를 즐겨보세요.</p>
+        <div class="card-tags">
+          <span class="tag">2인용</span>
+          <span class="tag">두뇌</span>
+          <span class="tag">멀티플레이</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- CARD 5 — Tap Battle -->
     <a href="/games/tap-battle/" class="game-card" id="card-tap-battle" data-difficulty="medium" data-game-id="tap-battle">
       <div class="card-visual gradient-1">⚡</div>
       <div class="card-body">
@@ -645,112 +687,7 @@
       </div>
     </a>
 
-    <!-- CARD 2 — RPS -->
-    <a href="/games/rps/" class="game-card" id="card-rps" data-difficulty="easy" data-game-id="rps">
-      <div class="card-visual gradient-3">✊</div>
-      <div class="card-body">
-        <div class="card-header">
-          <div class="card-title">
-            가위바위보
-            <span class="badge badge-live">LIVE</span>
-          </div>
-          <div class="difficulty-badge diff-easy">⭐ 초급</div>
-        </div>
-        <div class="card-score" id="card-score-rps"></div>
-        <p class="card-desc">3판 2선승! 양쪽에서 동시에 선택하고 마지막에 결과 확인!</p>
-        <div class="card-tags">
-          <span class="tag">2인용</span>
-          <span class="tag">전략</span>
-          <span class="tag">벌칙 룰렛</span>
-        </div>
-      </div>
-    </a>
-
-    <!-- CARD 3 — Ping Pong -->
-    <a href="/games/ping-pong/" class="game-card" id="card-ping-pong" data-difficulty="medium" data-game-id="ping-pong">
-      <div class="card-visual gradient-2">🏓</div>
-      <div class="card-body">
-        <div class="card-header">
-          <div class="card-title">
-            미니 핑퐁
-            <span class="badge badge-live">LIVE</span>
-          </div>
-          <div class="difficulty-badge diff-medium">⭐⭐ 중급</div>
-        </div>
-        <div class="card-score" id="card-score-ping-pong"></div>
-        <p class="card-desc">화면 양쪽에서 패들을 터치로 움직여 공을 주고 받는 탁구 대결!</p>
-        <div class="card-tags">
-          <span class="tag">2인용</span>
-          <span class="tag">스포츠</span>
-          <span class="tag">5점 선승</span>
-        </div>
-      </div>
-    </a>
-
-    <!-- CARD 4 — Memory Numbers -->
-    <a href="/games/memory-numbers/" class="game-card" id="card-memory-numbers" data-difficulty="easy" data-game-id="memory-numbers">
-      <div class="card-visual gradient-4">🧠</div>
-      <div class="card-body">
-        <div class="card-header">
-          <div class="card-title">
-            숫자 기억력
-            <span class="badge badge-live">LIVE</span>
-          </div>
-          <div class="difficulty-badge diff-easy">⭐ 초급</div>
-        </div>
-        <div class="card-score" id="card-score-memory-numbers"></div>
-        <p class="card-desc">랜덤 숫자를 기억하고 빠르게 입력! 5라운드 두뇌 대결!</p>
-        <div class="card-tags">
-          <span class="tag">2인용</span>
-          <span class="tag">두뇌</span>
-          <span class="tag">기억력</span>
-        </div>
-      </div>
-    </a>
-
-    <!-- CARD 5 — Balloon Pop -->
-    <a href="/games/balloon-pop/" class="game-card" id="card-balloon-pop" data-difficulty="easy" data-game-id="balloon-pop">
-      <div class="card-visual gradient-5">🎈</div>
-      <div class="card-body">
-        <div class="card-header">
-          <div class="card-title">
-            풍선 터뜨리기
-            <span class="badge badge-live">LIVE</span>
-          </div>
-          <div class="difficulty-badge diff-easy">⭐ 초급</div>
-        </div>
-        <div class="card-score" id="card-score-balloon-pop"></div>
-        <p class="card-desc">15초 타임어택! 각자 영역의 풍선을 미친 듯이 터뜨려라! 💥</p>
-        <div class="card-tags">
-          <span class="tag">2인용</span>
-          <span class="tag">터치</span>
-          <span class="tag">15초</span>
-        </div>
-      </div>
-    </a>
-
-    <!-- CARD 6 — Color Sequence -->
-    <a href="/games/color-sequence/" class="game-card" id="card-color-sequence" data-difficulty="medium" data-game-id="color-sequence">
-      <div class="card-visual gradient-6">🎨</div>
-      <div class="card-body">
-        <div class="card-header">
-          <div class="card-title">
-            색깔 순서 기억
-            <span class="badge badge-live">LIVE</span>
-          </div>
-          <div class="difficulty-badge diff-medium">⭐⭐ 중급</div>
-        </div>
-        <div class="card-score" id="card-score-color-sequence"></div>
-        <p class="card-desc">사이먼 세이즈! 색깔 순서를 기억하고 따라 터치하세요. 더 높은 레벨이 승리!</p>
-        <div class="card-tags">
-          <span class="tag">2인용</span>
-          <span class="tag">기억력</span>
-          <span class="tag">번갈아 플레이</span>
-        </div>
-      </div>
-    </a>
-
-    <!-- CARD 7 — Timing Hit -->
+    <!-- CARD 6 — Timing Hit -->
     <a href="/games/timing-hit/" class="game-card" id="card-timing-hit" data-difficulty="hard" data-game-id="timing-hit">
       <div class="card-visual gradient-7">🎯</div>
       <div class="card-body">
@@ -771,44 +708,107 @@
       </div>
     </a>
 
-    <!-- CARD 8 — Yahtzee -->
-    <a href="/games/yahtzee/" class="game-card" id="card-yahtzee" data-difficulty="hard" data-game-id="yahtzee">
-      <div class="card-visual gradient-1" style="background: linear-gradient(135deg, #1e3a8a, #3b82f6)">🎲</div>
+    <!-- CARD 7 — Balloon Pop -->
+    <a href="/games/balloon-pop/" class="game-card" id="card-balloon-pop" data-difficulty="easy" data-game-id="balloon-pop">
+      <div class="card-visual gradient-5">🎈</div>
       <div class="card-body">
         <div class="card-header">
           <div class="card-title">
-            커플 야추
+            풍선 터뜨리기
             <span class="badge badge-live">LIVE</span>
           </div>
-          <div class="difficulty-badge diff-hard">⭐⭐⭐ 상급</div>
+          <div class="difficulty-badge diff-easy">⭐ 초급</div>
         </div>
-        <div class="card-score" id="card-score-yahtzee"></div>
-        <p class="card-desc">주사위 5개로 최고의 조합을 만들어라! 운소기대 커플 야추 대결.</p>
+        <div class="card-score" id="card-score-balloon-pop"></div>
+        <p class="card-desc">15초 타임어택! 각자 영역의 풍선을 미친 듯이 터뜨려라! 💥</p>
         <div class="card-tags">
           <span class="tag">2인용</span>
-          <span class="tag">턴제</span>
-          <span class="tag">전략</span>
+          <span class="tag">터치</span>
+          <span class="tag">15초</span>
         </div>
       </div>
     </a>
 
-    <!-- CARD 9 — Tetris Battle -->
-    <a href="/games/tetris/" class="game-card" id="card-tetris" data-difficulty="medium" data-game-id="tetris">
-      <div class="card-visual gradient-5" style="background: linear-gradient(135deg, #a78bfa, #f472b6)">🧱</div>
+    <!-- CARD 8 — Ping Pong -->
+    <a href="/games/ping-pong/" class="game-card" id="card-ping-pong" data-difficulty="medium" data-game-id="ping-pong">
+      <div class="card-visual gradient-2">🏓</div>
       <div class="card-body">
         <div class="card-header">
           <div class="card-title">
-            테트리스 배틀
+            미니 핑퐁
             <span class="badge badge-live">LIVE</span>
           </div>
           <div class="difficulty-badge diff-medium">⭐⭐ 중급</div>
         </div>
-        <div class="card-score" id="card-score-tetris"></div>
-        <p class="card-desc">줄을 지워 상대방을 공격! 1인용 도전부터 실시간 원격 대결까지 가능합니다.</p>
+        <div class="card-score" id="card-score-ping-pong"></div>
+        <p class="card-desc">화면 양쪽에서 패들을 터치로 움직여 공을 주고 받는 탁구 대결!</p>
         <div class="card-tags">
-          <span class="tag">1~2인용</span>
-          <span class="tag">액션</span>
-          <span class="tag">실시간 공격</span>
+          <span class="tag">2인용</span>
+          <span class="tag">스포츠</span>
+          <span class="tag">5점 선승</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- CARD 9 — RPS -->
+    <a href="/games/rps/" class="game-card" id="card-rps" data-difficulty="easy" data-game-id="rps">
+      <div class="card-visual gradient-3">✊</div>
+      <div class="card-body">
+        <div class="card-header">
+          <div class="card-title">
+            가위바위보
+            <span class="badge badge-live">LIVE</span>
+          </div>
+          <div class="difficulty-badge diff-easy">⭐ 초급</div>
+        </div>
+        <div class="card-score" id="card-score-rps"></div>
+        <p class="card-desc">3판 2선승! 양쪽에서 동시에 선택하고 마지막에 결과 확인!</p>
+        <div class="card-tags">
+          <span class="tag">2인용</span>
+          <span class="tag">전략</span>
+          <span class="tag">벌칙 룰렛</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- CARD 10 — Memory Numbers -->
+    <a href="/games/memory-numbers/" class="game-card" id="card-memory-numbers" data-difficulty="easy" data-game-id="memory-numbers">
+      <div class="card-visual gradient-4">🧠</div>
+      <div class="card-body">
+        <div class="card-header">
+          <div class="card-title">
+            숫자 기억력
+            <span class="badge badge-live">LIVE</span>
+          </div>
+          <div class="difficulty-badge diff-easy">⭐ 초급</div>
+        </div>
+        <div class="card-score" id="card-score-memory-numbers"></div>
+        <p class="card-desc">랜덤 숫자를 기억하고 빠르게 입력! 5라운드 두뇌 대결!</p>
+        <div class="card-tags">
+          <span class="tag">2인용</span>
+          <span class="tag">두뇌</span>
+          <span class="tag">기억력</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- CARD 11 — Color Sequence -->
+    <a href="/games/color-sequence/" class="game-card" id="card-color-sequence" data-difficulty="medium" data-game-id="color-sequence">
+      <div class="card-visual gradient-6">🎨</div>
+      <div class="card-body">
+        <div class="card-header">
+          <div class="card-title">
+            색깔 순서 기억
+            <span class="badge badge-live">LIVE</span>
+          </div>
+          <div class="difficulty-badge diff-medium">⭐⭐ 중급</div>
+        </div>
+        <div class="card-score" id="card-score-color-sequence"></div>
+        <p class="card-desc">사이먼 세이즈! 색깔 순서를 기억하고 따라 터치하세요. 더 높은 레벨이 승리!</p>
+        <div class="card-tags">
+          <span class="tag">2인용</span>
+          <span class="tag">기억력</span>
+          <span class="tag">번갈아 플레이</span>
         </div>
       </div>
     </a>
@@ -824,6 +824,17 @@
   <div class="ad-banner">
     <!-- [ADSENSE SLOT] 허브 하단 배너 -->
     <div class="ad-slot">ADVERTISEMENT · 320 × 100</div>
+  </div>
+
+  <!-- ═══════════════ SUPPORT ═══════════════ -->
+  <div style="max-width: 800px; margin: 0 auto 3rem; padding: 0 1rem;">
+    <div style="background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(245, 158, 11, 0.05)); border: 1px solid rgba(251, 191, 36, 0.2); border-radius: var(--radius); padding: 1.5rem; text-align: center;">
+      <h3 style="font-size: 1.1rem; font-weight: 800; margin-bottom: 0.5rem; color: #fbbf24;">☕ 개발자 커피 사주기</h3>
+      <p style="font-size: 0.85rem; color: var(--text-dim); margin-bottom: 1rem; line-height: 1.5;">재미있게 즐기셨나요? 따뜻한 커피 한 잔의 응원은<br>더 많은 게임을 만드는 데 큰 힘이 됩니다! 🐾</p>
+      <div style="background: rgba(251, 191, 36, 0.15); color: #fbbf24; padding: 0.75rem 1.25rem; border-radius: 50px; display: inline-block; font-size: 0.9rem; font-weight: 700; border: 1px solid rgba(251, 191, 36, 0.3);">
+        농협 174347-56-070460
+      </div>
+    </div>
   </div>
 
   <!-- ═══════════════ FOOTER ═══════════════ -->

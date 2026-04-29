@@ -37,56 +37,30 @@
                 {% else %}
             <li class="chapter" data-level="1.1" data-path="{{site.baseurl}}">
                 {% endif %}
-                <a href="{{site.baseurl}}/" onclick="pageScrollToTop(this)">
-                    {{ intro_page.title | default: site.title | escape }}
+                <a href="https://youyeonhwi.github.io/" onclick="pageScrollToTop(this)">
+                    Whistle's Dev Diary
                 </a>
             <li class="chapter" data-level="1.2">
                 <span>
-                    <a href="{{site.baseurl}}/games/" style="color: #f472b6; font-weight: 900;">🎮 커플 게임 광장 <span
-                            class="badge"
-                            style="background: #f472b6; color: white; font-size: 0.6rem; padding: 2px 5px; border-radius: 4px; margin-left: 5px;">NEW</span>
-                    </a>
+                    <a href="{{site.baseurl}}/games/">커플 게임 광장</a>
                 </span>
                 <ul class="articles">
-                    <li class="chapter"><a href="{{site.baseurl}}/games/yahtzee/">🎲 커플 야추 3D</a></li>
-                    <li class="chapter"><a href="{{site.baseurl}}/games/rps/">✊ 가위바위보</a></li>
-                    <li class="chapter"><a href="{{site.baseurl}}/games/tap-battle/">⚡ 순발력 터치 대결</a></li>
-                    <li class="chapter"><a href="{{site.baseurl}}/games/ping-pong/">🏓 미니 핑퐁</a></li>
-                    <li class="chapter"><a href="{{site.baseurl}}/games/memory-numbers/">🧠 숫자 기억력</a></li>
-                    <li class="chapter"><a href="{{site.baseurl}}/games/balloon-pop/">🎈 풍선 터뜨리기</a></li>
-                    <li class="chapter"><a href="{{site.baseurl}}/games/color-sequence/">🎨 색깔 순서 기억</a></li>
-                    <li class="chapter"><a href="{{site.baseurl}}/games/timing-hit/">🎯 타이밍 맞추기</a></li>
-                    <li class="chapter"><a href="{{site.baseurl}}/games/number-race/">🔢 숫자 레이스</a></li>
-                    <li class="chapter"><a href="{{site.baseurl}}/games/nunchi/">👀 눈치 게임</a></li>
+                    <li class="chapter"><a href="{{site.baseurl}}/games/yahtzee/">커플 야추</a></li>
+                    <li class="chapter"><a href="{{site.baseurl}}/games/tetris/">테트리스 배틀</a></li>
+                    <li class="chapter"><a href="{{site.baseurl}}/games/omok/">오목</a></li>
+                    <li class="chapter"><a href="{{site.baseurl}}/games/janggi/">장기</a></li>
+                    <li class="chapter"><a href="{{site.baseurl}}/games/tap-battle/">순발력 터치 대결</a></li>
+                    <li class="chapter"><a href="{{site.baseurl}}/games/timing-hit/">타이밍 맞추기</a></li>
+                    <li class="chapter"><a href="{{site.baseurl}}/games/balloon-pop/">풍선 터뜨리기</a></li>
+                    <li class="chapter"><a href="{{site.baseurl}}/games/ping-pong/">미니 핑퐁</a></li>
+                    <li class="chapter"><a href="{{site.baseurl}}/games/rps/">가위바위보</a></li>
+                    <li class="chapter"><a href="{{site.baseurl}}/games/memory-numbers/">숫자 기억력</a></li>
+                    <li class="chapter"><a href="{{site.baseurl}}/games/color-sequence/">색깔 순서 기억</a></li>
+                    <li class="chapter"><a href="{{site.baseurl}}/games/number-race/">숫자 레이스</a></li>
+                    <li class="chapter"><a href="{{site.baseurl}}/games/nunchi/">눈치 게임</a></li>
                 </ul>
             </li>
 
-            <li class="divider"></li>
-
-            <li class="chapter">
-                <span style="font-weight: 700;">🐍 파이썬 기초 문법</span>
-                <ul class="articles">
-                    {% assign python_lessons = site.pages | where: "category", "파이썬 기초 문법" | sort: "weight" %}
-                    {% for lesson in python_lessons %}
-                    <li class="chapter {% if page.url == lesson.url %}active{% endif %}" data-path="{{site.baseurl}}{{lesson.url}}">
-                        <a href="{{site.baseurl}}{{lesson.url}}" onclick="pageScrollToTop(this)">
-                            {{ lesson.title | escape }}
-                        </a>
-                    </li>
-                    {% endfor %}
-                </ul>
-            </li>
-
-            <li class="divider"></li>
-
-            <li class="chapter">
-                <span>Information</span>
-                <ul class="articles">
-                    <li class="chapter"><a href="{{site.baseurl}}/about.html">정보 (About)</a></li>
-                    <li class="chapter"><a href="{{site.baseurl}}/privacy.html">개인정보처리방침</a></li>
-                    <li class="chapter"><a href="{{site.baseurl}}/terms.html">이용약관</a></li>
-                </ul>
-            </li>
 
             <li class="divider"></li>
 
@@ -184,6 +158,16 @@
             {% endif %}
             {% endfor %}
             {% endif %}
+            <li class="divider"></li>
+
+            <li class="chapter">
+                <span>Information</span>
+                <ul class="articles">
+                    <li class="chapter {% if page.url == '/about.html' %}active{% endif %}"><a href="{{site.baseurl}}/about.html">정보 (About)</a></li>
+                    <li class="chapter {% if page.url == '/privacy.html' %}active{% endif %}"><a href="{{site.baseurl}}/privacy.html">개인정보처리방침</a></li>
+                    <li class="chapter {% if page.url == '/terms.html' %}active{% endif %}"><a href="{{site.baseurl}}/terms.html">이용약관</a></li>
+                </ul>
+            </li>
         </ul>
     </nav>
 </div>
