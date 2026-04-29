@@ -597,10 +597,16 @@ const GameUtils = (() => {
           <p>친구와 대결할 방식을 선택하세요!</p>
           <button class="remote-btn remote-btn-primary" id="menu-local">📱 로컬 대결 (한 화면)</button>
           <button class="remote-btn remote-btn-ghost" id="menu-online">🌐 원격 대결 (따로 플레이)</button>
+          <div class="lobby-ad-slot" style="margin-top:1.5rem;">
+            <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2428685752915797" data-ad-slot="2927445656" data-ad-format="auto" data-full-width-responsive="true"></ins>
+          </div>
           <a href="/games/" style="color:#64748b; font-size:0.75rem; text-decoration:none; margin-top:1rem; display:inline-block;">← 게임 목록으로</a>
         </div>
       `;
       document.body.appendChild(overlay);
+
+      // 시작 화면 광고 초기화
+      try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
 
       overlay.querySelector('#menu-local').onclick = () => {
         overlay.remove();
@@ -627,12 +633,18 @@ const GameUtils = (() => {
           <div style="height:1px; background:rgba(255,255,255,0.1); margin:1.5rem 0;"></div>
           <input type="text" class="remote-input" id="input-code" placeholder="방 번호 4자리" maxlength="4">
           <button class="remote-btn remote-btn-ghost" id="btn-join">참여하기</button>
+          <div class="lobby-ad-slot" style="margin-top:1.5rem;">
+            <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2428685752915797" data-ad-slot="4240527325" data-ad-format="auto" data-full-width-responsive="true"></ins>
+          </div>
           <button class="remote-btn" style="background:none; color:#64748b; font-size:0.8rem;" id="btn-back">← 취소</button>
         </div>
         <div class="remote-card hidden" id="lobby-wait">
           <h1>대기 중...</h1>
           <p>상대방에게 아래 코드를 전송하세요.</p>
           <div class="room-code-display" id="room-code-val">----</div>
+          <div class="lobby-ad-slot" style="margin:1.5rem 0;">
+            <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2428685752915797" data-ad-slot="1166896565" data-ad-format="auto" data-full-width-responsive="true"></ins>
+          </div>
           <button class="remote-btn remote-btn-ghost" id="btn-cancel">방 삭제 및 취소</button>
         </div>
         <div class="remote-card hidden" id="lobby-ready" style="max-width:350px;">
@@ -648,12 +660,22 @@ const GameUtils = (() => {
               <div style="font-weight:900; font-size:0.9rem; color:#a78bfa;" id="role-p2">Guest</div>
             </div>
           </div>
+          <div class="lobby-ad-slot" style="margin:1rem 0;">
+            <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2428685752915797" data-ad-slot="9612048162" data-ad-format="auto" data-full-width-responsive="true"></ins>
+          </div>
           <button class="remote-btn remote-btn-primary hidden" id="btn-real-start">게임 시작하기! 🚀</button>
           <p id="ready-msg" style="color:var(--primary); font-weight:700; margin-bottom:1rem; display:none;">방장이 시작하길 기다리는 중...</p>
           <button class="remote-btn remote-btn-ghost" id="btn-ready-cancel" style="padding:0.75rem; font-size:0.85rem;">방 나가기</button>
         </div>
       `;
       document.body.appendChild(overlay);
+
+      // 로비 광고 초기화
+      try {
+        overlay.querySelectorAll('.lobby-ad-slot ins.adsbygoogle').forEach(ad => {
+          (adsbygoogle = window.adsbygoogle || []).push({});
+        });
+      } catch(e) { /* AdSense not ready yet */ }
 
       const initUI = overlay.querySelector('#lobby-init');
       const waitUI = overlay.querySelector('#lobby-wait');
@@ -758,6 +780,12 @@ const GameUtils = (() => {
           margin: 1.5rem 0; text-shadow: 0 0 20px rgba(167,139,250,0.3);
         }
         .hidden { display: none !important; }
+        .lobby-ad-slot {
+          width: 100%; min-height: 100px; border-radius: 12px;
+          background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.08);
+          overflow: hidden; display: flex; align-items: center; justify-content: center;
+        }
+        .lobby-ad-slot ins { width: 100%; }
       `;
       document.head.appendChild(style);
     }

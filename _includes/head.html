@@ -8,7 +8,97 @@
 {%- endif -%}
 
 <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-<meta name="description" content="{{site.description}}">
+
+<!-- SEO 메타 태그 -->
+{%- if page.description -%}
+<meta name="description" content="{{ page.description | escape }}">
+{%- else -%}
+<meta name="description" content="{{ site.description | strip_html | strip_newlines | truncate: 160 | escape }}">
+{%- endif -%}
+<meta name="keywords" content="개발 블로그, 파이썬, 파이썬 기초, 파이썬 문법, 파이썬 입문, 파이썬 독학, 파이썬 강좌, python, python 기초, 프로그래밍, 프로그래밍 입문, 코딩, 코딩 공부, 커플 게임, 2인용 게임, 모바일 게임, 커플 야추, 야추 게임, 테트리스 배틀, 오목 온라인, 장기 온라인, 순발력 게임, 타이밍 게임, 풍선 터뜨리기, 미니 핑퐁, 가위바위보, 숫자 기억력, 색깔 순서 기억, 숫자 레이스, 눈치 게임, couple game, 2 player game, mobile game, 온라인 대전, 실시간 대결, 멀티플레이어, 웹 게임, 브라우저 게임, 무료 게임, HTML5 게임, 스마트폰 게임, 연인 게임, 친구 게임, 대결 게임, Whistle Dev Diary, 개발 일기, 개인 블로그, 기술 블로그, 깃허브 블로그, GitHub Pages">
+<link rel="canonical" href="{{ site.url }}{{ site.baseurl }}{{ page.url | replace: 'index.html', '' }}">
+<link rel="sitemap" type="application/xml" href="{{ site.url }}{{ site.baseurl }}/sitemap.xml">
+<meta name="robots" content="index, follow">
+<meta name="subject" content="개발 블로그 & 커플 게임">
+<meta name="language" content="ko">
+<meta name="revisit-after" content="3 days">
+<meta name="classification" content="Blog, Games">
+<meta name="rating" content="General">
+
+<!-- Open Graph (Facebook, KakaoTalk, 카카오톡 공유 등) -->
+<meta property="og:type" content="{% if page.layout == 'post' %}article{% else %}website{% endif %}">
+{%- if page.title -%}
+<meta property="og:title" content="{{ page.title | escape }} · {{ site.title | escape }}">
+{%- else -%}
+<meta property="og:title" content="{{ site.title | escape }}">
+{%- endif -%}
+{%- if page.description -%}
+<meta property="og:description" content="{{ page.description | escape }}">
+{%- else -%}
+<meta property="og:description" content="{{ site.description | strip_html | strip_newlines | truncate: 200 | escape }}">
+{%- endif -%}
+<meta property="og:url" content="{{ site.url }}{{ site.baseurl }}{{ page.url }}">
+<meta property="og:site_name" content="{{ site.title | escape }}">
+<meta property="og:locale" content="ko_KR">
+{%- if page.date -%}
+<meta property="article:published_time" content="{{ page.date | date_to_xmlschema }}">
+{%- endif -%}
+<meta property="article:author" content="{{ site.author | escape }}">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary">
+{%- if page.title -%}
+<meta name="twitter:title" content="{{ page.title | escape }}">
+{%- else -%}
+<meta name="twitter:title" content="{{ site.title | escape }}">
+{%- endif -%}
+{%- if page.description -%}
+<meta name="twitter:description" content="{{ page.description | escape }}">
+{%- else -%}
+<meta name="twitter:description" content="{{ site.description | strip_html | strip_newlines | truncate: 200 | escape }}">
+{%- endif -%}
+
+<!-- JSON-LD 구조화 데이터 (구글 리치 결과) -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "{{ site.title | escape }}",
+  "url": "{{ site.url }}{{ site.baseurl }}/",
+  "description": "{{ site.description | strip_html | strip_newlines | truncate: 200 | escape }}",
+  "author": {
+    "@type": "Person",
+    "name": "{{ site.author | escape }}"
+  },
+  "publisher": {
+    "@type": "Person",
+    "name": "{{ site.author | escape }}"
+  },
+  "inLanguage": "ko-KR"
+}
+</script>
+{%- if page.layout == 'post' -%}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "{{ page.title | escape }}",
+  "url": "{{ site.url }}{{ site.baseurl }}{{ page.url }}",
+  "datePublished": "{{ page.date | date_to_xmlschema }}",
+  "author": { "@type": "Person", "name": "{{ site.author | escape }}" },
+  "publisher": { "@type": "Person", "name": "{{ site.author | escape }}" },
+  "description": "{% if page.description %}{{ page.description | escape }}{% else %}{{ site.description | strip_html | strip_newlines | truncate: 200 | escape }}{% endif %}"
+}
+</script>
+{%- endif -%}
+
+<!-- 네이버 웹마스터 도구 인증 (Search Advisor에서 발급받은 코드로 교체) -->
+<!-- <meta name="naver-site-verification" content="여기에_네이버_인증코드_입력"> -->
+
+<!-- 구글 서치 콘솔 인증 (Search Console에서 발급받은 코드로 교체) -->
+<!-- <meta name="google-site-verification" content="여기에_구글_인증코드_입력"> -->
+
+<!-- Google AdSense -->
 <meta name="google-adsense-account" content="ca-pub-2428685752915797">
 <!-- 구글 애드센스 자동 광고 스크립트 -->
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2428685752915797" crossorigin="anonymous"></script>

@@ -4,7 +4,7 @@ longtitle:        DevWhistle
 author:           DevWhistle
 email:            dusgnl0903@gmail.com
 description: >
-  My blog for Dev Diaries
+  파이썬 기초 문법, 커플 2인용 모바일 게임(야추, 테트리스, 오목, 장기 등) 등 다양한 개발 콘텐츠를 제공하는 Whistle의 개발 블로그입니다.
 
 version:          1.0
 gitbook_version:  3.2.3
@@ -72,3 +72,4 @@ plugins:
   - jekyll-feed
   - jekyll-readme-index
   - jemoji
+  - jekyll-sitemap
