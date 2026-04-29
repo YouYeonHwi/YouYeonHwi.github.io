@@ -261,3 +261,69 @@ pre:has(code.language-mermaid[data-processed="true"]) {
     --c-danger-title: #c00;
     --font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
 }
+
+/* Sidebar Home Box Styles */
+.sidebar-home-box {
+    padding: 15px;
+    margin-bottom: 5px;
+}
+
+.sidebar-home-box a {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    background: linear-gradient(135deg, #6366f1, #a855f7);
+    color: white !important;
+    text-decoration: none !important;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: 1rem;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-home-box a:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(99, 102, 241, 0.3);
+    filter: brightness(1.1);
+}
+
+.sidebar-home-box .home-icon {
+    font-size: 1.2rem;
+    margin-right: 10px;
+}
+
+/* Search input margin */
+#book-search-input {
+    margin: 0 15px 15px 15px !important;
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 8px;
+    background: #fff;
+}
+
+#book-search-input input {
+    padding: 10px 15px !important;
+}
+
+/* Sidebar navigation adjustments */
+.summary {
+    padding-top: 10px;
+}
+
+.summary .chapter span {
+    display: flex !important;
+    align-items: center;
+}
+
+.summary .chapter span a {
+    color: inherit !important;
+    text-decoration: none !important;
+    padding: 0 !important;
+    display: inline-block !important;
+}
+
+/* Area separation */
+.divider {
+    margin: 15px 0 !important;
+    opacity: 0.5;
+}
