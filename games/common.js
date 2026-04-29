@@ -328,15 +328,9 @@ const GameUtils = (() => {
     addOverlayMascot('overlay-result');
   }
 
-  /* ───────────────────── 구글 애드센스 스크립트 일괄 주입 ───────────────────── */
-  function injectAdsense() {
-    if (document.querySelector('script[src*="adsbygoogle.js"]')) return;
-    const script = document.createElement('script');
-    script.async = true;
-    script.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2428685752915797";
-    script.crossOrigin = "anonymous";
-    document.head.appendChild(script);
-  }
+  /* ───────────────────── 구글 애드센스 (head.html에서 전역 로드) ───────────────────── */
+  // AdSense 스크립트는 _includes/head.html에서 전역으로 한 번만 로드됩니다.
+  // 게임 페이지에서 중복 주입하지 않습니다.
 
   /* ───────────────────── 실시간 원격 엔진 (RemoteManager) ───────────────────── */
   const RemoteManager = (() => {
@@ -776,7 +770,6 @@ const GameUtils = (() => {
     lockViewport();
     applyTheme(); // 저장된 테마 적용
     injectShibaTheme();
-    injectAdsense(); // 모든 게임에 애드센스 자동 광고 스크립트 로드
   }
 
   // DOM 준비 시 자동 초기화
